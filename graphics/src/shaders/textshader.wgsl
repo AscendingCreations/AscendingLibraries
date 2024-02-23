@@ -85,7 +85,7 @@ fn vertex(
         result.color = unpack_color(vertex.color);
     } else {
         size = textureDimensions(tex);
-        result.color = unpack_linear_color(vertex.color);
+        result.color = unpack_color(vertex.color);
     }
 
     let fsize = vec2<f32> (f32(size.x), f32(size.y));
