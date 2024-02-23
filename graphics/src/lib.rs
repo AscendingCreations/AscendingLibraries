@@ -23,6 +23,7 @@ pub use textures::*;
 pub use tilesheet::*;
 pub use ui::*;
 
-pub use glam::{UVec2, UVec3, UVec4, Vec2, Vec3, Vec4};
-pub use wgpu;
 pub use cosmic_text::{self, Color};
+pub use glam::{UVec2, UVec3, UVec4, Vec2, Vec3, Vec4};
+pub use naga;
+pub use wgpu;
