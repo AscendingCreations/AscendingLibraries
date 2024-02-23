@@ -30,6 +30,17 @@ pub enum MapLayers {
 }
 
 impl MapLayers {
+    pub const LAYERS: [Self; 8] = [
+        Self::Ground,
+        Self::Mask,
+        Self::Mask2,
+        Self::Anim1,
+        Self::Anim2,
+        Self::Anim3,
+        Self::Fringe,
+        Self::Fringe2,
+    ];
+
     pub fn indexed_layers(layer: usize) -> f32 {
         match layer {
             0 => 9.5,
