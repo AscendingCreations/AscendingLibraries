@@ -14,7 +14,7 @@ use crate::{
 use cosmic_text::Color;
 
 #[allow(dead_code)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, PartialOrd)]
 pub enum MapLayers {
     Ground,
     Mask,
@@ -41,28 +41,28 @@ impl MapLayers {
         Self::Fringe2,
     ];
 
-    pub fn indexed_layers(layer: usize) -> f32 {
-        match layer {
-            0 => 9.5,
-            1 => 9.4,
-            2 => 9.3,
-            3 => 9.2,
-            4 => 9.1,
-            5 => 9.0,
-            6 => 5.1,
+    pub fn indexed_layers(self) -> f32 {
+        match self {
+            Self::Ground => 9.5,
+            Self::Mask => 9.4,
+            Self::Mask2 => 9.3,
+            Self::Anim1 => 9.2,
+            Self::Anim2 => 9.1,
+            Self::Anim3 => 9.0,
+            Self::Fringe => 5.1,
             _ => 5.0,
         }
     }
 
-    pub fn as_str<'a>(layer: u32) -> &'a str {
-        match layer {
-            0 => "Ground",
-            1 => "Mask",
-            2 => "Mask 2",
-            3 => "Anim 1",
-            4 => "Anim 2",
-            5 => "Anim 3",
-            6 => "Fringe",
+    pub fn as_str<'a>(self) -> &'a str {
+        match self {
+            Self::Ground => "Ground",
+            Self::Mask => "Mask",
+            Self::Mask2 => "Mask 2",
+            Self::Anim1 => "Anim 1",
+            Self::Anim2 => "Anim 2",
+            Self::Anim3 => "Anim 3",
+            Self::Fringe => "Fringe",
             _ => "Fringe 2",
         }
     }
@@ -117,17 +117,17 @@ impl Map {
         let mut upper_buffer = Vec::with_capacity(2048);
         let atlas_width = atlas.size().x / self.tilesize;
 
-        for i in 0..8 {
-            let z = MapLayers::indexed_layers(i);
+        for layer in MapLayers::LAYERS {
+            let z = layer.indexed_layers();
 
-            if self.filled_tiles[i] == 0 {
+            if self.filled_tiles[layer as usize] == 0 {
                 continue;
             }
 
             for x in 0..32 {
                 for y in 0..32 {
                     let tile = &self.tiles
-                        [(x + (y * 32) + (i as u32 * 1024)) as usize];
+                        [(x + (y * 32) + (layer as u32 * 1024)) as usize];
 
                     if tile.id == 0 {
                         continue;
@@ -149,7 +149,7 @@ impl Map {
                             color: tile.color.0,
                         };
 
-                        if i < 6 {
+                        if layer < MapLayers::Fringe {
                             lower_buffer.push(map_vertex)
                         } else {
                             upper_buffer.push(map_vertex)
