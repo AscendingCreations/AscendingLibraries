@@ -91,7 +91,7 @@ fn vertex(
     } else if pos.z == 9.1 && frame != 2u {
         result.uv = vec2<f32>(0.0, 0.0);
         result.clip_position = vec4<f32>(0.0, 0.0, 0.0, 0.0);
-    } else if pos.z = 9.0 && frame != 3u {
+    } else if pos.z == 9.0 && frame != 3u {
         result.uv = vec2<f32>(0.0, 0.0);
         result.clip_position = vec4<f32>(0.0, 0.0, 0.0, 0.0);
     }
