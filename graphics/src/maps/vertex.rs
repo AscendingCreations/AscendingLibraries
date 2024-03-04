@@ -32,7 +32,7 @@ impl BufferLayout for MapVertex {
 
     /// default set as 8,192 tile per map.
     fn default_buffer() -> BufferData {
-        Self::with_capacity(8_192, 0)
+        Self::with_capacity(9_216, 0)
     }
 
     fn with_capacity(

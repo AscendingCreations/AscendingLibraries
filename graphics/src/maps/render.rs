@@ -15,8 +15,8 @@ impl MapRenderer {
         Ok(Self {
             buffer: InstanceBuffer::with_capacity(
                 renderer.gpu_device(),
-                8_192 * map_count as usize,
-                128,
+                9_216 * map_count as usize,
+                144,
             ),
         })
     }

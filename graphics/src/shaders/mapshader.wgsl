@@ -79,8 +79,8 @@ fn vertex(
     result.clip_position =  (global.proj * global.view) * vec4<f32>(pos, 1.0);
     result.color = unpack_color(vertex.color);
 
-    let id = global.seconds / (f32(250) / 1000.0);
-    let frame = u32(floor(id % f32(4)));
+    let id = global.seconds / (f32(333) / 1000.0);
+    let frame = u32(floor(id % f32(3)));
 
     if pos.z == 9.2 && frame != 1u {
         result.uv = vec2<f32>(0.0, 0.0);
