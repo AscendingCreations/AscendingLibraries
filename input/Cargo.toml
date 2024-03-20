@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2021"
 authors = ["S.J.R. van Schaik", "Andrew Wheeler <genusistimelord@gmail.com>"]
 license = "MIT OR Apache-2.0"
-resolver = "2"
+readme = "README.md"
+documentation = "https://docs.rs/ascending_input"
+keywords = ["winit", "input", "wgpu"]
+repository = "https://github.com/AscendingCreations/AscendingLibraries"
+description = "This is just a basic Library to help with winit input."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

@@ -161,12 +161,12 @@ impl Map {
 
         let size = (self.tilesize * 32) as f32;
 
-        if let Some(store) = renderer.get_buffer_mut(&self.stores[0]) {
+        if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
             store.store = bytemuck::cast_slice(&lower_buffer).to_vec();
             store.changed = true;
         }
 
-        if let Some(store) = renderer.get_buffer_mut(&self.stores[1]) {
+        if let Some(store) = renderer.get_buffer_mut(self.stores[1]) {
             store.store = bytemuck::cast_slice(&upper_buffer).to_vec();
             store.changed = true;
         }

@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 pub mod camera;
 pub mod controls;
 pub mod projection;

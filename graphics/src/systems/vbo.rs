@@ -66,7 +66,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
         mut index: OrderedIndex,
         layer: usize,
     ) {
-        if let Some(store) = renderer.get_buffer(&index.index) {
+        if let Some(store) = renderer.get_buffer(index.index) {
             let offset = layer.saturating_add(1);
             // add in the missing layers this is better than keeping a hash since
             // if at anytime a process adds new data to a older layer it will already Exist.
@@ -140,7 +140,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
                 let old_vertex_pos = vertex_pos as u64;
                 let old_index_pos = index_pos as u64;
 
-                if let Some(store) = renderer.get_buffer_mut(&buf.index) {
+                if let Some(store) = renderer.get_buffer_mut(buf.index) {
                     let vertex_range =
                         vertex_pos..vertex_pos + store.store.len();
                     let index_range = index_pos..index_pos + store.indexs.len();
@@ -170,7 +170,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
                 }
 
                 if write_vertex {
-                    if let Some(store) = renderer.get_buffer(&buf.index) {
+                    if let Some(store) = renderer.get_buffer(buf.index) {
                         self.vertex_buffer.write(
                             &renderer.device,
                             &store.store,
@@ -180,7 +180,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
                 }
 
                 if write_index {
-                    if let Some(store) = renderer.get_buffer(&buf.index) {
+                    if let Some(store) = renderer.get_buffer(buf.index) {
                         self.index_buffer.write(
                             &renderer.device,
                             &store.indexs,

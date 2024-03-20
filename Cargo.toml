@@ -3,46 +3,45 @@ resolver = "2"
 members = ["input", "camera", "graphics"]
 
 [workspace.dependencies]
-async-trait = "0.1.73"
-bytemuck = { version = "1.14.0", features = ["derive"] }
-crevice = "0.14.0"
+async-trait = "0.1.78"
+bytemuck = { version = "1.15.0", features = ["derive"] }
+crevice = "0.15.0"
 crevice-derive = "0.10.0"
 mint = "0.5.9"
-thiserror = "1.0.48"
-winit = { version = "0.29.10", features = ["serde", "rwh_05"] }
-image = "0.24.7"
-tokio = { version = "1.32.0", features = ["full"] }
+thiserror = "1.0.58"
+winit = { version = "0.29.15", features = ["serde", "rwh_05"] }
+image = "0.25.0"
+tokio = { version = "1.36.0", features = ["full"] }
 guillotiere = "0.6.2"
-serde = { version = "1.0.188", features = ["derive"] }
+serde = { version = "1.0.197", features = ["derive"] }
 camera = { path = "./camera", package = "ascending_camera"}
 input = { path = "./input", package = "ascending_input" }
 graphics = { path = "./graphics", package = "ascending_graphics" }
-log = "0.4.20"
+log = "0.4.21"
 backtrace = "0.3.69"
-futures = "0.3.28"
-cosmic-text = { git = "https://github.com/pop-os/cosmic-text", features = ["shape-run-cache"]}
-ordered-float = { version = "3.9.1", features = ["serde"] }
-chrono = { version = "0.4.30", disable-defaults = true, features = ["clock", "serde", "std"] }
+futures = "0.3.30"
+cosmic-text = { version = "0.11.2", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
+ordered-float = { version = "4.2.0", features = ["serde"] }
+chrono = { version = "0.4.35", disable-defaults = true, features = ["clock", "serde", "std"] }
 ubits = "0.3.1"
-lru = "0.11.1"
-generational_array = "0.1.1"
+lru = "0.12.3"
 ritehash = "0.2.0"
-hecs = "0.10.3"
-glam = { version = "0.24.1", features = ["bytemuck", "mint"] }
+hecs = "0.10.4"
+glam = { version = "0.26.0", features = ["bytemuck", "mint"] }
 lyon = "1.0.1"
 slab = "0.4.9"
-smol_str = "0.2"
-indexmap = "2.1.0"
-kdtree = "0.7.0"
+smol_str = "0.2.1"
+indexmap = "2.2.5"
+genr = "0.1.0"
 
 [workspace.dependencies.naga]
 #git = "https://github.com/gfx-rs/naga"
 #rev = "76003dc0035d53a474d366dcdf49d2e4d12e921f"
-version = "0.19.0"
+version = "0.19.2"
 features = ["wgsl-in"]
 
 [workspace.dependencies.wgpu]
 #git = "https://github.com/gfx-rs/wgpu"
 #rev = "061e04b"
 #features = ["angle"]
-version = "0.19.0"
+version = "0.19.3"

@@ -4,9 +4,7 @@ use crate::{
     StaticBufferObject,
 };
 use cosmic_text::FontSystem;
-use generational_array::{
-    GenerationalArray, GenerationalArrayResult, GenerationalArrayResultMut,
-};
+use genr::{generational::Generational, gvec::GVec};
 use std::rc::Rc;
 
 use winit::{dpi::PhysicalSize, event::Event, window::Window};
@@ -15,7 +13,7 @@ use winit::{dpi::PhysicalSize, event::Event, window::Window};
 pub struct GpuRenderer {
     pub(crate) window: GpuWindow,
     pub(crate) device: GpuDevice,
-    pub(crate) buffer_stores: GenerationalArray<BufferStore>,
+    pub(crate) buffer_stores: GVec<BufferStore>,
     pub(crate) layout_storage: LayoutStorage,
     pub(crate) pipeline_storage: PipelineStorage,
     pub(crate) depthbuffer: wgpu::TextureView,
@@ -53,7 +51,7 @@ impl GpuRenderer {
         Self {
             window,
             device,
-            buffer_stores: GenerationalArray::new(),
+            buffer_stores: GVec::new(),
             layout_storage: LayoutStorage::new(),
             pipeline_storage: PipelineStorage::new(),
             depthbuffer: depth_buffer,
@@ -168,25 +166,12 @@ impl GpuRenderer {
         let _ = self.buffer_stores.remove(index);
     }
 
-    pub fn get_buffer(&self, index: &Index) -> Option<&BufferStore> {
-        match self.buffer_stores.get(index) {
-            GenerationalArrayResult::None => None,
-            GenerationalArrayResult::OutDated => None,
-            GenerationalArrayResult::OutOfBounds => None,
-            GenerationalArrayResult::Some(v) => Some(v),
-        }
+    pub fn get_buffer(&self, index: Index) -> Option<&BufferStore> {
+        self.buffer_stores.get(index)
     }
 
-    pub fn get_buffer_mut(
-        &mut self,
-        index: &Index,
-    ) -> Option<&mut BufferStore> {
-        match self.buffer_stores.get_mut(index) {
-            GenerationalArrayResultMut::None => None,
-            GenerationalArrayResultMut::OutDated => None,
-            GenerationalArrayResultMut::OutOfBounds => None,
-            GenerationalArrayResultMut::Some(v) => Some(v),
-        }
+    pub fn get_buffer_mut(&mut self, index: Index) -> Option<&mut BufferStore> {
+        self.buffer_stores.get_mut(index)
     }
 
     pub fn create_layout<K: Layout>(

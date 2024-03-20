@@ -1,8 +1,8 @@
 use crate::{Vec2, Vec3};
-use generational_array::GenerationalIndex;
+use genr::generational::GIdx;
 use std::cmp::Ordering;
 
-pub type Index = GenerationalIndex;
+pub type Index = GIdx;
 
 #[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub struct DrawOrder {

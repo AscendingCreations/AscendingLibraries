@@ -114,7 +114,7 @@ impl Lights {
             area_count: self.area_lights.len() as u32,
         };
 
-        if let Some(store) = renderer.get_buffer_mut(&self.store_id) {
+        if let Some(store) = renderer.get_buffer_mut(self.store_id) {
             store.store = bytemuck::bytes_of(&instance).to_vec();
             store.changed = true;
         }

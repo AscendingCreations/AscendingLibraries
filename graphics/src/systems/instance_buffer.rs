@@ -44,7 +44,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         index: OrderedIndex,
         layer: usize,
     ) {
-        if let Some(store) = renderer.get_buffer(&index.index) {
+        if let Some(store) = renderer.get_buffer(index.index) {
             let offset = layer.saturating_add(1);
 
             if self.unprocessed.len() < offset {
@@ -97,7 +97,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
                 let mut write_buffer = false;
                 let old_pos = pos as u64;
 
-                if let Some(store) = renderer.get_buffer_mut(&buf.index) {
+                if let Some(store) = renderer.get_buffer_mut(buf.index) {
                     let range = pos..pos + store.store.len();
 
                     if store.store_pos != range || changed || store.changed {
@@ -111,7 +111,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
                 }
 
                 if write_buffer {
-                    if let Some(store) = renderer.get_buffer(&buf.index) {
+                    if let Some(store) = renderer.get_buffer(buf.index) {
                         self.buffer.write(
                             &renderer.device,
                             &store.store,

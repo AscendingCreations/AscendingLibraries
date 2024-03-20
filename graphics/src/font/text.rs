@@ -204,7 +204,7 @@ impl Text {
             }
         }
 
-        if let Some(store) = renderer.get_buffer_mut(&self.store_id) {
+        if let Some(store) = renderer.get_buffer_mut(self.store_id) {
             store.store = bytemuck::cast_slice(&text_buf).to_vec();
             store.changed = true;
         }

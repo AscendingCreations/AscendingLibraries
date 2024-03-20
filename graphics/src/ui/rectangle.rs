@@ -143,7 +143,7 @@ impl Rect {
             use_camera: u32::from(self.use_camera),
         };
 
-        if let Some(store) = renderer.get_buffer_mut(&self.store_id) {
+        if let Some(store) = renderer.get_buffer_mut(self.store_id) {
             store.store = bytemuck::bytes_of(&buffer).to_vec();
             store.changed = true;
         }

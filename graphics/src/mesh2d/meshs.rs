@@ -85,7 +85,7 @@ impl Mesh2D {
     }
 
     pub fn create_quad(&mut self, renderer: &mut GpuRenderer) {
-        if let Some(store) = renderer.get_buffer_mut(&self.vbo_store_id) {
+        if let Some(store) = renderer.get_buffer_mut(self.vbo_store_id) {
             let mut vertex_bytes = Vec::with_capacity(
                 self.vertices.len() * Mesh2DVertex::stride(),
             );
