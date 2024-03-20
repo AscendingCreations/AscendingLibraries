@@ -23,6 +23,7 @@ pub enum MapLayers {
     Anim1,
     Anim2,
     Anim3,
+    Anim4,
     /// always above player. \/
     Fringe,
     Fringe2,
@@ -30,25 +31,27 @@ pub enum MapLayers {
 }
 
 impl MapLayers {
-    pub const LAYERS: [Self; 8] = [
+    pub const LAYERS: [Self; 9] = [
         Self::Ground,
         Self::Mask,
         Self::Mask2,
         Self::Anim1,
         Self::Anim2,
         Self::Anim3,
+        Self::Anim4,
         Self::Fringe,
         Self::Fringe2,
     ];
 
     pub fn indexed_layers(self) -> f32 {
         match self {
-            Self::Ground => 9.5,
-            Self::Mask => 9.4,
-            Self::Mask2 => 9.3,
-            Self::Anim1 => 9.2,
-            Self::Anim2 => 9.1,
-            Self::Anim3 => 9.0,
+            Self::Ground => 9.6,
+            Self::Mask => 9.5,
+            Self::Mask2 => 9.4,
+            Self::Anim1 => 9.3,
+            Self::Anim2 => 9.2,
+            Self::Anim3 => 9.1,
+            Self::Anim4 => 9.0,
             Self::Fringe => 5.1,
             _ => 5.0,
         }
@@ -62,6 +65,7 @@ impl MapLayers {
             Self::Anim1 => "Anim 1",
             Self::Anim2 => "Anim 2",
             Self::Anim3 => "Anim 3",
+            Self::Anim4 => "Anim 4",
             Self::Fringe => "Fringe",
             _ => "Fringe 2",
         }
@@ -91,7 +95,7 @@ pub struct Map {
     /// its render position. within the screen.
     pub pos: Vec2,
     // tiles per layer.
-    pub tiles: [TileData; 8192],
+    pub tiles: [TileData; 9216],
     /// Store index per each layer.
     pub stores: Vec<Index>,
     /// the draw order of the maps. created when update is called.
@@ -113,7 +117,7 @@ impl Map {
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
     ) {
-        let mut lower_buffer = Vec::with_capacity(6144);
+        let mut lower_buffer = Vec::with_capacity(7168);
         let mut upper_buffer = Vec::with_capacity(2048);
         let atlas_width = atlas.size().x / self.tilesize;
 
@@ -191,7 +195,7 @@ impl Map {
 
     pub fn new(renderer: &mut GpuRenderer, tilesize: u32) -> Self {
         Self {
-            tiles: [TileData::default(); 8192],
+            tiles: [TileData::default(); 9216],
             pos: Vec2::default(),
             stores: (0..2).map(|_| renderer.new_buffer()).collect(),
             filled_tiles: [0; MapLayers::Count as usize],
@@ -204,8 +208,8 @@ impl Map {
 
     pub fn get_tile(&self, pos: (u32, u32, u32)) -> TileData {
         assert!(
-            pos.0 < 32 || pos.1 < 32 || pos.2 < 8,
-            "pos is invalid. X < 32, y < 256, z < 8"
+            pos.0 < 32 || pos.1 < 32 || pos.2 < 9,
+            "pos is invalid. X < 32, y < 256, z < 9"
         );
 
         self.tiles[(pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize]
@@ -215,7 +219,7 @@ impl Map {
     //layer within the texture array and Alpha for its transparency.
     // This allows us to loop through the tiles Shader side efficiently.
     pub fn set_tile(&mut self, pos: (u32, u32, u32), tile: TileData) {
-        if pos.0 >= 32 || pos.1 >= 32 || pos.2 >= 8 {
+        if pos.0 >= 32 || pos.1 >= 32 || pos.2 >= 9 {
             return;
         }
         let tilepos = (pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize;
