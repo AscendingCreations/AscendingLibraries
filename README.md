@@ -7,12 +7,12 @@ Ascending Libraries
 [![https://crates.io/crates/ascending_input](https://img.shields.io/crates/v/ascending_input?style=plastic)](https://crates.io/crates/ascending_input)
 [![Docs](https://docs.rs/ascending_input/badge.svg)](https://docs.rs/ascending_input)
 
-## 📦 Graphics
+## 📦 Camera
 
 [![https://crates.io/crates/ascending_camera](https://img.shields.io/crates/v/ascending_camera?style=plastic)](https://crates.io/crates/ascending_camera)
 [![Docs](https://docs.rs/ascending_camera/badge.svg)](https://docs.rs/ascending_camera)
 
-## 📦 Camera
+## 📦 Graphics
 
 [![https://crates.io/crates/ascending_graphics](https://img.shields.io/crates/v/ascending_graphics?style=plastic)](https://crates.io/crates/ascending_graphics)
 [![Docs](https://docs.rs/ascending_graphics/badge.svg)](https://docs.rs/ascending_graphics)

@@ -135,11 +135,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ascending_camera"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbc533cbd7669e66a3cdff10d1a30adddf8507a0558ba0a6f10c3d7e1901f8a8"
+dependencies = [
+ "glam",
+ "mint",
+]
+
+[[package]]
 name = "ascending_graphics"
 version = "0.1.1"
 dependencies = [
- "ascending_camera",
- "ascending_input",
+ "ascending_camera 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ascending_input 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "async-trait",
  "bytemuck",
  "cosmic-text",
@@ -166,6 +176,18 @@ dependencies = [
 [[package]]
 name = "ascending_input"
 version = "0.1.1"
+dependencies = [
+ "ordered-float",
+ "serde",
+ "smol_str",
+ "winit",
+]
+
+[[package]]
+name = "ascending_input"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac601d64698d28d76674bd7e20a4b10dc8882853aaa968f7ed6c54382c82d919"
 dependencies = [
  "ordered-float",
  "serde",
