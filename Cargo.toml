@@ -11,18 +11,14 @@ mint = "0.5.9"
 thiserror = "1.0.58"
 winit = { version = "0.29.15", features = ["serde", "rwh_05"] }
 image = "0.25.0"
-tokio = { version = "1.36.0", features = ["full"] }
 guillotiere = "0.6.2"
 serde = { version = "1.0.197", features = ["derive"] }
 camera = { path = "./camera", package = "ascending_camera"}
 input = { path = "./input", package = "ascending_input" }
 graphics = { path = "./graphics", package = "ascending_graphics" }
 log = "0.4.21"
-backtrace = "0.3.69"
-futures = "0.3.30"
 cosmic-text = { version = "0.11.2", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
 ordered-float = { version = "4.2.0", features = ["serde"] }
-chrono = { version = "0.4.35", disable-defaults = true, features = ["clock", "serde", "std"] }
 ubits = "0.3.1"
 lru = "0.12.3"
 ritehash = "0.2.0"
