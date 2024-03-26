@@ -1,5 +1,5 @@
 use crate::{
-    AscendingError, BufferPass, BufferStore, GpuDevice, GpuWindow, Index,
+    BufferPass, BufferStore, GpuDevice, GpuWindow, GraphicsError, Index,
     Layout, LayoutStorage, OtherError, PipeLineLayout, PipelineStorage,
     StaticBufferObject,
 };
@@ -69,7 +69,7 @@ impl GpuRenderer {
     pub fn resize(
         &mut self,
         size: PhysicalSize<u32>,
-    ) -> Result<(), AscendingError> {
+    ) -> Result<(), GraphicsError> {
         self.window.resize(&self.device, size)
     }
 
@@ -97,10 +97,7 @@ impl GpuRenderer {
         self.window.surface_format
     }
 
-    pub fn update(
-        &mut self,
-        event: &Event<()>,
-    ) -> Result<bool, AscendingError> {
+    pub fn update(&mut self, event: &Event<()>) -> Result<bool, GraphicsError> {
         let frame = match self.window.update(&self.device, event)? {
             Some(frame) => frame,
             _ => return Ok(false),
@@ -124,7 +121,7 @@ impl GpuRenderer {
         self.depthbuffer = self.window.create_depth_texture(&self.device);
     }
 
-    pub fn present(&mut self) -> Result<(), AscendingError> {
+    pub fn present(&mut self) -> Result<(), GraphicsError> {
         self.framebuffer = None;
 
         match self.frame.take() {
@@ -132,7 +129,7 @@ impl GpuRenderer {
                 frame.present();
                 Ok(())
             }
-            None => Err(AscendingError::Other(OtherError::new(
+            None => Err(GraphicsError::Other(OtherError::new(
                 "Frame does not Exist. Did you forget to update the renderer?",
             ))),
         }

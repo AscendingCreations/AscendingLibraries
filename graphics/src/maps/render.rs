@@ -1,5 +1,5 @@
 use crate::{
-    AsBufferPass, AscendingError, AtlasSet, GpuRenderer, InstanceBuffer, Map,
+    AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer, Map,
     MapRenderPipeline, MapVertex, OrderedIndex, SetBuffers, StaticBufferObject,
 };
 
@@ -11,7 +11,7 @@ impl MapRenderer {
     pub fn new(
         renderer: &mut GpuRenderer,
         map_count: u32,
-    ) -> Result<Self, AscendingError> {
+    ) -> Result<Self, GraphicsError> {
         Ok(Self {
             buffer: InstanceBuffer::with_capacity(
                 renderer.gpu_device(),

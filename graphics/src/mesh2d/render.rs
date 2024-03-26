@@ -1,5 +1,5 @@
 use crate::{
-    AsBufferPass, AscendingError, GpuBuffer, GpuRenderer, Mesh2D,
+    AsBufferPass, GpuBuffer, GpuRenderer, GraphicsError, Mesh2D,
     Mesh2DRenderPipeline, Mesh2DVertex, OrderedIndex, SetBuffers,
 };
 
@@ -9,7 +9,7 @@ pub struct Mesh2DRenderer {
 
 //TODO: Update this to take in instance buffer index too.
 impl Mesh2DRenderer {
-    pub fn new(renderer: &GpuRenderer) -> Result<Self, AscendingError> {
+    pub fn new(renderer: &GpuRenderer) -> Result<Self, GraphicsError> {
         Ok(Self {
             vbos: GpuBuffer::new(renderer.gpu_device(), 512),
         })

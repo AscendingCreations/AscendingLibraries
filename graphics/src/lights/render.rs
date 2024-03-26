@@ -1,9 +1,9 @@
 use std::{iter, mem};
 
 use crate::{
-    AreaLightLayout, AreaLightRaw, AscendingError, DirLightLayout,
-    DirectionalLightRaw, GpuRenderer, InstanceBuffer, LightRenderPipeline,
-    Lights, LightsVertex, OrderedIndex, StaticBufferObject, MAX_AREA_LIGHTS,
+    AreaLightLayout, AreaLightRaw, DirLightLayout, DirectionalLightRaw,
+    GpuRenderer, GraphicsError, InstanceBuffer, LightRenderPipeline, Lights,
+    LightsVertex, OrderedIndex, StaticBufferObject, MAX_AREA_LIGHTS,
     MAX_DIR_LIGHTS,
 };
 
@@ -18,7 +18,7 @@ pub struct LightRenderer {
 }
 
 impl LightRenderer {
-    pub fn new(renderer: &mut GpuRenderer) -> Result<Self, AscendingError> {
+    pub fn new(renderer: &mut GpuRenderer) -> Result<Self, GraphicsError> {
         // The size + Padding == 32.
         let area_alignment: usize =
             align_to(mem::size_of::<AreaLightRaw>(), 32) as usize;

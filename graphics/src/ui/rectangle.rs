@@ -1,5 +1,5 @@
 use crate::{
-    AscendingError, AtlasSet, DrawOrder, DrawType, GpuRenderer, Index,
+    AtlasSet, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
     OrderedIndex, OtherError, RectVertex, Texture, Vec2, Vec3, Vec4,
 };
 use cosmic_text::Color;
@@ -63,7 +63,7 @@ impl Rect {
         renderer: &GpuRenderer,
         atlas: &mut AtlasSet,
         path: String,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         let (id, allocation) =
             Texture::upload_from_with_alloc(path, atlas, renderer)
                 .ok_or_else(|| OtherError::new("failed to upload image"))?;

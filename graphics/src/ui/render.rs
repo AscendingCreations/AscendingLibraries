@@ -1,5 +1,5 @@
 use crate::{
-    AscendingError, AtlasSet, GpuRenderer, InstanceBuffer, OrderedIndex, Rect,
+    AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer, OrderedIndex, Rect,
     RectRenderPipeline, RectVertex, StaticBufferObject,
 };
 
@@ -8,7 +8,7 @@ pub struct RectRenderer {
 }
 
 impl RectRenderer {
-    pub fn new(renderer: &GpuRenderer) -> Result<Self, AscendingError> {
+    pub fn new(renderer: &GpuRenderer) -> Result<Self, GraphicsError> {
         Ok(Self {
             buffer: InstanceBuffer::new(renderer.gpu_device(), 512),
         })

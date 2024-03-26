@@ -22,7 +22,7 @@ impl OtherError {
 }
 
 #[derive(Debug, Error)]
-pub enum AscendingError {
+pub enum GraphicsError {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]

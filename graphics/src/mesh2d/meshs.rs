@@ -1,5 +1,5 @@
 use crate::{
-    AscendingError, BufferLayout, DrawOrder, DrawType, GpuRenderer, Index,
+    BufferLayout, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
     Mesh2DVertex, OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
 };
 use cosmic_text::Color;
@@ -194,7 +194,7 @@ impl Mesh2DBuilder {
         z: f32,
         width: f32,
         color: Color,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         self.polyline(DrawMode::stroke(width), points, z, color)
     }
 
@@ -206,7 +206,7 @@ impl Mesh2DBuilder {
         tolerance: f32,
         z: f32,
         color: Color,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         assert!(tolerance > 0.0, "Tolerances <= 0 are invalid");
         {
             let buffers = &mut self.buffer;
@@ -249,7 +249,7 @@ impl Mesh2DBuilder {
         tolerance: f32,
         z: f32,
         color: Color,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         assert!(tolerance > 0.0, "Tolerances <= 0 are invalid");
         {
             let buffers = &mut self.buffer;
@@ -294,9 +294,9 @@ impl Mesh2DBuilder {
         points: &[Vec2],
         z: f32,
         color: Color,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         if points.len() < 2 {
-            return Err(AscendingError::Other(OtherError::new(
+            return Err(GraphicsError::Other(OtherError::new(
                 "MeshBuilder::polyline() got a list of < 2 points",
             )));
         }
@@ -310,9 +310,9 @@ impl Mesh2DBuilder {
         points: &[Vec2],
         z: f32,
         color: Color,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         if points.len() < 3 {
-            return Err(AscendingError::Other(OtherError::new(
+            return Err(GraphicsError::Other(OtherError::new(
                 "MeshBuilder::polygon() got a list of < 3 points",
             )));
         }
@@ -327,7 +327,7 @@ impl Mesh2DBuilder {
         is_closed: bool,
         z: f32,
         color: Color,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         let vb = VertexBuilder {
             z,
             color,
@@ -342,7 +342,7 @@ impl Mesh2DBuilder {
         points: &[Vec2],
         is_closed: bool,
         vb: V,
-    ) -> Result<&mut Self, AscendingError>
+    ) -> Result<&mut Self, GraphicsError>
     where
         V: tess::StrokeVertexConstructor<Mesh2DVertex>
             + tess::FillVertexConstructor<Mesh2DVertex>,
@@ -386,7 +386,7 @@ impl Mesh2DBuilder {
         bounds: Vec4,
         z: f32,
         color: Color,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         {
             let buffers = &mut self.buffer;
             let rect = tess::math::Box2D::from_origin_and_size(
@@ -426,7 +426,7 @@ impl Mesh2DBuilder {
         z: f32,
         radius: f32,
         color: Color,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         {
             let buffers = &mut self.buffer;
             let rect = tess::math::Box2D::from_origin_and_size(
@@ -472,10 +472,10 @@ impl Mesh2DBuilder {
         triangles: &[Vec2],
         z: f32,
         color: Color,
-    ) -> Result<&mut Self, AscendingError> {
+    ) -> Result<&mut Self, GraphicsError> {
         {
             if (triangles.len() % 3) != 0 {
-                return Err(AscendingError::Other(OtherError::new(
+                return Err(GraphicsError::Other(OtherError::new(
                     "Called MeshBuilder::triangles() with points that have a length not a multiple of 3.",
                 )));
             }

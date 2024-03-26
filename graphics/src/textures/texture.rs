@@ -1,4 +1,4 @@
-use crate::{Allocation, AscendingError, AtlasSet, GpuRenderer, TileSheet};
+use crate::{Allocation, AtlasSet, GpuRenderer, GraphicsError, TileSheet};
 use image::{DynamicImage, GenericImageView, ImageFormat};
 use std::{
     io::{Error, ErrorKind},
@@ -17,7 +17,7 @@ impl Texture {
         &self.bytes
     }
 
-    pub fn from_file(path: impl AsRef<Path>) -> Result<Self, AscendingError> {
+    pub fn from_file(path: impl AsRef<Path>) -> Result<Self, GraphicsError> {
         let name = path
             .as_ref()
             .to_str()
@@ -78,7 +78,7 @@ impl Texture {
     pub fn from_memory(
         name: String,
         data: &[u8],
-    ) -> Result<Self, AscendingError> {
+    ) -> Result<Self, GraphicsError> {
         Ok(Self::from_image(name, image::load_from_memory(data)?))
     }
 
@@ -86,7 +86,7 @@ impl Texture {
         name: String,
         data: &[u8],
         format: ImageFormat,
-    ) -> Result<Self, AscendingError> {
+    ) -> Result<Self, GraphicsError> {
         Ok(Self::from_image(
             name,
             image::load_from_memory_with_format(data, format)?,

@@ -1,5 +1,5 @@
 use crate::{
-    AscendingError, Bounds, Color, DrawOrder, DrawType, GpuRenderer, Index,
+    Bounds, Color, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
     OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
@@ -36,7 +36,7 @@ impl Text {
         cache: &mut SwashCache,
         atlas: &mut TextAtlas,
         renderer: &mut GpuRenderer,
-    ) -> Result<(), AscendingError> {
+    ) -> Result<(), GraphicsError> {
         let count: usize =
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
         let mut text_buf = Vec::with_capacity(count);
@@ -97,7 +97,7 @@ impl Text {
                                     ),
                                     renderer,
                                 )
-                                .ok_or(AscendingError::AtlasFull)?;
+                                .ok_or(GraphicsError::AtlasFull)?;
                             (allocation, is_color)
                         } else {
                             let (_, allocation) = atlas
@@ -113,7 +113,7 @@ impl Text {
                                     ),
                                     renderer,
                                 )
-                                .ok_or(AscendingError::AtlasFull)?;
+                                .ok_or(GraphicsError::AtlasFull)?;
                             (allocation, is_color)
                         }
                     } else {
@@ -449,7 +449,7 @@ impl Text {
         cache: &mut SwashCache,
         atlas: &mut TextAtlas,
         renderer: &mut GpuRenderer,
-    ) -> Result<OrderedIndex, AscendingError> {
+    ) -> Result<OrderedIndex, GraphicsError> {
         if self.changed {
             self.create_quad(cache, atlas, renderer)?;
         }

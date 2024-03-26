@@ -1,5 +1,5 @@
 use crate::{
-    AsBufferPass, AscendingError, AtlasSet, GpuRenderer, InstanceBuffer,
+    AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer,
     OrderedIndex, SetBuffers, StaticBufferObject, Text, TextRenderPipeline,
     TextVertex, Vec2,
 };
@@ -11,7 +11,7 @@ pub struct TextAtlas {
 }
 
 impl TextAtlas {
-    pub fn new(renderer: &mut GpuRenderer) -> Result<Self, AscendingError> {
+    pub fn new(renderer: &mut GpuRenderer) -> Result<Self, GraphicsError> {
         Ok(Self {
             text: AtlasSet::new(renderer, wgpu::TextureFormat::R8Unorm, false),
             emoji: AtlasSet::new(
@@ -34,7 +34,7 @@ pub struct TextRenderer {
 }
 
 impl TextRenderer {
-    pub fn new(renderer: &GpuRenderer) -> Result<Self, AscendingError> {
+    pub fn new(renderer: &GpuRenderer) -> Result<Self, GraphicsError> {
         Ok(Self {
             buffer: InstanceBuffer::new(renderer.gpu_device(), 1024),
             swash_cache: SwashCache::new(),
@@ -60,7 +60,7 @@ impl TextRenderer {
         atlas: &mut TextAtlas,
         renderer: &mut GpuRenderer,
         layer: usize,
-    ) -> Result<(), AscendingError> {
+    ) -> Result<(), GraphicsError> {
         let index = text.update(&mut self.swash_cache, atlas, renderer)?;
 
         self.add_buffer_store(renderer, index, layer);
