@@ -3,24 +3,22 @@ resolver = "2"
 members = ["input", "camera", "graphics"]
 
 [workspace.dependencies]
-async-trait = "0.1.78"
+async-trait = "0.1.79"
 bytemuck = { version = "1.15.0", features = ["derive"] }
 crevice = "0.15.0"
-crevice-derive = "0.10.0"
 mint = "0.5.9"
 thiserror = "1.0.58"
 winit = { version = "0.29.15", features = ["serde", "rwh_05"] }
-image = "0.25.0"
+image = "0.25.1"
 guillotiere = "0.6.2"
 serde = { version = "1.0.197", features = ["derive"] }
 log = "0.4.21"
 cosmic-text = { version = "0.11.2", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
 ordered-float = { version = "4.2.0", features = ["serde"] }
-ubits = "0.3.1"
 lru = "0.12.3"
 ritehash = "0.2.0"
 hecs = "0.10.4"
-glam = { version = "0.26.0", features = ["bytemuck", "mint"] }
+glam = { version = "0.27.0", features = ["bytemuck", "mint"] }
 lyon = "1.0.1"
 slab = "0.4.9"
 smol_str = "0.2.1"

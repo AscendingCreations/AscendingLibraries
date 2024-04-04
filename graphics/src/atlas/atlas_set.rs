@@ -482,6 +482,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
 
             self.upload_allocation(bytes, &allocation, renderer);
             let id = self.store.insert((allocation, key.clone()));
+            self.layers[allocation.layer].insert_index(id);
             self.lookup.insert(key, id);
             self.cache.push(id, 1);
             Some(id)
@@ -512,6 +513,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
 
             self.upload_allocation(bytes, &allocation, renderer);
             let id = self.store.insert((allocation, key.clone()));
+            self.layers[allocation.layer].insert_index(id);
             self.lookup.insert(key.clone(), id);
             self.cache.push(id, 1);
             Some((id, allocation))

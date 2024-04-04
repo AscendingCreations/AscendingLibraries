@@ -1,40 +1,26 @@
 use crate::Vec3;
 
-/// This is the location within the World.
-/// Height is needed to map world to the correct mouse coords.
+/// This is the bounds can be used for Many things from Clipping Text, Clipping a Rendered World object.
+/// Or even just to check coords.
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct WorldBounds {
+pub struct Bounds {
     pub left: f32,
     pub bottom: f32,
     pub right: f32,
     pub top: f32,
-    //used to transform world coords into window coords.
-    //text rendering can just use anything here.
-    pub height: f32,
 }
 
-impl WorldBounds {
-    pub fn new(
-        left: f32,
-        bottom: f32,
-        right: f32,
-        top: f32,
-        height: f32,
-    ) -> Self {
+impl Bounds {
+    pub fn new(left: f32, bottom: f32, right: f32, top: f32) -> Self {
         Self {
             left,
             bottom,
             right,
             top,
-            height,
         }
     }
 
-    pub fn set_offset_within_limits(
-        &self,
-        offset: &mut Vec3,
-        limits: &WorldBounds,
-    ) {
+    pub fn set_offset_within_limits(&self, offset: &mut Vec3, limits: &Bounds) {
         if self.left + offset.x < limits.left {
             offset.x = limits.left - self.left;
         } else if self.right + offset.x > limits.right {
@@ -55,7 +41,7 @@ impl WorldBounds {
         self.bottom += offset.y;
     }
 
-    pub fn set_within_limits(&mut self, limits: &WorldBounds) {
+    pub fn set_within_limits(&mut self, limits: &Bounds) {
         if self.left < limits.left {
             self.left = limits.left;
         }
@@ -70,38 +56,6 @@ impl WorldBounds {
 
         if self.right > limits.right {
             self.right = limits.right;
-        }
-    }
-}
-
-impl Default for WorldBounds {
-    fn default() -> Self {
-        Self {
-            left: 0.0,
-            bottom: 0.0,
-            right: 2_147_483_600.0,
-            top: 2_147_483_600.0,
-            height: 1.0,
-        }
-    }
-}
-
-/// This is the bounds used to clip Text.
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Bounds {
-    pub left: f32,
-    pub bottom: f32,
-    pub right: f32,
-    pub top: f32,
-}
-
-impl Bounds {
-    pub fn new(left: f32, bottom: f32, right: f32, top: f32) -> Self {
-        Self {
-            left,
-            bottom,
-            right,
-            top,
         }
     }
 }

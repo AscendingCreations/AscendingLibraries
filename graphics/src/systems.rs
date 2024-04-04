@@ -11,7 +11,7 @@ mod static_vbo;
 mod system;
 mod vbo;
 
-pub use bounds::{Bounds, WorldBounds};
+pub use bounds::Bounds;
 pub use buffer::{
     AsBufferPass, Buffer, BufferData, BufferLayout, BufferPass, BufferStore,
 };

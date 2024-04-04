@@ -18,7 +18,6 @@ default = []
 async-trait.workspace = true
 bytemuck.workspace = true
 crevice.workspace = true
-crevice-derive.workspace = true
 mint.workspace = true
 thiserror.workspace = true
 winit.workspace = true

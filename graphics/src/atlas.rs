@@ -35,6 +35,10 @@ impl Atlas {
         self.allocator.allocate(width, height)
     }
 
+    pub fn insert_index(&mut self, index: usize) {
+        self.allocated.insert(index);
+    }
+
     pub fn clear(&mut self) {
         self.allocator.clear();
         self.allocated.clear();

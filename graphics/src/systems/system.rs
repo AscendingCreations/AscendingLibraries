@@ -1,15 +1,10 @@
-use crate::{GpuDevice, GpuRenderer, Layout, WorldBounds};
+use crate::{Bounds, GpuDevice, GpuRenderer, Layout};
 use bytemuck::{Pod, Zeroable};
 use camera::Projection;
 use crevice::std140::AsStd140;
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use input::FrameTime;
 use wgpu::util::DeviceExt;
-
-#[cfg(feature = "iced")]
-use iced_wgpu::graphics::Viewport;
-#[cfg(feature = "iced")]
-use iced_winit::core::Size;
 
 #[repr(C)]
 #[derive(Clone, Copy, Hash, Pod, Zeroable)]
@@ -64,8 +59,6 @@ pub struct System<Controls: camera::controls::Controls> {
     pub screen_size: [f32; 2],
     global_buffer: wgpu::Buffer,
     bind_group: wgpu::BindGroup,
-    #[cfg(feature = "iced")]
-    iced_view: Viewport,
 }
 
 impl<Controls> System<Controls>
@@ -97,12 +90,6 @@ where
         let mut camera = camera::Camera::new(projection, controls);
 
         camera.update(0.0);
-
-        #[cfg(feature = "iced")]
-        let iced_view = Viewport::with_physical_size(
-            Size::new(screen_size[0] as u32, screen_size[1] as u32),
-            1.0,
-        );
 
         // Create the camera uniform.
         let proj = camera.projection();
@@ -163,8 +150,6 @@ where
             screen_size,
             global_buffer,
             bind_group,
-            #[cfg(feature = "iced")]
-            iced_view,
         }
     }
 
@@ -229,30 +214,12 @@ where
                 size: screen_size.into(),
             };
 
-            #[cfg(feature = "iced")]
-            self.set_iced_view_size(screen_size);
-
             renderer.queue().write_buffer(
                 &self.global_buffer,
                 208,
                 screen_info.as_std140().as_bytes(),
             );
         }
-    }
-
-    #[cfg(feature = "iced")]
-    fn set_iced_view_size(&mut self, screen_size: [f32; 2]) {
-        let scale = self.iced_view.scale_factor();
-
-        self.iced_view = Viewport::with_physical_size(
-            Size::new(screen_size[0] as u32, screen_size[1] as u32),
-            scale,
-        );
-    }
-
-    #[cfg(feature = "iced")]
-    pub fn iced_view(&self) -> &Viewport {
-        &self.iced_view
     }
 
     pub fn view(&self) -> mint::ColumnMatrix4<f32> {
@@ -262,8 +229,9 @@ where
     pub fn projected_world_to_screen(
         &self,
         scale: bool,
-        bounds: &WorldBounds,
+        bounds: &Bounds,
     ) -> Vec4 {
+        let height = f32::abs(bounds.top - bounds.bottom);
         let projection = Mat4::from(self.camera.projection());
         let model = Mat4::IDENTITY;
         let view = if scale {
@@ -286,16 +254,17 @@ where
             (
                 bounds.right * self.camera.scale(),
                 bounds.top * self.camera.scale(),
-                bounds.height * self.camera.scale(),
+                height * self.camera.scale(),
             )
         } else {
-            (bounds.right, bounds.top, bounds.height)
+            (bounds.right, bounds.top, height)
         };
 
         Vec4::new(xy.x, xy.y - objh, bw, bh)
     }
 
-    pub fn world_to_screen(&self, scale: bool, bounds: &WorldBounds) -> Vec4 {
+    pub fn world_to_screen(&self, scale: bool, bounds: &Bounds) -> Vec4 {
+        let height = f32::abs(bounds.top - bounds.bottom);
         let projection = Mat4::from(self.camera.projection());
         let model = Mat4::IDENTITY;
         let clip_coords = projection
@@ -312,16 +281,15 @@ where
             (
                 bounds.right * self.camera.scale(),
                 bounds.top * self.camera.scale(),
-                bounds.height * self.camera.scale(),
+                height * self.camera.scale(),
             )
         } else {
-            (bounds.right, bounds.top, bounds.height)
+            (bounds.right, bounds.top, height)
         };
 
         Vec4::new(xy.x, xy.y - objh, bw, bh)
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn world_to_screen_direct(
         screen_size: [f32; 2],
         scale: f32,
@@ -330,8 +298,8 @@ where
         bottom: f32,
         right: f32,
         top: f32,
-        height: f32,
     ) -> Vec4 {
+        let height = f32::abs(top - bottom);
         let model = Mat4::IDENTITY;
         let clip_coords =
             projection * model * Vec4::new(left, bottom, 1.0, 1.0);
