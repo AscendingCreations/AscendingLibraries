@@ -7,8 +7,8 @@ pub use render::*;
 pub use vertex::*;
 
 use crate::{
-    AtlasSet, Color, DrawOrder, DrawType, GpuRenderer, Index, OrderedIndex,
-    Vec2, Vec3, Vec4,
+    AtlasSet, Bounds, Color, DrawOrder, DrawType, GpuRenderer, Index,
+    OrderedIndex, Vec2, Vec3, Vec4,
 };
 
 pub enum TextDrawOrder {
@@ -36,6 +36,7 @@ pub struct Image {
     pub store_id: Index,
     pub order: DrawOrder,
     pub render_layer: u32,
+    pub bounds: Option<Bounds>,
     /// if anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -59,9 +60,15 @@ impl Image {
             store_id: renderer.new_buffer(),
             order: DrawOrder::default(),
             render_layer,
+            bounds: None,
             changed: true,
         }
     }
+
+    pub fn update_bounds(&mut self, bounds: Option<Bounds>) {
+        self.bounds = bounds;
+    }
+
     pub fn create_quad(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -125,6 +132,6 @@ impl Image {
             self.create_quad(renderer, atlas);
         }
 
-        OrderedIndex::new(self.order, self.store_id, 0)
+        OrderedIndex::new_with_bounds(self.order, self.store_id, 0, self.bounds)
     }
 }

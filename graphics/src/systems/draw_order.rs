@@ -1,4 +1,4 @@
-use crate::{Vec2, Vec3};
+use crate::{Bounds, Vec2, Vec3};
 use genr::generational::GIdx;
 use std::cmp::Ordering;
 
@@ -61,6 +61,7 @@ pub struct OrderedIndex {
     pub(crate) index: Index,
     pub(crate) index_count: u32,
     pub(crate) index_max: u32,
+    pub(crate) bounds: Option<Bounds>,
 }
 
 impl PartialOrd for OrderedIndex {
@@ -90,6 +91,22 @@ impl OrderedIndex {
             index,
             index_count: 0,
             index_max,
+            bounds: None,
+        }
+    }
+
+    pub fn new_with_bounds(
+        order: DrawOrder,
+        index: Index,
+        index_max: u32,
+        bounds: Option<Bounds>,
+    ) -> Self {
+        Self {
+            order,
+            index,
+            index_count: 0,
+            index_max,
+            bounds,
         }
     }
 }

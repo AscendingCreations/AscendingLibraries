@@ -1,6 +1,6 @@
 use crate::{
-    AsBufferPass, Buffer, BufferData, BufferLayout, BufferPass, GpuDevice,
-    GpuRenderer, OrderedIndex,
+    AsBufferPass, Bounds, Buffer, BufferData, BufferLayout, BufferPass,
+    GpuDevice, GpuRenderer, OrderedIndex,
 };
 use std::ops::Range;
 //This Holds onto all the Vertexs Compressed into a byte array.
@@ -13,14 +13,17 @@ pub struct IndexDetails {
     pub vertex_base: i32,
 }
 
+pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>);
+
 pub struct GpuBuffer<K: BufferLayout> {
     unprocessed: Vec<Vec<OrderedIndex>>,
-    pub buffers: Vec<Vec<IndexDetails>>,
+    pub buffers: Vec<Vec<ClippedIndexDetails>>,
     pub vertex_buffer: Buffer<K>,
     vertex_needed: usize,
     pub index_buffer: Buffer<K>,
     index_needed: usize,
     pub layer_size: usize,
+    is_clipped: bool,
 }
 
 impl<'a, K: BufferLayout> AsBufferPass<'a> for GpuBuffer<K> {
@@ -57,6 +60,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
             ),
             index_needed: 0,
             layer_size: layer_size.max(32),
+            is_clipped: false,
         }
     }
 
@@ -101,8 +105,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
             mut index_pos,
             mut pos,
             mut base_vertex,
-            mut layer,
-        ) = (false, 0, 0, 0, 0, 1);
+        ) = (false, 0, 0, 0, 0);
 
         if self.vertex_needed > self.vertex_buffer.max
             || self.index_needed > self.index_buffer.max
@@ -133,7 +136,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
             buffer.clear()
         }
 
-        for processing in &self.unprocessed {
+        for (layer, processing) in self.unprocessed.iter().enumerate() {
             for buf in processing {
                 let mut write_vertex = false;
                 let mut write_index = false;
@@ -196,16 +199,17 @@ impl<K: BufferLayout> GpuBuffer<K> {
                 base_vertex += buf.index_max as i32 + 1;
                 pos += buf.index_count;
 
-                if let Some(buffer) = self.buffers.get_mut(layer - 1) {
-                    buffer.push(IndexDetails {
-                        indices_start,
-                        indices_end,
-                        vertex_base,
-                    });
+                if let Some(buffer) = self.buffers.get_mut(layer) {
+                    buffer.push((
+                        IndexDetails {
+                            indices_start,
+                            indices_end,
+                            vertex_base,
+                        },
+                        buf.bounds,
+                    ));
                 }
             }
-
-            layer += 1;
         }
 
         for buffer in &mut self.unprocessed {
@@ -281,6 +285,20 @@ impl<K: BufferLayout> GpuBuffer<K> {
 
     pub fn is_empty(&self) -> bool {
         self.vertex_buffer.count == 0
+    }
+
+    /// Returns if the buffer is clipped or not to deturmine if you should use
+    /// buffers or clipped_buffers.
+    pub fn is_clipped(&self) -> bool {
+        self.is_clipped
+    }
+
+    /// Sets the Buffer into Clipping mode.
+    /// This will Produce a clipped_buffers instead of the buffers which
+    /// will still be layered but a Vector of individual objects will Exist rather
+    /// than a grouped object per layer. Will make it less Efficient but allows Bounds Clipping.
+    pub fn set_as_clipped(&mut self) {
+        self.is_clipped = true;
     }
 
     /// Returns vertex_buffer's max size in bytes.

@@ -1,3 +1,5 @@
+use log::warn;
+
 use crate::{
     AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer, Map,
     MapRenderPipeline, MapVertex, OrderedIndex, SetBuffers, StaticBufferObject,
@@ -46,6 +48,10 @@ impl MapRenderer {
                 self.add_buffer_store(renderer, order_index, layers[id]);
             }
         }
+    }
+
+    pub fn use_clipping(&mut self) {
+        warn!("Light does not use Clipping.");
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::{
     AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer, OrderedIndex, Rect,
-    RectRenderPipeline, RectVertex, StaticBufferObject,
+    RectRenderPipeline, RectVertex, StaticBufferObject, System,
 };
 
 pub struct RectRenderer {
@@ -38,33 +38,87 @@ impl RectRenderer {
 
         self.add_buffer_store(renderer, index, layer);
     }
+
+    pub fn use_clipping(&mut self) {
+        self.buffer.set_as_clipped();
+    }
 }
 
-pub trait RenderRects<'a, 'b>
+pub trait RenderRects<'a, 'b, Controls>
 where
     'b: 'a,
+    Controls: camera::controls::Controls,
 {
     fn render_rects(
         &mut self,
         renderer: &'b GpuRenderer,
         buffer: &'b RectRenderer,
         atlas: &'b AtlasSet,
+        system: &'b System<Controls>,
         layer: usize,
     );
 }
 
-impl<'a, 'b> RenderRects<'a, 'b> for wgpu::RenderPass<'a>
+impl<'a, 'b, Controls> RenderRects<'a, 'b, Controls> for wgpu::RenderPass<'a>
 where
     'b: 'a,
+    Controls: camera::controls::Controls,
 {
     fn render_rects(
         &mut self,
         renderer: &'b GpuRenderer,
         buffer: &'b RectRenderer,
         atlas: &'b AtlasSet,
+        system: &'b System<Controls>,
         layer: usize,
     ) {
-        if let Some(Some(details)) = buffer.buffer.buffers.get(layer) {
+        if buffer.buffer.is_clipped() {
+            if let Some(details) = buffer.buffer.clipped_buffers.get(layer) {
+                let mut scissor_is_default = true;
+
+                if buffer.buffer.count() > 0 {
+                    self.set_bind_group(
+                        1,
+                        &atlas.texture_group.bind_group,
+                        &[],
+                    );
+                    self.set_vertex_buffer(1, buffer.buffer.instances(None));
+                    self.set_pipeline(
+                        renderer.get_pipelines(RectRenderPipeline).unwrap(),
+                    );
+
+                    for (details, bounds) in details {
+                        if let Some(bounds) = bounds {
+                            let bounds = system.world_to_screen(false, bounds);
+
+                            self.set_scissor_rect(
+                                bounds.x as u32,
+                                bounds.y as u32,
+                                bounds.z as u32,
+                                bounds.w as u32,
+                            );
+                            scissor_is_default = false;
+                        }
+
+                        self.draw_indexed(
+                            0..StaticBufferObject::index_count(),
+                            0,
+                            details.start..details.end,
+                        );
+
+                        if !scissor_is_default {
+                            self.set_scissor_rect(
+                                0,
+                                0,
+                                system.screen_size[0] as u32,
+                                system.screen_size[1] as u32,
+                            );
+                            scissor_is_default = true;
+                        };
+                    }
+                }
+            }
+        } else if let Some(Some(details)) = buffer.buffer.buffers.get(layer) {
             if buffer.buffer.count() > 0 {
                 self.set_bind_group(1, &atlas.texture_group.bind_group, &[]);
                 self.set_vertex_buffer(1, buffer.buffer.instances(None));
