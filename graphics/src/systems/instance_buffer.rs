@@ -1,4 +1,6 @@
-use crate::{Buffer, BufferLayout, GpuDevice, GpuRenderer, OrderedIndex};
+use crate::{
+    Bounds, Buffer, BufferLayout, GpuDevice, GpuRenderer, OrderedIndex,
+};
 use std::ops::Range;
 
 pub struct InstanceDetails {
@@ -6,14 +8,18 @@ pub struct InstanceDetails {
     pub end: u32,
 }
 
+pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>);
+
 //This Holds onto all the instances Compressed into a byte array.
 pub struct InstanceBuffer<K: BufferLayout> {
     pub unprocessed: Vec<Vec<OrderedIndex>>,
     pub buffers: Vec<Option<InstanceDetails>>,
+    pub clipped_buffers: Vec<Vec<ClippedInstanceDetails>>,
     pub buffer: Buffer<K>,
     pub layer_size: usize,
     // this is a calculation of the buffers size when being marked as ready to add into the buffer.
     needed_size: usize,
+    is_clipped: bool,
 }
 
 impl<K: BufferLayout> InstanceBuffer<K> {
@@ -27,6 +33,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         InstanceBuffer {
             unprocessed: Vec::new(),
             buffers: Vec::new(),
+            clipped_buffers: Vec::new(),
             buffer: Buffer::new(
                 gpu_device,
                 data,
@@ -35,6 +42,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             ),
             layer_size: layer_size.max(32),
             needed_size: 0,
+            is_clipped: false,
         }
     }
 
@@ -68,6 +76,37 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         }
     }
 
+    fn buffer_write(
+        &self,
+        renderer: &mut GpuRenderer,
+        buf: &OrderedIndex,
+        pos: &mut usize,
+        count: &mut u32,
+        changed: bool,
+    ) {
+        let mut write_buffer = false;
+        let old_pos = *pos as u64;
+
+        if let Some(store) = renderer.get_buffer_mut(buf.index) {
+            let range = *pos..*pos + store.store.len();
+
+            if store.store_pos != range || changed || store.changed {
+                store.store_pos = range;
+                store.changed = false;
+                write_buffer = true
+            }
+
+            *pos += store.store.len();
+            *count += (store.store.len() / K::stride()) as u32;
+        }
+
+        if write_buffer {
+            if let Some(store) = renderer.get_buffer(buf.index) {
+                self.buffer.write(&renderer.device, &store.store, old_pos);
+            }
+        }
+    }
+
     pub fn finalize(&mut self, renderer: &mut GpuRenderer) {
         let (mut changed, mut pos, mut count) = (false, 0, 0);
 
@@ -83,48 +122,60 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             processing.sort();
         }
 
-        self.buffers.clear();
+        if self.is_clipped {
+            for buffer in &mut self.clipped_buffers {
+                buffer.clear();
+            }
 
-        for processing in &self.unprocessed {
+            if self.clipped_buffers.len() < self.unprocessed.len() {
+                for _ in self.clipped_buffers.len()..self.unprocessed.len() {
+                    self.clipped_buffers.push(Vec::new());
+                }
+            }
+        } else {
+            self.buffers.clear();
+        }
+
+        for (layer, processing) in self.unprocessed.iter().enumerate() {
             if processing.is_empty() {
-                self.buffers.push(None);
+                if !self.is_clipped {
+                    self.buffers.push(None);
+                }
                 continue;
             }
 
-            let start_pos = count;
+            let mut start_pos = count;
 
-            for buf in processing {
-                let mut write_buffer = false;
-                let old_pos = pos as u64;
-
-                if let Some(store) = renderer.get_buffer_mut(buf.index) {
-                    let range = pos..pos + store.store.len();
-
-                    if store.store_pos != range || changed || store.changed {
-                        store.store_pos = range;
-                        store.changed = false;
-                        write_buffer = true
-                    }
-
-                    pos += store.store.len();
-                    count += (store.store.len() / K::stride()) as u32;
+            if !self.is_clipped {
+                for buf in processing {
+                    self.buffer_write(
+                        renderer, buf, &mut pos, &mut count, changed,
+                    );
                 }
 
-                if write_buffer {
-                    if let Some(store) = renderer.get_buffer(buf.index) {
-                        self.buffer.write(
-                            &renderer.device,
-                            &store.store,
-                            old_pos,
-                        );
+                self.buffers.push(Some(InstanceDetails {
+                    start: start_pos,
+                    end: count,
+                }));
+            } else {
+                for buf in processing {
+                    self.buffer_write(
+                        renderer, buf, &mut pos, &mut count, changed,
+                    );
+
+                    if let Some(buffer) = self.clipped_buffers.get_mut(layer) {
+                        buffer.push((
+                            InstanceDetails {
+                                start: start_pos,
+                                end: count,
+                            },
+                            buf.bounds,
+                        ));
                     }
+
+                    start_pos = count;
                 }
             }
-
-            self.buffers.push(Some(InstanceDetails {
-                start: start_pos,
-                end: count,
-            }));
         }
 
         self.needed_size = 0;
@@ -173,6 +224,20 @@ impl<K: BufferLayout> InstanceBuffer<K> {
     /// Returns vertex_buffer's max size in bytes.
     pub fn max(&self) -> usize {
         self.buffer.max
+    }
+
+    /// Returns if the buffer is clipped or not to deturmine if you should use
+    /// buffers or clipped_buffers.
+    pub fn is_clipped(&self) -> bool {
+        self.is_clipped
+    }
+
+    /// Sets the Buffer into Clipping mode.
+    /// This will Produce a clipped_buffers instead of the buffers which
+    /// will still be layered but a Vector of individual objects will Exist rather
+    /// than a grouped object per layer. Will make it less Efficient but allows Bounds Clipping.
+    pub fn set_as_clipped(&mut self) {
+        self.is_clipped = true;
     }
 
     /// Returns buffer's stride.

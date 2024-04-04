@@ -7,6 +7,7 @@ use crate::{
     MAX_DIR_LIGHTS,
 };
 
+use log::warn;
 use wgpu::util::{align_to, DeviceExt};
 
 pub struct LightRenderer {
@@ -119,6 +120,10 @@ impl LightRenderer {
         );
 
         self.add_buffer_store(renderer, index, layer);
+    }
+
+    pub fn use_clipping(&mut self) {
+        warn!("Light does not use Clipping.");
     }
 }
 

@@ -4,6 +4,7 @@ use crate::{
     TextVertex, Vec2,
 };
 use cosmic_text::{CacheKey, SwashCache};
+use log::{error, warn};
 
 pub struct TextAtlas {
     pub(crate) text: AtlasSet<CacheKey, Vec2>,
@@ -66,6 +67,10 @@ impl TextRenderer {
         self.add_buffer_store(renderer, index, layer);
         Ok(())
     }
+
+    pub fn use_clipping(&mut self) {
+        warn!("Text uses its own Clipping.");
+    }
 }
 
 pub trait RenderText<'a, 'b>
@@ -92,6 +97,11 @@ where
         atlas: &'b TextAtlas,
         layer: usize,
     ) {
+        if buffer.buffer.is_clipped() {
+            error!("Text uses its own clipping mechanisim it does not need to be clipped by the clipper.");
+            return;
+        }
+
         if let Some(Some(details)) = buffer.buffer.buffers.get(layer) {
             if buffer.buffer.count() > 0 {
                 self.set_buffers(renderer.buffer_object.as_buffer_pass());
