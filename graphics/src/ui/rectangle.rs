@@ -1,5 +1,5 @@
 use crate::{
-    AtlasSet, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
+    AtlasSet, Bounds, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
     OrderedIndex, OtherError, RectVertex, Texture, Vec2, Vec3, Vec4,
 };
 use cosmic_text::Color;
@@ -17,6 +17,7 @@ pub struct Rect {
     pub store_id: Index,
     pub order: DrawOrder,
     pub render_layer: u32,
+    pub bounds: Option<Bounds>,
     /// if anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -36,8 +37,13 @@ impl Rect {
             store_id: renderer.new_buffer(),
             order: DrawOrder::default(),
             render_layer,
+            bounds: None,
             changed: true,
         }
+    }
+
+    pub fn update_bounds(&mut self, bounds: Option<Bounds>) {
+        self.bounds = bounds;
     }
 
     pub fn set_use_camera(&mut self, use_camera: bool) -> &mut Self {
@@ -169,7 +175,7 @@ impl Rect {
             self.changed = false;
         }
 
-        OrderedIndex::new(self.order, self.store_id, 0)
+        OrderedIndex::new_with_bounds(self.order, self.store_id, 0, self.bounds)
     }
 
     pub fn check_mouse_bounds(&self, mouse_pos: Vec2) -> bool {
