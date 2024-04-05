@@ -4,6 +4,7 @@ use super::button::Button;
 use super::{Key, Location};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
+use std::time::{Duration, Instant};
 use winit::dpi::PhysicalPosition;
 use winit::event::KeyEvent;
 use winit::window::Window;
@@ -11,6 +12,15 @@ use winit::{
     event::{DeviceEvent, ElementState, Event, MouseScrollDelta, WindowEvent},
     keyboard::{self, ModifiersState},
 };
+
+#[derive(Default, PartialEq, Eq, Copy, Clone)]
+pub enum MouseButtonAction {
+    #[default]
+    None,
+    Single(winit::event::MouseButton),
+    Double(winit::event::MouseButton),
+    Triple(winit::event::MouseButton),
+}
 
 pub struct InputHandler<ActionId, AxisId>
 where
@@ -35,6 +45,8 @@ where
     mouse_wheel: (f32, f32),
     //key modifiers.
     modifiers: ModifiersState,
+    mouse_button_action: MouseButtonAction,
+    mouse_action_timer: Instant,
 }
 
 impl<ActionId, AxisId> InputHandler<ActionId, AxisId>
@@ -185,10 +197,24 @@ where
             mouse_delta: (0.0, 0.0),
             mouse_wheel: (0.0, 0.0),
             modifiers: ModifiersState::default(),
+            mouse_button_action: MouseButtonAction::None,
+            mouse_action_timer: Instant::now(),
         }
     }
 
-    pub fn update(&mut self, window: &Window, event: &Event<()>, hidpi: f32) {
+    pub fn update(
+        &mut self,
+        window: &Window,
+        event: &Event<()>,
+        hidpi: f32,
+    ) -> Option<MouseButtonAction> {
+        let mut ret = None;
+
+        if self.mouse_action_timer <= Instant::now() {
+            ret = Some(self.mouse_button_action);
+            self.mouse_button_action = MouseButtonAction::None;
+        }
+
         match *event {
             Event::WindowEvent {
                 ref event,
@@ -212,10 +238,10 @@ where
                             if let Some(c) = chars.first() {
                                 Key::Character(*c)
                             } else {
-                                return;
+                                return ret;
                             }
                         }
-                        _ => return,
+                        _ => return ret,
                     };
                     if *state == ElementState::Pressed {
                         self.keys.insert(key, *location);
@@ -226,6 +252,47 @@ where
                 WindowEvent::MouseInput { state, button, .. } => {
                     if *state == ElementState::Pressed {
                         self.mouse_buttons.insert(*button);
+
+                        if self.mouse_button_action != MouseButtonAction::None {
+                            match self.mouse_button_action {
+                                MouseButtonAction::None => {
+                                    self.mouse_button_action =
+                                        MouseButtonAction::Single(*button);
+                                    self.mouse_action_timer = Instant::now()
+                                        + Duration::from_millis(500);
+                                }
+                                MouseButtonAction::Single(btn) => {
+                                    if btn == *button {
+                                        self.mouse_button_action =
+                                            MouseButtonAction::Double(btn);
+                                    } else {
+                                        ret = Some(self.mouse_button_action);
+                                        self.mouse_button_action =
+                                            MouseButtonAction::Single(*button);
+                                        self.mouse_action_timer =
+                                            Instant::now()
+                                                + Duration::from_millis(500);
+                                    }
+                                }
+                                MouseButtonAction::Double(btn) => {
+                                    if btn == *button {
+                                        self.mouse_button_action =
+                                            MouseButtonAction::None;
+                                        ret = Some(MouseButtonAction::Triple(
+                                            btn,
+                                        ));
+                                    } else {
+                                        ret = Some(self.mouse_button_action);
+                                        self.mouse_button_action =
+                                            MouseButtonAction::Single(*button);
+                                        self.mouse_action_timer =
+                                            Instant::now()
+                                                + Duration::from_millis(500);
+                                    }
+                                }
+                                MouseButtonAction::Triple(_) => {}
+                            }
+                        }
                     } else {
                         self.mouse_buttons.remove(button);
                     }
@@ -280,5 +347,7 @@ where
             },
             _ => (),
         }
+
+        ret
     }
 }
