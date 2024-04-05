@@ -130,17 +130,7 @@ checksum = "175571dd1d178ced59193a6fc02dde1b972eb0bc56c892cde9beeceac5bf0f6b"
 name = "ascending_camera"
 version = "0.1.1"
 dependencies = [
- "glam 0.27.0",
- "mint",
-]
-
-[[package]]
-name = "ascending_camera"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbc533cbd7669e66a3cdff10d1a30adddf8507a0558ba0a6f10c3d7e1901f8a8"
-dependencies = [
- "glam 0.26.0",
+ "glam",
  "mint",
 ]
 
@@ -148,14 +138,14 @@ dependencies = [
 name = "ascending_graphics"
 version = "0.3.0"
 dependencies = [
- "ascending_camera 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "ascending_input 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ascending_camera",
+ "ascending_input",
  "async-trait",
  "bytemuck",
  "cosmic-text",
  "crevice",
  "genr",
- "glam 0.27.0",
+ "glam",
  "guillotiere",
  "image",
  "indexmap",
@@ -175,18 +165,6 @@ dependencies = [
 [[package]]
 name = "ascending_input"
 version = "0.1.1"
-dependencies = [
- "ordered-float",
- "serde",
- "smol_str",
- "winit",
-]
-
-[[package]]
-name = "ascending_input"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac601d64698d28d76674bd7e20a4b10dc8882853aaa968f7ed6c54382c82d919"
 dependencies = [
  "ordered-float",
  "serde",
@@ -836,16 +814,6 @@ dependencies = [
  "khronos_api",
  "log",
  "xml-rs",
-]
-
-[[package]]
-name = "glam"
-version = "0.26.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bebe52f2c58f1eea4d6fd3307058cf818c74181435a3620502d1651db07ff018"
-dependencies = [
- "bytemuck",
- "mint",
 ]
 
 [[package]]

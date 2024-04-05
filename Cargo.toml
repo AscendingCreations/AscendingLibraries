@@ -27,12 +27,12 @@ genr = "0.1.0"
 
 [workspace.dependencies.camera]
 package = "ascending_camera"
-#path = "./camera"
+path = "./camera"
 version = "0.1.0"
 
 [workspace.dependencies.input]
 package = "ascending_input" 
-#path = "./input"
+path = "./input"
 version = "0.1.0"
 
 [workspace.dependencies.naga]
