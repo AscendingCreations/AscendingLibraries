@@ -1,7 +1,6 @@
 use crate::{Bounds, GpuDevice, GpuRenderer, Layout};
 use bytemuck::{Pod, Zeroable};
 use camera::Projection;
-use crevice::std140::AsStd140;
 use glam::{Mat4, Vec2, Vec3, Vec4};
 use input::FrameTime;
 use wgpu::util::DeviceExt;
@@ -32,26 +31,6 @@ impl Layout for SystemLayout {
             },
         )
     }
-}
-
-#[derive(AsStd140)]
-pub struct CameraUniform {
-    view: mint::ColumnMatrix4<f32>,
-    proj: mint::ColumnMatrix4<f32>,
-    inverse_proj: mint::ColumnMatrix4<f32>,
-    eye: mint::Vector3<f32>,
-    scale: f32,
-}
-
-#[derive(AsStd140)]
-pub struct ScreenUniform {
-    size: mint::Vector2<f32>,
-}
-
-#[derive(AsStd140)]
-pub struct TimeUniform {
-    //seconds since the start of the program. given by the FrameTime
-    seconds: f32,
 }
 
 pub struct System<Controls: camera::controls::Controls> {
@@ -99,31 +78,24 @@ where
         let inverse_proj: Mat4 = (mat_proj * mat_view).inverse();
         let eye: mint::Vector3<f32> = camera.eye().into();
         let scale = camera.scale();
+        let proj_inv: mint::ColumnMatrix4<f32> = inverse_proj.into();
+        let seconds = 0.0;
+        let size: mint::Vector2<f32> = screen_size.into();
 
-        let camera_info = CameraUniform {
-            view,
-            proj,
-            inverse_proj: inverse_proj.into(),
-            eye,
-            scale,
-        };
-        let time_info = TimeUniform { seconds: 0.0 };
-        let screen_info = ScreenUniform {
-            size: screen_size.into(),
-        };
-
-        let mut camera_bytes = camera_info.as_std140().as_bytes().to_vec();
-        let mut time_bytes = time_info.as_std140().as_bytes().to_vec();
-        let mut screen_bytes = screen_info.as_std140().as_bytes().to_vec();
-
-        camera_bytes.append(&mut screen_bytes);
-        camera_bytes.append(&mut time_bytes);
+        let mut raw = [0f32; 52 + 4];
+        raw[..16].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&view)[..]);
+        raw[16..32].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj)[..]);
+        raw[32..48].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj_inv)[..]);
+        raw[48..51].copy_from_slice(&AsRef::<[f32; 3]>::as_ref(&eye)[..]);
+        raw[51] = scale;
+        raw[52..54].copy_from_slice(&AsRef::<[f32; 2]>::as_ref(&size)[..]);
+        raw[54] = seconds;
 
         // Create the uniform buffers.
         let global_buffer = renderer.device().create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("camera buffer"),
-                contents: &camera_bytes,
+                contents: bytemuck::cast_slice(&raw),
                 usage: wgpu::BufferUsages::UNIFORM
                     | wgpu::BufferUsages::COPY_DST,
             },
@@ -172,34 +144,30 @@ where
             let mat_proj: Mat4 = proj.into();
             let mat_view: Mat4 = view.into();
             let inverse_proj: Mat4 = (mat_proj * mat_view).inverse();
-            //inverse_proj = inverse_proj.inverse();
-
+            let proj_inv: mint::ColumnMatrix4<f32> = inverse_proj.into();
             let eye: mint::Vector3<f32> = self.camera.eye().into();
             let scale = self.camera.scale();
 
-            let camera_info = CameraUniform {
-                view,
-                proj,
-                inverse_proj: inverse_proj.into(),
-                eye,
-                scale,
-            };
+            let mut raw = [0f32; 52];
+            raw[..16].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&view)[..]);
+            raw[16..32].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj)[..]);
+            raw[32..48]
+                .copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj_inv)[..]);
+            raw[48..51].copy_from_slice(&AsRef::<[f32; 3]>::as_ref(&eye)[..]);
+            raw[51] = scale;
 
             renderer.queue().write_buffer(
                 &self.global_buffer,
                 0,
-                camera_info.as_std140().as_bytes(),
+                bytemuck::cast_slice(&raw),
             );
         }
 
-        let time_info = TimeUniform {
-            seconds: frame_time.seconds(),
-        };
-
+        let raw = [frame_time.seconds(); 1];
         renderer.queue().write_buffer(
             &self.global_buffer,
             216,
-            time_info.as_std140().as_bytes(),
+            bytemuck::cast_slice(&raw),
         );
     }
 
@@ -210,14 +178,11 @@ where
     ) {
         if self.screen_size != screen_size {
             self.screen_size = screen_size;
-            let screen_info = ScreenUniform {
-                size: screen_size.into(),
-            };
 
             renderer.queue().write_buffer(
                 &self.global_buffer,
                 208,
-                screen_info.as_std140().as_bytes(),
+                bytemuck::cast_slice(&screen_size),
             );
         }
     }

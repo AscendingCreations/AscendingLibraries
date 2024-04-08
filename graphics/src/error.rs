@@ -32,6 +32,8 @@ pub enum GraphicsError {
     #[error(transparent)]
     Device(#[from] wgpu::RequestDeviceError),
     #[error(transparent)]
+    Adapter(#[from] wgpu::core::instance::RequestAdapterError),
+    #[error(transparent)]
     ImageError(#[from] image::ImageError),
     #[error("Image atlas has no more space.")]
     AtlasFull,
