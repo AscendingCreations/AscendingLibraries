@@ -107,6 +107,7 @@ where
     pub window_focused: bool,
     ///Input events gathered per the last Click. Will contain multiple events.
     pub input_events: Vec<InputEvent>,
+    ///Duration allowed between clicks.
     click_duration: Duration,
 }
 
@@ -285,6 +286,9 @@ where
     }
 
     ///Initialize the Input Handler.
+    /// bindings: Mapping of actions to take per certain requirements.
+    /// click_duration: is the allowed duration
+    /// between each click before the click is submitted.
     pub fn new(
         bindings: Bindings<ActionId, AxisId>,
         click_duration: Duration,
@@ -401,6 +405,8 @@ where
                                     if btn == *button {
                                         self.mouse_button_action =
                                             MouseButtonAction::Double(btn);
+                                        self.mouse_action_timer =
+                                            timer + self.click_duration;
                                     } else {
                                         self.input_events.push(
                                             InputEvent::MouseButtonAction(
