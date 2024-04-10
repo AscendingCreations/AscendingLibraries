@@ -342,7 +342,7 @@ impl InstanceExt for wgpu::Instance {
             compatible_adapters.push((adapter, device_type));
         }
 
-        compatible_adapters.sort_by(|a, b| a.1.cmp(&b.1));
+        compatible_adapters.sort_by(|a, b| b.1.cmp(&a.1));
         compatible_adapters
     }
 
