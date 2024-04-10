@@ -1,6 +1,6 @@
 use crate::{GpuRenderer, GraphicsError};
 use async_trait::async_trait;
-use log::debug;
+use log::{debug, info};
 use std::{path::Path, sync::Arc};
 use wgpu::{
     core::instance::RequestAdapterError, Adapter, Backend, Backends,
@@ -329,6 +329,7 @@ impl InstanceExt for wgpu::Instance {
                         1
                     }
                 }
+                DeviceType::VirtualGpu | DeviceType::Cpu => 3,
                 _ => continue,
             };
 
@@ -368,6 +369,11 @@ impl InstanceExt for wgpu::Instance {
                 .await;
 
             if ret.is_ok() {
+                if adapter.1 == 3 {
+                    info!(
+                        "A virtual or software rendering Driver was choosen."
+                    );
+                }
                 return ret;
             }
         }

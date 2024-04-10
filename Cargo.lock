@@ -136,7 +136,7 @@ dependencies = [
 
 [[package]]
 name = "ascending_graphics"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "ascending_camera",
  "ascending_input",
@@ -163,7 +163,7 @@ dependencies = [
 
 [[package]]
 name = "ascending_input"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "ordered-float",
  "serde",
