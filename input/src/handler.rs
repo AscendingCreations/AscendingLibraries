@@ -265,6 +265,11 @@ where
         self.modifiers_state
     }
 
+    ///Get the current events that where last processed during update.
+    pub fn events(&self) -> &[InputEvent] {
+        &self.input_events
+    }
+
     ///Get Physical mouse position.
     /// This value is a f64 and is not calculated against the DPI.
     pub fn physical_mouse_position(&self) -> Option<PhysicalPosition<f64>> {
