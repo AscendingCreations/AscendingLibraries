@@ -1,6 +1,6 @@
 use crate::{GpuRenderer, GraphicsError};
 use async_trait::async_trait;
-use log::info;
+use log::debug;
 use std::{path::Path, sync::Arc};
 use wgpu::{
     core::instance::RequestAdapterError, Adapter, Backend, Backends,
@@ -235,7 +235,7 @@ impl AdapterExt for wgpu::Adapter {
         let surface = instance.create_surface(window.clone()).unwrap();
         let caps = surface.get_capabilities(&self);
 
-        println!("{:?}", caps.formats);
+        debug!("{:?}", caps.formats);
 
         let rgba = caps
             .formats
@@ -254,7 +254,7 @@ impl AdapterExt for wgpu::Adapter {
             panic!("Your Rendering Device does not support Bgra8UnormSrgb or Rgba8UnormSrgb");
         };
 
-        println!("surface format: {:?}", format);
+        debug!("surface format: {:?}", format);
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
@@ -329,7 +329,6 @@ impl InstanceExt for wgpu::Instance {
                         1
                     }
                 }
-                DeviceType::VirtualGpu => 3,
                 _ => continue,
             };
 
@@ -354,16 +353,11 @@ impl InstanceExt for wgpu::Instance {
         trace_path: Option<&Path>,
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError> {
-        info!("before get adapters.");
         let mut adapters = self.get_adapters(options);
-        info!("after get adapters.");
 
-        while let Some((adapter, kind)) = adapters.pop() {
-            if kind == 3 {
-                info!("adapter try VirtualGpu as all else failed.");
-            }
-
+        while let Some(adapter) = adapters.pop() {
             let ret = adapter
+                .0
                 .create_renderer(
                     self,
                     &window,

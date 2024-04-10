@@ -43,5 +43,5 @@ features = ["wgsl-in"]
 [workspace.dependencies.wgpu]
 #git = "https://github.com/gfx-rs/wgpu"
 #rev = "061e04b"
-#features = ["strict_asserts", "trace"]
-version = "0.19.3"
+#path = "../wgpu-trunk/wgpu"
+version = "0.19.0"
