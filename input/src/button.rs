@@ -1,6 +1,7 @@
 use super::Key;
 use serde::{Deserialize, Serialize};
 
+///Button Type for bindings.
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Button {
     // A virtual key on the keyboard.

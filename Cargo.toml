@@ -5,10 +5,9 @@ members = ["input", "camera", "graphics"]
 [workspace.dependencies]
 async-trait = "0.1.79"
 bytemuck = { version = "1.15.0", features = ["derive"] }
-crevice = "0.15.0"
 mint = "0.5.9"
 thiserror = "1.0.58"
-winit = { version = "0.29.15", features = ["serde", "rwh_05"] }
+winit = { version = "0.29.15", features = ["serde"] }
 image = "0.25.1"
 guillotiere = "0.6.2"
 serde = { version = "1.0.197", features = ["derive"] }
@@ -27,12 +26,12 @@ genr = "0.1.0"
 
 [workspace.dependencies.camera]
 package = "ascending_camera"
-#path = "./camera"
+path = "./camera"
 version = "0.1.0"
 
 [workspace.dependencies.input]
 package = "ascending_input" 
-#path = "./input"
+path = "./input"
 version = "0.1.0"
 
 [workspace.dependencies.naga]
@@ -44,5 +43,5 @@ features = ["wgsl-in"]
 [workspace.dependencies.wgpu]
 #git = "https://github.com/gfx-rs/wgpu"
 #rev = "061e04b"
-#features = ["angle"]
-version = "0.19.3"
+#path = "../wgpu-trunk/wgpu"
+version = "0.19.0"

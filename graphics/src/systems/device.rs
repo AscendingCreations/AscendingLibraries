@@ -1,7 +1,11 @@
 use crate::{GpuRenderer, GraphicsError};
 use async_trait::async_trait;
+use log::debug;
 use std::{path::Path, sync::Arc};
-use wgpu::TextureFormat;
+use wgpu::{
+    core::instance::RequestAdapterError, Adapter, Backend, Backends,
+    DeviceType, Surface, TextureFormat,
+};
 use winit::{
     dpi::PhysicalSize,
     event::{Event, WindowEvent},
@@ -22,6 +26,24 @@ impl GpuDevice {
     pub fn queue(&self) -> &wgpu::Queue {
         &self.queue
     }
+}
+
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum AdapterPowerSettings {
+    LowPower,
+    #[default]
+    HighPower,
+}
+
+#[derive(Debug)]
+pub struct AdapterOptions {
+    /// Power preference for the adapter.
+    pub allowed_backends: Backends,
+    pub power: AdapterPowerSettings,
+    /// Surface that is required to be presentable with the requested adapter. This does not
+    /// create the surface, only guarantees that the adapter can present to said surface.
+    /// Recommend checking this always.
+    pub compatible_surface: Option<Surface<'static>>,
 }
 
 ///Handles the Window, Adapter and Surface information.
@@ -188,7 +210,7 @@ pub trait AdapterExt {
     async fn create_renderer(
         self,
         instance: &wgpu::Instance,
-        window: Arc<Window>,
+        window: &Arc<Window>,
         device_descriptor: &wgpu::DeviceDescriptor,
         trace_path: Option<&Path>,
         present_mode: wgpu::PresentMode,
@@ -200,7 +222,7 @@ impl AdapterExt for wgpu::Adapter {
     async fn create_renderer(
         self,
         instance: &wgpu::Instance,
-        window: Arc<Window>,
+        window: &Arc<Window>,
         device_descriptor: &wgpu::DeviceDescriptor,
         trace_path: Option<&Path>,
         present_mode: wgpu::PresentMode,
@@ -213,7 +235,7 @@ impl AdapterExt for wgpu::Adapter {
         let surface = instance.create_surface(window.clone()).unwrap();
         let caps = surface.get_capabilities(&self);
 
-        println!("{:?}", caps.formats);
+        debug!("{:?}", caps.formats);
 
         let rgba = caps
             .formats
@@ -232,7 +254,7 @@ impl AdapterExt for wgpu::Adapter {
             panic!("Your Rendering Device does not support Bgra8UnormSrgb or Rgba8UnormSrgb");
         };
 
-        println!("surface format: {:?}", format);
+        debug!("surface format: {:?}", format);
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
@@ -250,7 +272,7 @@ impl AdapterExt for wgpu::Adapter {
             GpuWindow {
                 adapter: self,
                 surface,
-                window,
+                window: window.clone(),
                 surface_format: format,
                 size: PhysicalSize::new(size.width as f32, size.height as f32),
                 surface_config,
@@ -270,33 +292,86 @@ pub trait InstanceExt {
     async fn create_device(
         &self,
         window: Arc<Window>,
-        request_adapter_options: &wgpu::RequestAdapterOptions,
+        options: AdapterOptions,
         device_descriptor: &wgpu::DeviceDescriptor,
         trace_path: Option<&Path>,
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError>;
+
+    fn get_adapters(&self, options: AdapterOptions) -> Vec<(Adapter, u32)>;
 }
 
 #[async_trait]
 impl InstanceExt for wgpu::Instance {
+    fn get_adapters(&self, options: AdapterOptions) -> Vec<(Adapter, u32)> {
+        let mut adapters = self.enumerate_adapters(options.allowed_backends);
+        let mut compatible_adapters: Vec<(Adapter, u32)> = Vec::new();
+
+        while let Some(adapter) = adapters.pop() {
+            let information = adapter.get_info();
+
+            if information.backend == Backend::Empty {
+                continue;
+            }
+
+            let device_type = match information.device_type {
+                DeviceType::IntegratedGpu => {
+                    if options.power == AdapterPowerSettings::LowPower {
+                        1
+                    } else {
+                        2
+                    }
+                }
+                DeviceType::DiscreteGpu => {
+                    if options.power == AdapterPowerSettings::LowPower {
+                        2
+                    } else {
+                        1
+                    }
+                }
+                _ => continue,
+            };
+
+            if let Some(ref surface) = options.compatible_surface {
+                if !adapter.is_surface_supported(surface) {
+                    continue;
+                }
+            }
+
+            compatible_adapters.push((adapter, device_type));
+        }
+
+        compatible_adapters.sort_by(|a, b| a.1.cmp(&b.1));
+        compatible_adapters
+    }
+
     async fn create_device(
         &self,
         window: Arc<Window>,
-        request_adapter_options: &wgpu::RequestAdapterOptions,
+        options: AdapterOptions,
         device_descriptor: &wgpu::DeviceDescriptor,
         trace_path: Option<&Path>,
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError> {
-        let adapter =
-            self.request_adapter(request_adapter_options).await.unwrap();
-        adapter
-            .create_renderer(
-                self,
-                window,
-                device_descriptor,
-                trace_path,
-                present_mode,
-            )
-            .await
+        let mut adapters = self.get_adapters(options);
+
+        while let Some(adapter) = adapters.pop() {
+            let ret = adapter
+                .0
+                .create_renderer(
+                    self,
+                    &window,
+                    device_descriptor,
+                    trace_path,
+                    present_mode,
+                )
+                .await;
+
+            if ret.is_ok() {
+                return ret;
+            }
+        }
+
+        Err(GraphicsError::Adapter(RequestAdapterError::NotFound))
     }
 }
