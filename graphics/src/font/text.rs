@@ -3,8 +3,16 @@ use crate::{
     OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
-    Attrs, Buffer, Cursor, Metrics, SwashCache, SwashContent, Wrap,
+    Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap,
 };
+
+pub struct TextOptions {
+    pub shaping: cosmic_text::Shaping,
+    pub metrics: Option<Metrics>,
+    pub buffer_size: Vec2,
+    pub scale: f32,
+    pub wrap: Wrap,
+}
 
 pub struct Text {
     pub buffer: Buffer,
@@ -257,6 +265,10 @@ impl Text {
         }
     }
 
+    pub fn unload(&self, renderer: &mut GpuRenderer) {
+        renderer.remove_buffer(self.store_id);
+    }
+
     /// resets the TextRender bytes to empty for new bytes
     pub fn set_text(
         &mut self,
@@ -478,6 +490,44 @@ impl Text {
             width.min(max_width),
             (total_lines as f32 * self.buffer.metrics().line_height)
                 .min(max_height),
+        )
+    }
+
+    /// Allows measuring the String for how big it will be when Rendering.
+    /// This will not create any buffers in the rendering system.
+    pub fn measure_string(
+        font_system: &mut FontSystem,
+        text: &str,
+        attrs: Attrs,
+        options: TextOptions,
+    ) -> Vec2 {
+        let mut buffer = Buffer::new(
+            font_system,
+            options
+                .metrics
+                .unwrap_or(Metrics::new(16.0, 16.0).scale(options.scale)),
+        );
+
+        buffer.set_wrap(font_system, options.wrap);
+        buffer.set_size(
+            font_system,
+            options.buffer_size.x,
+            options.buffer_size.y,
+        );
+        buffer.set_text(font_system, text, attrs, options.shaping);
+
+        let (width, total_lines) = buffer.layout_runs().fold(
+            (0.0, 0usize),
+            |(width, total_lines), run| {
+                (run.line_w.max(width), total_lines + 1)
+            },
+        );
+
+        let (max_width, max_height) = buffer.size();
+
+        Vec2::new(
+            width.min(max_width),
+            (total_lines as f32 * buffer.metrics().line_height).min(max_height),
         )
     }
 }

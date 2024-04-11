@@ -106,6 +106,10 @@ impl Lights {
         }
     }
 
+    pub fn unload(&self, renderer: &mut GpuRenderer) {
+        renderer.remove_buffer(self.store_id);
+    }
+
     pub fn create_quad(&mut self, renderer: &mut GpuRenderer) {
         let instance = LightsVertex {
             world_color: self.world_color.to_array(),

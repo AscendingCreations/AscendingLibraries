@@ -206,6 +206,12 @@ impl Map {
         }
     }
 
+    pub fn unload(&self, renderer: &mut GpuRenderer) {
+        for index in &self.stores {
+            renderer.remove_buffer(*index);
+        }
+    }
+
     pub fn get_tile(&self, pos: (u32, u32, u32)) -> TileData {
         assert!(
             pos.0 < 32 || pos.1 < 32 || pos.2 < 9,

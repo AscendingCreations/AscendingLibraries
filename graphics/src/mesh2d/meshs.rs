@@ -54,6 +54,10 @@ impl Mesh2D {
         }
     }
 
+    pub fn unload(&self, renderer: &mut GpuRenderer) {
+        renderer.remove_buffer(self.vbo_store_id);
+    }
+
     pub fn from_builder(&mut self, builder: Mesh2DBuilder) {
         self.position =
             Vec3::new(builder.bounds.x, builder.bounds.y, builder.z);

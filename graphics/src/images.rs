@@ -65,6 +65,10 @@ impl Image {
         }
     }
 
+    pub fn unload(&self, renderer: &mut GpuRenderer) {
+        renderer.remove_buffer(self.store_id);
+    }
+
     pub fn update_bounds(&mut self, bounds: Option<Bounds>) {
         self.bounds = bounds;
     }
