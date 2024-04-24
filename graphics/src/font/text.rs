@@ -215,10 +215,9 @@ impl Text {
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            let text_bytes: &[u8] = bytemuck::cast_slice(&self.text_buf);
-            store.store.clear();
-            store.store.reserve_exact(text_bytes.len());
-            store.store.copy_from_slice(text_bytes);
+            let bytes: &[u8] = bytemuck::cast_slice(&self.text_buf);
+            store.store.resize_with(bytes.len(), || 0);
+            store.store.copy_from_slice(bytes);
             store.changed = true;
         }
 

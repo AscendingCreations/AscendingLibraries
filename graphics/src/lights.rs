@@ -122,8 +122,9 @@ impl Lights {
         };
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            store.store.clear();
-            store.store.copy_from_slice(bytemuck::bytes_of(&instance));
+            let bytes = bytemuck::bytes_of(&instance);
+            store.store.resize_with(bytes.len(), || 0);
+            store.store.copy_from_slice(bytes);
             store.changed = true;
         }
 

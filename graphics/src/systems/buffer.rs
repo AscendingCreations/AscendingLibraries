@@ -13,9 +13,15 @@ pub struct BufferStore {
 
 impl BufferStore {
     pub fn new(store_size: usize, index_size: usize) -> Self {
+        let mut store = Vec::with_capacity(store_size);
+        let mut indexs = Vec::with_capacity(index_size);
+
+        store.resize_with(store_size, || 0);
+        indexs.resize_with(index_size, || 0);
+
         Self {
-            store: Vec::with_capacity(store_size),
-            indexs: Vec::with_capacity(index_size),
+            store,
+            indexs,
             changed: false,
             store_pos: Range::default(),
             index_pos: Range::default(),
