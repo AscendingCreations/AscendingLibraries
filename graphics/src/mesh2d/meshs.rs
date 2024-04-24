@@ -1,6 +1,6 @@
 use crate::{
-    BufferLayout, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
-    Mesh2DVertex, OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
+    DrawOrder, DrawType, GpuRenderer, GraphicsError, Index, Mesh2DVertex,
+    OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
 };
 use cosmic_text::Color;
 use lyon::{
@@ -45,7 +45,7 @@ impl Mesh2D {
             position: Vec3::default(),
             size: Vec2::default(),
             color: Color::rgba(255, 255, 255, 255),
-            vbo_store_id: renderer.new_buffer(),
+            vbo_store_id: renderer.default_buffer(),
             order: DrawOrder::default(),
             changed: true,
             vertices: Vec::new(),
@@ -90,21 +90,14 @@ impl Mesh2D {
 
     pub fn create_quad(&mut self, renderer: &mut GpuRenderer) {
         if let Some(store) = renderer.get_buffer_mut(self.vbo_store_id) {
-            let mut vertex_bytes = Vec::with_capacity(
-                self.vertices.len() * Mesh2DVertex::stride(),
-            );
-            let mut index_bytes = Vec::with_capacity(self.indices.len() * 4);
-
-            for vertex in &self.vertices {
-                vertex_bytes.append(&mut bytemuck::bytes_of(vertex).to_vec());
-            }
-
-            for index in &self.indices {
-                index_bytes.append(&mut bytemuck::bytes_of(index).to_vec());
-            }
-
-            store.store = vertex_bytes;
-            store.indexs = index_bytes;
+            let vertex_bytes: &[u8] = bytemuck::cast_slice(&self.vertices);
+            let index_bytes: &[u8] = bytemuck::cast_slice(&self.indices);
+            store.store.clear();
+            store.indexs.clear();
+            store.store.reserve_exact(vertex_bytes.len());
+            store.indexs.reserve_exact(index_bytes.len());
+            store.store.copy_from_slice(vertex_bytes);
+            store.indexs.copy_from_slice(index_bytes);
             store.changed = true;
         }
 

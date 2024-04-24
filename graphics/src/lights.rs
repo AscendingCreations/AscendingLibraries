@@ -93,7 +93,10 @@ impl Lights {
         Self {
             world_color: Vec4::new(1.0, 1.0, 1.0, 0.0),
             enable_lights: false,
-            store_id: renderer.new_buffer(),
+            store_id: renderer.new_buffer(
+                bytemuck::bytes_of(&LightsVertex::default()).len(),
+                0,
+            ),
             order: DrawOrder::default(),
             render_layer,
             area_lights: Slab::with_capacity(MAX_AREA_LIGHTS),
@@ -119,9 +122,11 @@ impl Lights {
         };
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            store.store = bytemuck::bytes_of(&instance).to_vec();
+            store.store.clear();
+            store.store.copy_from_slice(bytemuck::bytes_of(&instance));
             store.changed = true;
         }
+
         let size = renderer.size();
         self.order = DrawOrder::new(
             false,

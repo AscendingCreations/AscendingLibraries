@@ -24,6 +24,8 @@ pub struct Rect {
 
 impl Rect {
     pub fn new(renderer: &mut GpuRenderer, render_layer: u32) -> Self {
+        let rect_size = bytemuck::bytes_of(&RectVertex::default()).len();
+
         Self {
             position: Vec3::default(),
             size: Vec2::default(),
@@ -34,7 +36,7 @@ impl Rect {
             border_color: Color::rgba(0, 0, 0, 0),
             radius: 0.0,
             use_camera: false,
-            store_id: renderer.new_buffer(),
+            store_id: renderer.new_buffer(rect_size, 0),
             order: DrawOrder::default(),
             render_layer,
             bounds: None,
@@ -141,7 +143,7 @@ impl Rect {
             ([0.0, 0.0, 0.0, 0.0], 0)
         };
 
-        let buffer = RectVertex {
+        let instance = RectVertex {
             position: self.position.to_array(),
             size: self.size.to_array(),
             border_width: self.border_width,
@@ -154,7 +156,8 @@ impl Rect {
         };
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            store.store = bytemuck::bytes_of(&buffer).to_vec();
+            store.store.clear();
+            store.store.copy_from_slice(bytemuck::bytes_of(&instance));
             store.changed = true;
         }
 

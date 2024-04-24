@@ -155,7 +155,16 @@ impl GpuRenderer {
         &mut self.font_sys
     }
 
-    pub fn new_buffer(&mut self) -> Index {
+    pub fn new_buffer(
+        &mut self,
+        store_size: usize,
+        index_size: usize,
+    ) -> Index {
+        self.buffer_stores
+            .insert(BufferStore::new(store_size, index_size))
+    }
+
+    pub fn default_buffer(&mut self) -> Index {
         self.buffer_stores.insert(BufferStore::default())
     }
 
