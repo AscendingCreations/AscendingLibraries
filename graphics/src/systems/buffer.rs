@@ -11,6 +11,18 @@ pub struct BufferStore {
     pub index_pos: Range<usize>,
 }
 
+impl BufferStore {
+    pub fn new(store_size: usize, index_size: usize) -> Self {
+        Self {
+            store: Vec::with_capacity(store_size),
+            indexs: Vec::with_capacity(index_size),
+            changed: false,
+            store_pos: Range::default(),
+            index_pos: Range::default(),
+        }
+    }
+}
+
 pub struct BufferPass<'a> {
     pub vertex_buffer: &'a wgpu::Buffer,
     pub index_buffer: &'a wgpu::Buffer,

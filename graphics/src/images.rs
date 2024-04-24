@@ -57,7 +57,10 @@ impl Image {
             use_camera: true,
             color: Color::rgba(255, 255, 255, 255),
             texture,
-            store_id: renderer.new_buffer(),
+            store_id: renderer.new_buffer(
+                bytemuck::bytes_of(&ImageVertex::default()).len(),
+                0,
+            ),
             order: DrawOrder::default(),
             render_layer,
             bounds: None,
@@ -111,7 +114,8 @@ impl Image {
         };
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            store.store = bytemuck::bytes_of(&instance).to_vec();
+            store.store.clear();
+            store.store.copy_from_slice(bytemuck::bytes_of(&instance));
             store.changed = true;
         }
 

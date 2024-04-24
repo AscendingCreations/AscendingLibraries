@@ -88,6 +88,10 @@ impl Default for TileData {
     }
 }
 
+pub const TILE_COUNT: usize = 9216;
+pub const LOWER_COUNT: usize = 7168;
+pub const UPPER_COUNT: usize = 2048;
+
 pub struct Map {
     /// X, Y, GroupID for loaded map.
     /// Add this to the higher up Map struct.
@@ -95,11 +99,13 @@ pub struct Map {
     /// its render position. within the screen.
     pub pos: Vec2,
     // tiles per layer.
-    pub tiles: [TileData; 9216],
+    pub tiles: Vec<TileData>,
+    pub lower_buffer: Vec<MapVertex>,
+    pub upper_buffer: Vec<MapVertex>,
     /// Store index per each layer.
-    pub stores: Vec<Index>,
+    pub stores: [Index; 2],
     /// the draw order of the maps. created when update is called.
-    pub orders: Vec<DrawOrder>,
+    pub orders: [DrawOrder; 2],
     /// count if any Filled Tiles Exist. this is to optimize out empty maps in rendering.
     pub filled_tiles: [u16; MapLayers::Count as usize],
     // The size of the Tile to render. for spacing tiles out upon
@@ -117,9 +123,10 @@ impl Map {
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
     ) {
-        let mut lower_buffer = Vec::with_capacity(7168);
-        let mut upper_buffer = Vec::with_capacity(2048);
         let atlas_width = atlas.size().x / self.tilesize;
+
+        self.lower_buffer.clear();
+        self.upper_buffer.clear();
 
         for layer in MapLayers::LAYERS {
             let z = layer.indexed_layers();
@@ -154,9 +161,9 @@ impl Map {
                         };
 
                         if layer < MapLayers::Fringe {
-                            lower_buffer.push(map_vertex)
+                            self.lower_buffer.push(map_vertex)
                         } else {
-                            upper_buffer.push(map_vertex)
+                            self.upper_buffer.push(map_vertex)
                         }
                     }
                 }
@@ -166,12 +173,18 @@ impl Map {
         let size = (self.tilesize * 32) as f32;
 
         if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
-            store.store = bytemuck::cast_slice(&lower_buffer).to_vec();
+            store.store.clear();
+            store
+                .store
+                .copy_from_slice(bytemuck::cast_slice(&self.lower_buffer));
             store.changed = true;
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.stores[1]) {
-            store.store = bytemuck::cast_slice(&upper_buffer).to_vec();
+            store.store.clear();
+            store
+                .store
+                .copy_from_slice(bytemuck::cast_slice(&self.upper_buffer));
             store.changed = true;
         }
 
@@ -194,12 +207,19 @@ impl Map {
     }
 
     pub fn new(renderer: &mut GpuRenderer, tilesize: u32) -> Self {
+        let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
+
+        let lower_index = renderer.new_buffer(map_vertex_size * LOWER_COUNT, 0);
+        let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
+
         Self {
-            tiles: [TileData::default(); 9216],
+            tiles: iter::repeat(TileData::default()).take(9216).collect(),
             pos: Vec2::default(),
-            stores: (0..2).map(|_| renderer.new_buffer()).collect(),
+            stores: [lower_index, upper_index],
             filled_tiles: [0; MapLayers::Count as usize],
-            orders: iter::repeat(DrawOrder::default()).take(2).collect(),
+            lower_buffer: Vec::with_capacity(LOWER_COUNT),
+            upper_buffer: Vec::with_capacity(UPPER_COUNT),
+            orders: [DrawOrder::default(), DrawOrder::default()],
             tilesize,
             can_render: false,
             changed: true,

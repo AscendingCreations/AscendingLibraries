@@ -16,6 +16,7 @@ pub struct TextOptions {
 
 pub struct Text {
     pub buffer: Buffer,
+    pub text_buf: Vec<TextVertex>,
     pub pos: Vec3,
     pub size: Vec2,
     pub scale: f32,
@@ -47,7 +48,8 @@ impl Text {
     ) -> Result<(), GraphicsError> {
         let count: usize =
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
-        let mut text_buf = Vec::with_capacity(count);
+        self.text_buf.clear();
+        self.text_buf.reserve_exact(count);
 
         let mut width = 0.0;
         let mut total_lines: usize = 0;
@@ -208,12 +210,15 @@ impl Text {
                     is_color: is_color as u32,
                 };
 
-                text_buf.push(default);
+                self.text_buf.push(default);
             }
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            store.store = bytemuck::cast_slice(&text_buf).to_vec();
+            let text_bytes: &[u8] = bytemuck::cast_slice(&self.text_buf);
+            store.store.clear();
+            store.store.reserve_exact(text_bytes.len());
+            store.store.copy_from_slice(text_bytes);
             store.changed = true;
         }
 
@@ -243,16 +248,20 @@ impl Text {
         size: Vec2,
         scale: f32,
     ) -> Self {
+        let text_starter_size =
+            bytemuck::bytes_of(&TextVertex::default()).len() * 64;
+
         Self {
             buffer: Buffer::new(
                 &mut renderer.font_sys,
                 metrics.unwrap_or(Metrics::new(16.0, 16.0).scale(scale)),
             ),
+            text_buf: Vec::with_capacity(64),
             pos,
             size,
             offsets: Vec2 { x: 0.0, y: 0.0 },
             bounds: None,
-            store_id: renderer.new_buffer(),
+            store_id: renderer.new_buffer(text_starter_size, 0),
             order: DrawOrder::default(),
             changed: true,
             default_color: Color::rgba(0, 0, 0, 255),
