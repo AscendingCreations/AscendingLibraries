@@ -92,10 +92,8 @@ impl Mesh2D {
         if let Some(store) = renderer.get_buffer_mut(self.vbo_store_id) {
             let vertex_bytes: &[u8] = bytemuck::cast_slice(&self.vertices);
             let index_bytes: &[u8] = bytemuck::cast_slice(&self.indices);
-            store.store.clear();
-            store.indexs.clear();
-            store.store.reserve_exact(vertex_bytes.len());
-            store.indexs.reserve_exact(index_bytes.len());
+            store.store.resize_with(vertex_bytes.len(), || 0);
+            store.indexs.resize_with(index_bytes.len(), || 0);
             store.store.copy_from_slice(vertex_bytes);
             store.indexs.copy_from_slice(index_bytes);
             store.changed = true;

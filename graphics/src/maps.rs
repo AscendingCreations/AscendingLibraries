@@ -173,18 +173,16 @@ impl Map {
         let size = (self.tilesize * 32) as f32;
 
         if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
-            store.store.clear();
-            store
-                .store
-                .copy_from_slice(bytemuck::cast_slice(&self.lower_buffer));
+            let bytes = bytemuck::cast_slice(&self.lower_buffer);
+            store.store.resize_with(bytes.len(), || 0);
+            store.store.copy_from_slice(bytes);
             store.changed = true;
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.stores[1]) {
-            store.store.clear();
-            store
-                .store
-                .copy_from_slice(bytemuck::cast_slice(&self.upper_buffer));
+            let bytes = bytemuck::cast_slice(&self.upper_buffer);
+            store.store.resize_with(bytes.len(), || 0);
+            store.store.copy_from_slice(bytes);
             store.changed = true;
         }
 
