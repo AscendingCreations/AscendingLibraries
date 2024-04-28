@@ -55,6 +55,7 @@ impl PipeLineLayout for MapRenderPipeline {
                             attributes: &MapVertex::attributes(),
                         },
                     ],
+                    compilation_options: Default::default(),
                 },
                 primitive: wgpu::PrimitiveState {
                     topology: wgpu::PrimitiveTopology::TriangleList,
@@ -81,6 +82,7 @@ impl PipeLineLayout for MapRenderPipeline {
                         blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
+                    compilation_options: Default::default(),
                 }),
                 multiview: None,
             },

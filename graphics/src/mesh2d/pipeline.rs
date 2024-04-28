@@ -45,6 +45,7 @@ impl PipeLineLayout for Mesh2DRenderPipeline {
                         step_mode: wgpu::VertexStepMode::Vertex,
                         attributes: &Mesh2DVertex::attributes(),
                     }],
+                    compilation_options: Default::default(),
                 },
                 primitive: wgpu::PrimitiveState {
                     topology: wgpu::PrimitiveTopology::TriangleList,
@@ -71,6 +72,7 @@ impl PipeLineLayout for Mesh2DRenderPipeline {
                         blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
+                    compilation_options: Default::default(),
                 }),
                 multiview: None,
             },

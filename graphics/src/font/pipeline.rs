@@ -59,6 +59,7 @@ impl PipeLineLayout for TextRenderPipeline {
                             attributes: &TextVertex::attributes(),
                         },
                     ],
+                    compilation_options: Default::default(),
                 },
                 primitive: wgpu::PrimitiveState {
                     topology: wgpu::PrimitiveTopology::TriangleList,
@@ -87,6 +88,7 @@ impl PipeLineLayout for TextRenderPipeline {
                         ),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
+                    compilation_options: Default::default(),
                 }),
                 multiview: None,
             },

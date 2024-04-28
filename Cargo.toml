@@ -36,11 +36,11 @@ version = "0.2.0"
 [workspace.dependencies.naga]
 #git = "https://github.com/gfx-rs/naga"
 #rev = "76003dc0035d53a474d366dcdf49d2e4d12e921f"
-version = "0.19.2"
+version = "0.20.0"
 features = ["wgsl-in"]
 
 [workspace.dependencies.wgpu]
 #git = "https://github.com/gfx-rs/wgpu"
 #rev = "061e04b"
 #path = "../wgpu-trunk/wgpu"
-version = "0.19.0"
+version = "0.20.0"
