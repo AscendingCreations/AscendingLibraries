@@ -22,7 +22,7 @@ slab = "0.4.9"
 smol_str = "0.2.1"
 indexmap = "2.2.6"
 genr = "0.1.0"
-thunderdome = "0.6.1"
+slotmap = "1.0.7"
 ahash = {version = "0.8.11", features = ["serde"]}
 
 [workspace.dependencies.camera]

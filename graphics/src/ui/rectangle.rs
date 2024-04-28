@@ -8,7 +8,7 @@ pub struct Rect {
     pub position: Vec3,
     pub size: Vec2,
     pub color: Color,
-    pub image: Option<usize>,
+    pub image: Option<Index>,
     pub uv: Vec4,
     pub border_width: f32,
     pub border_color: Color,

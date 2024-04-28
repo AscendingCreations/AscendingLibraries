@@ -32,7 +32,7 @@ pub struct Image {
     pub animate: bool,
     pub use_camera: bool,
     /// Texture area location in Atlas.
-    pub texture: Option<usize>,
+    pub texture: Option<Index>,
     pub store_id: Index,
     pub order: DrawOrder,
     pub render_layer: u32,
@@ -43,7 +43,7 @@ pub struct Image {
 
 impl Image {
     pub fn new(
-        texture: Option<usize>,
+        texture: Option<Index>,
         renderer: &mut GpuRenderer,
         render_layer: u32,
     ) -> Self {

@@ -4,7 +4,7 @@ use crate::{
     StaticBufferObject,
 };
 use cosmic_text::FontSystem;
-use genr::{generational::Generational, gvec::GVec};
+use slotmap::SlotMap;
 use std::rc::Rc;
 
 use winit::{dpi::PhysicalSize, event::Event, window::Window};
@@ -13,7 +13,7 @@ use winit::{dpi::PhysicalSize, event::Event, window::Window};
 pub struct GpuRenderer {
     pub(crate) window: GpuWindow,
     pub(crate) device: GpuDevice,
-    pub(crate) buffer_stores: GVec<BufferStore>,
+    pub(crate) buffer_stores: SlotMap<Index, BufferStore>,
     pub(crate) layout_storage: LayoutStorage,
     pub(crate) pipeline_storage: PipelineStorage,
     pub(crate) depthbuffer: wgpu::TextureView,
@@ -51,7 +51,7 @@ impl GpuRenderer {
         Self {
             window,
             device,
-            buffer_stores: GVec::new(),
+            buffer_stores: SlotMap::new(),
             layout_storage: LayoutStorage::new(),
             pipeline_storage: PipelineStorage::new(),
             depthbuffer: depth_buffer,

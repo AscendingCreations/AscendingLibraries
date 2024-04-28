@@ -1,12 +1,11 @@
 use crate::{
-    AHashMap, AHashSet, Allocation, Atlas, GpuRenderer, TextureGroup,
+    AHashMap, AHashSet, Allocation, Atlas, GpuRenderer, Index, TextureGroup,
     TextureLayout, UVec3,
 };
 use lru::LruCache;
-use slab::Slab;
+use slotmap::SlotMap;
 use std::hash::Hash;
 use wgpu::BindGroup;
-
 /**
  * AtlasSet is used to hold and contain the data of many Atlas layers.
  * Each Atlas keeps track of the allocations allowed. Each allocation is a
@@ -50,17 +49,17 @@ pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
     /// Store the Allocations se we can easily remove and update them.
     /// use a Generation id to avoid conflict if users use older allocation id's.
     /// Also stores the Key associated with the Allocation.
-    pub store: Slab<(Allocation<Data>, U)>,
+    pub store: SlotMap<Index, (Allocation<Data>, U)>,
     /// for key to index lookups.
-    pub lookup: AHashMap<U, usize>,
+    pub lookup: AHashMap<U, Index>,
     /// keeps a list of least used allocations so we can unload them when need be.
     /// Also include the RefCount per ID lookup.
     /// we use this to keep track of when Fonts need to be unloaded.
     /// this only helps to get memory back but does not fix fragmentation of the Atlas.
-    pub cache: LruCache<usize, usize>,
+    pub cache: LruCache<Index, usize>,
     /// List of allocations used in the last frame to ensure we dont unload what is
     /// in use.
-    pub last_used: AHashSet<usize>,
+    pub last_used: AHashSet<Index>,
     /// Format the Texture uses.
     pub format: wgpu::TextureFormat,
     /// When the System will Error if reached. This is the max allowed Layers
@@ -282,7 +281,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 Atlas::new(limits.max_texture_dimension_3d),
                 Atlas::new(limits.max_texture_dimension_3d),
             ],
-            store: Slab::new(),
+            store: SlotMap::with_capacity(512),
             lookup: AHashMap::new(),
             extent,
             cache: LruCache::unbounded(),
@@ -362,13 +361,13 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         }
     }
 
-    pub fn promote(&mut self, id: usize) {
+    pub fn promote(&mut self, id: Index) {
         self.cache.promote(&id);
         self.last_used.insert(id);
     }
 
     /// Get the ID of a image if it is loaded.
-    pub fn lookup(&self, key: &U) -> Option<usize> {
+    pub fn lookup(&self, key: &U) -> Option<Index> {
         self.lookup.get(key).copied()
     }
 
@@ -380,7 +379,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         }
     }
 
-    pub fn peek(&mut self, id: usize) -> Option<&(Allocation<Data>, U)> {
+    pub fn peek(&mut self, id: Index) -> Option<&(Allocation<Data>, U)> {
         self.store.get(id)
     }
 
@@ -388,8 +387,8 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         self.lookup.contains_key(key)
     }
 
-    pub fn contains(&mut self, id: usize) -> bool {
-        self.store.contains(id)
+    pub fn contains(&mut self, id: Index) -> bool {
+        self.store.contains_key(id)
     }
 
     pub fn get_by_key(&mut self, key: &U) -> Option<Allocation<Data>> {
@@ -403,7 +402,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         None
     }
 
-    pub fn get(&mut self, id: usize) -> Option<Allocation<Data>> {
+    pub fn get(&mut self, id: Index) -> Option<Allocation<Data>> {
         if let Some((allocation, _)) = self.store.get(id) {
             self.cache.promote(&id);
             self.last_used.insert(id);
@@ -430,7 +429,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             return None;
         }
 
-        let (allocation, _) = self.store.remove(id);
+        let (allocation, _) = self.store.remove(id)?;
         self.last_used.remove(&id);
         self.lookup.remove(key);
         self.layers
@@ -440,7 +439,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     }
 
     // returns the layer id if removed otherwise None for everything else.
-    pub fn remove(&mut self, id: usize) -> Option<usize> {
+    pub fn remove(&mut self, id: Index) -> Option<usize> {
         let refcount = self.cache.pop(&id)?.saturating_sub(1);
 
         if self.use_ref_count && refcount > 0 {
@@ -448,7 +447,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             return None;
         }
 
-        let (allocation, key) = self.store.remove(id);
+        let (allocation, key) = self.store.remove(id)?;
         self.last_used.remove(&id);
         self.lookup.remove(&key);
         self.layers
@@ -466,7 +465,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         height: u32,
         data: Data,
         renderer: &GpuRenderer,
-    ) -> Option<usize> {
+    ) -> Option<Index> {
         if let Some(&id) = self.lookup.get(&key) {
             Some(id)
         } else {
@@ -496,7 +495,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         height: u32,
         data: Data,
         renderer: &GpuRenderer,
-    ) -> Option<(usize, Allocation<Data>)> {
+    ) -> Option<(Index, Allocation<Data>)> {
         if let Some(&id) = self.lookup.get(&key) {
             let (allocation, _) = self.store.get(id)?;
             Some((id, *allocation))

@@ -37,4 +37,4 @@ slab.workspace = true
 indexmap.workspace = true
 genr.workspace = true
 ahash.workspace = true
-thunderdome.workspace = true
+slotmap.workspace = true

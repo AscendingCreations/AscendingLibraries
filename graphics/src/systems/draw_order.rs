@@ -1,8 +1,7 @@
 use crate::{Bounds, Vec2, Vec3};
-use genr::generational::GIdx;
 use std::cmp::Ordering;
 
-pub type Index = GIdx;
+pub type Index = slotmap::DefaultKey;
 
 #[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub struct DrawOrder {

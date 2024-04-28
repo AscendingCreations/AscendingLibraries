@@ -12,7 +12,7 @@ use crate::{
     Color, DrawOrder, DrawType, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
     Vec4,
 };
-use slab::Slab;
+use slotmap::SlotMap;
 use std::mem;
 use wgpu::util::align_to;
 
@@ -78,8 +78,8 @@ pub struct Lights {
     pub store_id: Index,
     pub order: DrawOrder,
     pub render_layer: u32,
-    pub area_lights: Slab<AreaLight>,
-    pub directional_lights: Slab<DirectionalLight>,
+    pub area_lights: SlotMap<Index, AreaLight>,
+    pub directional_lights: SlotMap<Index, DirectionalLight>,
     pub area_count: u32,
     pub dir_count: u32,
     /// if anything got updated we need to update the buffers too.
@@ -99,8 +99,8 @@ impl Lights {
             ),
             order: DrawOrder::default(),
             render_layer,
-            area_lights: Slab::with_capacity(MAX_AREA_LIGHTS),
-            directional_lights: Slab::with_capacity(MAX_DIR_LIGHTS),
+            area_lights: SlotMap::with_capacity(MAX_AREA_LIGHTS),
+            directional_lights: SlotMap::with_capacity(MAX_DIR_LIGHTS),
             area_count: 0,
             dir_count: 0,
             changed: true,
@@ -139,7 +139,7 @@ impl Lights {
         self.changed = false;
     }
 
-    pub fn insert_area_light(&mut self, light: AreaLight) -> Option<usize> {
+    pub fn insert_area_light(&mut self, light: AreaLight) -> Option<Index> {
         if self.area_lights.len() + 1 >= MAX_AREA_LIGHTS {
             return None;
         }
@@ -149,13 +149,13 @@ impl Lights {
         Some(self.area_lights.insert(light))
     }
 
-    pub fn remove_area_light(&mut self, key: usize) {
+    pub fn remove_area_light(&mut self, key: Index) {
         self.areas_changed = true;
         self.changed = true;
         self.area_lights.remove(key);
     }
 
-    pub fn get_mut_area_light(&mut self, key: usize) -> Option<&mut AreaLight> {
+    pub fn get_mut_area_light(&mut self, key: Index) -> Option<&mut AreaLight> {
         self.areas_changed = true;
         self.area_lights.get_mut(key)
     }
@@ -163,7 +163,7 @@ impl Lights {
     pub fn insert_directional_light(
         &mut self,
         light: DirectionalLight,
-    ) -> Option<usize> {
+    ) -> Option<Index> {
         if self.directional_lights.len() + 1 >= MAX_DIR_LIGHTS {
             return None;
         }
@@ -173,7 +173,7 @@ impl Lights {
         Some(self.directional_lights.insert(light))
     }
 
-    pub fn remove_directional_light(&mut self, key: usize) {
+    pub fn remove_directional_light(&mut self, key: Index) {
         self.directionals_changed = true;
         self.changed = true;
         self.directional_lights.remove(key);
@@ -181,7 +181,7 @@ impl Lights {
 
     pub fn get_mut_directional_light(
         &mut self,
-        key: usize,
+        key: Index,
     ) -> Option<&mut DirectionalLight> {
         self.directionals_changed = true;
         self.directional_lights.get_mut(key)

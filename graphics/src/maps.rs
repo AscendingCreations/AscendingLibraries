@@ -12,6 +12,7 @@ use crate::{
     AtlasSet, DrawOrder, DrawType, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
 };
 use cosmic_text::Color;
+use slotmap::Key;
 
 #[allow(dead_code)]
 #[derive(Copy, Clone, PartialEq, PartialOrd)]
@@ -75,14 +76,14 @@ impl MapLayers {
 #[derive(Copy, Clone)]
 pub struct TileData {
     ///tiles allocation ID within the texture.
-    pub id: usize,
+    pub id: Index,
     pub color: Color,
 }
 
 impl Default for TileData {
     fn default() -> Self {
         Self {
-            id: 0,
+            id: Index::default(),
             color: Color::rgba(255, 255, 255, 255),
         }
     }
@@ -140,7 +141,7 @@ impl Map {
                     let tile = &self.tiles
                         [(x + (y * 32) + (layer as u32 * 1024)) as usize];
 
-                    if tile.id == 0 {
+                    if tile.id.is_null() {
                         continue;
                     }
 
@@ -249,12 +250,12 @@ impl Map {
         let tilepos = (pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize;
         let current_tile = self.tiles[tilepos];
 
-        if (current_tile.id > 0 || current_tile.color.a() > 0)
-            && (tile.color.a() == 0 || tile.id == 0)
+        if (!current_tile.id.is_null() || current_tile.color.a() > 0)
+            && (tile.color.a() == 0 || tile.id.is_null())
         {
             self.filled_tiles[pos.2 as usize] =
                 self.filled_tiles[pos.2 as usize].saturating_sub(1);
-        } else if tile.color.a() > 0 || tile.id > 0 {
+        } else if tile.color.a() > 0 || tile.id > Index::default() {
             self.filled_tiles[pos.2 as usize] =
                 self.filled_tiles[pos.2 as usize].saturating_add(1);
         }

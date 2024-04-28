@@ -26,5 +26,7 @@ pub use static_vbo::*;
 pub use system::*;
 pub use vbo::*;
 
-#[allow(unused_imports)]
-pub(crate) use ahash::{AHashMap, AHashSet};
+pub(crate) use ahash::{AHashMap, AHashSet, AHasher};
+
+pub(crate) type ABuildHasher = std::hash::BuildHasherDefault<AHasher>;
+pub(crate) type AIndexSet<K> = indexmap::IndexSet<K, ABuildHasher>;
