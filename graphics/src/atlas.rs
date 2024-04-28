@@ -10,7 +10,7 @@ pub use atlas_set::AtlasSet;
 pub struct Atlas {
     // handles the space allocation of the layer.
     pub allocator: Allocator,
-    //Stores each slab index the allocations exist at for this layer.
+    //Stores each Index the allocations exist at for this layer.
     pub allocated: AIndexSet<Index>,
     // use to avoid placing newly loaded images into
     //if we are migrating images out of it.
