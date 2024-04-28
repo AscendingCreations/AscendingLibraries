@@ -281,7 +281,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 Atlas::new(limits.max_texture_dimension_3d),
                 Atlas::new(limits.max_texture_dimension_3d),
             ],
-            store: SlotMap::with_capacity(512),
+            store: SlotMap::with_capacity_and_key(512),
             lookup: AHashMap::new(),
             extent,
             cache: LruCache::unbounded(),

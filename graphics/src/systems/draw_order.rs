@@ -1,7 +1,12 @@
 use crate::{Bounds, Vec2, Vec3};
+use slotmap::new_key_type;
 use std::cmp::Ordering;
 
-pub type Index = slotmap::DefaultKey;
+new_key_type! {
+    pub struct AscendingKey;
+}
+
+pub type Index = AscendingKey;
 
 #[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub struct DrawOrder {
