@@ -22,6 +22,7 @@ pub use layout::*;
 pub use pass::*;
 pub use pipelines::*;
 pub use renderer::*;
+pub use slotmap::KeyData;
 pub use static_vbo::*;
 pub use system::*;
 pub use vbo::*;
