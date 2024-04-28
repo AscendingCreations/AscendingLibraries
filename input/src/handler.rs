@@ -4,8 +4,8 @@ use super::{
     button::Button,
     Key, Location, ModifiersState, MouseButton, PhysicalPosition,
 };
+use ahash::{AHashMap, AHashSet};
 use std::{
-    collections::{HashMap, HashSet},
     hash::Hash,
     time::{Duration, Instant},
 };
@@ -82,9 +82,9 @@ where
     /// The bindings.
     bindings: Bindings<ActionId, AxisId>,
     /// The set of keys that are currently pressed down by their virtual key code.
-    pub keys: HashMap<Key, Location>,
+    pub keys: AHashMap<Key, Location>,
     /// The set of mouse buttons that are currently pressed down.
-    pub mouse_buttons: HashSet<winit::event::MouseButton>,
+    pub mouse_buttons: AHashSet<winit::event::MouseButton>,
     /// The current mouse position.
     pub physical_mouse_position: Option<PhysicalPosition<f64>>,
     /// The current mouse position.
@@ -96,7 +96,7 @@ where
     /// The current state of the mouse wheel.
     pub mouse_wheel: (f32, f32),
     ///key modifiers can tell if left or right keys.
-    pub modifiers: HashSet<Modifier>,
+    pub modifiers: AHashSet<Modifier>,
     ///key modifiers state can not tell if left or right keys.
     pub modifiers_state: ModifiersState,
     ///Current Mouse button presses in action. Please refer to the input_events
@@ -295,14 +295,14 @@ where
     ) -> Self {
         Self {
             bindings,
-            keys: HashMap::new(),
-            mouse_buttons: HashSet::new(),
+            keys: AHashMap::new(),
+            mouse_buttons: AHashSet::new(),
             physical_mouse_position: None,
             mouse_position: None,
             last_mouse_position: None,
             mouse_delta: (0.0, 0.0),
             mouse_wheel: (0.0, 0.0),
-            modifiers: HashSet::new(),
+            modifiers: AHashSet::new(),
             modifiers_state: ModifiersState::default(),
             mouse_button_action: MouseButtonAction::None,
             mouse_action_timer: Instant::now(),

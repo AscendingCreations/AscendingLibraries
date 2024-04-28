@@ -26,7 +26,5 @@ pub use static_vbo::*;
 pub use system::*;
 pub use vbo::*;
 
-pub(crate) type FxBuildHasher =
-    std::hash::BuildHasherDefault<ritehash::FxHasher>;
-pub(crate) type FxHashMap<K, V> =
-    std::collections::HashMap<K, V, FxBuildHasher>;
+#[allow(unused_imports)]
+pub(crate) use ahash::{AHashMap, AHashSet};

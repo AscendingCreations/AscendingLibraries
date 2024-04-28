@@ -1,12 +1,10 @@
 use crate::{
-    Allocation, Atlas, GpuRenderer, TextureGroup, TextureLayout, UVec3,
+    AHashMap, AHashSet, Allocation, Atlas, GpuRenderer, TextureGroup,
+    TextureLayout, UVec3,
 };
 use lru::LruCache;
 use slab::Slab;
-use std::{
-    collections::{HashMap, HashSet},
-    hash::Hash,
-};
+use std::hash::Hash;
 use wgpu::BindGroup;
 
 /**
@@ -54,7 +52,7 @@ pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
     /// Also stores the Key associated with the Allocation.
     pub store: Slab<(Allocation<Data>, U)>,
     /// for key to index lookups.
-    pub lookup: HashMap<U, usize>,
+    pub lookup: AHashMap<U, usize>,
     /// keeps a list of least used allocations so we can unload them when need be.
     /// Also include the RefCount per ID lookup.
     /// we use this to keep track of when Fonts need to be unloaded.
@@ -62,7 +60,7 @@ pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
     pub cache: LruCache<usize, usize>,
     /// List of allocations used in the last frame to ensure we dont unload what is
     /// in use.
-    pub last_used: HashSet<usize>,
+    pub last_used: AHashSet<usize>,
     /// Format the Texture uses.
     pub format: wgpu::TextureFormat,
     /// When the System will Error if reached. This is the max allowed Layers
@@ -285,10 +283,10 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 Atlas::new(limits.max_texture_dimension_3d),
             ],
             store: Slab::new(),
-            lookup: HashMap::new(),
+            lookup: AHashMap::new(),
             extent,
             cache: LruCache::unbounded(),
-            last_used: HashSet::default(),
+            last_used: AHashSet::default(),
             format,
             max_layers: limits.max_texture_array_layers as usize,
             deallocations_limit: 32,

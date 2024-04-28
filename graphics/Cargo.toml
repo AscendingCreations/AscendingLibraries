@@ -36,3 +36,5 @@ lyon.workspace = true
 slab.workspace = true
 indexmap.workspace = true
 genr.workspace = true
+ahash.workspace = true
+thunderdome.workspace = true

@@ -1,7 +1,7 @@
 use super::axis::Axis;
 use super::button::Button;
+use ahash::AHashMap;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::hash::Hash;
 
 /// Represents a collection of bindings mapping inputs to actions and axes for various input
@@ -13,9 +13,9 @@ where
     AxisId: Clone + Eq + Hash + Send + Sync,
 {
     /// A mapping from the action ID to an array of button combinations.
-    pub(super) actions: HashMap<ActionId, Vec<Vec<Button>>>,
+    pub(super) actions: AHashMap<ActionId, Vec<Vec<Button>>>,
     /// A mapping from the axis ID to an array of axes.
-    pub(super) axes: HashMap<AxisId, Vec<Axis>>,
+    pub(super) axes: AHashMap<AxisId, Vec<Axis>>,
 }
 
 impl<'de, ActionId, AxisId> Bindings<ActionId, AxisId>
@@ -56,8 +56,8 @@ where
 
     pub fn new() -> Self {
         Self {
-            actions: HashMap::new(),
-            axes: HashMap::new(),
+            actions: AHashMap::new(),
+            axes: AHashMap::new(),
         }
     }
 }

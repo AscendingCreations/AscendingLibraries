@@ -1,4 +1,4 @@
-use crate::{FxHashMap, GpuDevice};
+use crate::{AHashMap, GpuDevice};
 use bytemuck::{Pod, Zeroable};
 use std::{
     any::{Any, TypeId},
@@ -22,13 +22,13 @@ pub trait Layout: Pod + Zeroable {
 
 pub struct LayoutStorage {
     pub(crate) bind_group_map:
-        FxHashMap<(TypeId, Vec<u8>), Rc<wgpu::BindGroupLayout>>,
+        AHashMap<(TypeId, Vec<u8>), Rc<wgpu::BindGroupLayout>>,
 }
 
 impl LayoutStorage {
     pub fn new() -> Self {
         Self {
-            bind_group_map: FxHashMap::default(),
+            bind_group_map: AHashMap::default(),
         }
     }
 

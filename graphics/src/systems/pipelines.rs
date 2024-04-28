@@ -1,4 +1,4 @@
-use crate::{FxHashMap, GpuDevice, LayoutStorage};
+use crate::{AHashMap, GpuDevice, LayoutStorage};
 use bytemuck::{Pod, Zeroable};
 use std::any::{Any, TypeId};
 
@@ -20,13 +20,13 @@ pub trait PipeLineLayout: Pod + Zeroable {
 }
 
 pub struct PipelineStorage {
-    pub(crate) map: FxHashMap<(TypeId, Vec<u8>), wgpu::RenderPipeline>,
+    pub(crate) map: AHashMap<(TypeId, Vec<u8>), wgpu::RenderPipeline>,
 }
 
 impl PipelineStorage {
     pub fn new() -> Self {
         Self {
-            map: FxHashMap::default(),
+            map: AHashMap::default(),
         }
     }
 
