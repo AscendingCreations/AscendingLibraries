@@ -307,7 +307,7 @@ where
             mouse_button_action: MouseButtonAction::None,
             mouse_action_timer: Instant::now(),
             window_focused: true,
-            input_events: Vec::new(),
+            input_events: Vec::with_capacity(4),
             click_duration,
         }
     }
