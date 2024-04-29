@@ -51,7 +51,7 @@ impl GpuRenderer {
         Self {
             window,
             device,
-            buffer_stores: SlotMap::with_key(),
+            buffer_stores: SlotMap::with_capacity_and_key(1024),
             layout_storage: LayoutStorage::new(),
             pipeline_storage: PipelineStorage::new(),
             depthbuffer: depth_buffer,
