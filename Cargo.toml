@@ -22,6 +22,7 @@ smol_str = "0.2.1"
 indexmap = "2.2.6"
 slotmap = "1.0.7"
 ahash = {version = "0.8.11", features = ["serde"]}
+slab = "0.4.9"
 
 [workspace.dependencies.camera]
 package = "ascending_camera"

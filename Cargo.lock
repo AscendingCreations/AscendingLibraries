@@ -156,6 +156,7 @@ dependencies = [
  "naga",
  "ritehash",
  "serde",
+ "slab",
  "slotmap",
  "thiserror",
  "wgpu",

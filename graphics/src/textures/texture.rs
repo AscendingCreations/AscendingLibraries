@@ -1,6 +1,4 @@
-use crate::{
-    Allocation, AtlasSet, GpuRenderer, GraphicsError, Index, TileSheet,
-};
+use crate::{Allocation, AtlasSet, GpuRenderer, GraphicsError, TileSheet};
 use image::{DynamicImage, GenericImageView, ImageFormat};
 use std::{
     io::{Error, ErrorKind},
@@ -35,7 +33,7 @@ impl Texture {
         path: impl AsRef<Path>,
         atlas: &mut AtlasSet<String, i32>,
         renderer: &GpuRenderer,
-    ) -> Option<Index> {
+    ) -> Option<usize> {
         let name = path.as_ref().to_str()?.to_owned();
 
         if let Some(id) = atlas.lookup(&name) {
@@ -51,7 +49,7 @@ impl Texture {
         path: impl AsRef<Path>,
         atlas: &mut AtlasSet<String, i32>,
         renderer: &GpuRenderer,
-    ) -> Option<(Index, Allocation)> {
+    ) -> Option<(usize, Allocation)> {
         let name = path.as_ref().to_str()?.to_owned();
 
         if let Some(id) = atlas.lookup(&name) {
@@ -99,7 +97,7 @@ impl Texture {
         &self,
         atlas: &mut AtlasSet<String, i32>,
         renderer: &GpuRenderer,
-    ) -> Option<Index> {
+    ) -> Option<usize> {
         let (width, height) = self.size;
         atlas.upload(self.name.clone(), &self.bytes, width, height, 0, renderer)
     }
@@ -108,7 +106,7 @@ impl Texture {
         &self,
         atlas: &mut AtlasSet<String, i32>,
         renderer: &GpuRenderer,
-    ) -> Option<(Index, Allocation)> {
+    ) -> Option<(usize, Allocation)> {
         let (width, height) = self.size;
         atlas.upload_with_alloc(
             self.name.clone(),

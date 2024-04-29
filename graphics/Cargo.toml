@@ -36,3 +36,4 @@ lyon.workspace = true
 indexmap.workspace = true
 ahash.workspace = true
 slotmap.workspace = true
+slab.workspace = true

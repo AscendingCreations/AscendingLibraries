@@ -2,7 +2,7 @@ mod allocation;
 mod allocator;
 mod atlas_set;
 
-use crate::{AIndexSet, Index};
+use crate::AIndexSet;
 pub use allocation::Allocation;
 pub use allocator::Allocator;
 pub use atlas_set::AtlasSet;
@@ -11,7 +11,7 @@ pub struct Atlas {
     // handles the space allocation of the layer.
     pub allocator: Allocator,
     //Stores each Index the allocations exist at for this layer.
-    pub allocated: AIndexSet<Index>,
+    pub allocated: AIndexSet<usize>,
     // use to avoid placing newly loaded images into
     //if we are migrating images out of it.
     pub migrating: bool,
@@ -34,7 +34,7 @@ impl Atlas {
         self.allocator.allocate(width, height)
     }
 
-    pub fn insert_index(&mut self, index: Index) {
+    pub fn insert_index(&mut self, index: usize) {
         self.allocated.insert(index);
     }
 
@@ -46,7 +46,7 @@ impl Atlas {
 
     pub fn deallocate(
         &mut self,
-        index: Index,
+        index: usize,
         allocation: guillotiere::Allocation,
     ) {
         self.allocated.swap_remove(&index);

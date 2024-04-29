@@ -1,4 +1,4 @@
-use crate::{AtlasSet, GpuRenderer, Index, Texture};
+use crate::{AtlasSet, GpuRenderer, Texture};
 use image::{EncodableLayout, ImageBuffer, RgbaImage};
 
 //used to map the tile in the tilesheet back visually
@@ -9,7 +9,7 @@ pub struct Tile {
     pub x: u32,
     pub y: u32,
     /// Texture ID to reload the above if needed.
-    pub tex_id: Index,
+    pub tex_id: usize,
 }
 
 #[derive(Debug, Default)]
