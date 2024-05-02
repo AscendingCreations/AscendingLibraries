@@ -73,6 +73,7 @@ impl DirectionalLight {
 
 /// rendering data for world Light and all Lights.
 pub struct Lights {
+    pub z: f32,
     pub world_color: Vec4,
     pub enable_lights: bool,
     pub store_id: Index,
@@ -89,8 +90,9 @@ pub struct Lights {
 }
 
 impl Lights {
-    pub fn new(renderer: &mut GpuRenderer, render_layer: u32) -> Self {
+    pub fn new(renderer: &mut GpuRenderer, render_layer: u32, z: f32) -> Self {
         Self {
+            z,
             world_color: Vec4::new(1.0, 1.0, 1.0, 0.0),
             enable_lights: false,
             store_id: renderer.new_buffer(
@@ -119,6 +121,7 @@ impl Lights {
             enable_lights: u32::from(self.enable_lights),
             dir_count: self.directional_lights.len() as u32,
             area_count: self.area_lights.len() as u32,
+            z: self.z,
         };
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
