@@ -1,6 +1,6 @@
 use crate::{
     AsBufferPass, Bounds, Buffer, BufferData, BufferLayout, BufferPass,
-    GpuDevice, GpuRenderer, OrderedIndex,
+    CameraType, GpuDevice, GpuRenderer, OrderedIndex,
 };
 use std::ops::Range;
 //This Holds onto all the Vertexs Compressed into a byte array.
@@ -13,7 +13,7 @@ pub struct IndexDetails {
     pub vertex_base: i32,
 }
 
-pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>);
+pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>, CameraType);
 
 pub struct GpuBuffer<K: BufferLayout> {
     unprocessed: Vec<Vec<OrderedIndex>>,
@@ -207,6 +207,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
                             vertex_base,
                         },
                         buf.bounds,
+                        buf.camera_type,
                     ));
                 }
             }

@@ -10,7 +10,7 @@ pub struct ImageVertex {
     pub color: u32,
     pub frames: [f32; 2],
     pub animate: u32,
-    pub use_camera: u32,
+    pub camera_type: u32,
     pub time: u32,
     pub layer: i32,
 }
@@ -24,7 +24,7 @@ impl Default for ImageVertex {
             color: 0,
             frames: [0.0; 2],
             animate: 0,
-            use_camera: 1,
+            camera_type: 1,
             time: 0,
             layer: 0,
         }

@@ -60,7 +60,7 @@ impl BufferLayout for Mesh2DVertex {
 pub struct VertexBuilder {
     pub z: f32,
     pub color: Color,
-    pub camera: bool,
+    pub camera: u32,
 }
 
 impl VertexBuilder {
@@ -68,7 +68,7 @@ impl VertexBuilder {
         Mesh2DVertex {
             position: [position.x, position.y, self.z],
             color: self.color.0,
-            camera: u32::from(self.camera),
+            camera: self.camera,
         }
     }
 }
@@ -79,7 +79,7 @@ impl tess::StrokeVertexConstructor<Mesh2DVertex> for VertexBuilder {
         Mesh2DVertex {
             position: [position.x, position.y, self.z],
             color: self.color.0,
-            camera: u32::from(self.camera),
+            camera: self.camera,
         }
     }
 }
@@ -90,7 +90,7 @@ impl tess::FillVertexConstructor<Mesh2DVertex> for VertexBuilder {
         Mesh2DVertex {
             position: [position.x, position.y, self.z],
             color: self.color.0,
-            camera: u32::from(self.camera),
+            camera: self.camera,
         }
     }
 }

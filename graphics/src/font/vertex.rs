@@ -9,7 +9,7 @@ pub struct TextVertex {
     pub tex_coord: [f32; 2],
     pub layer: u32,
     pub color: u32,
-    pub use_camera: u32,
+    pub camera_type: u32,
     pub is_color: u32,
 }
 
@@ -21,7 +21,7 @@ impl Default for TextVertex {
             tex_coord: [0.0; 2],
             layer: 0,
             color: 0,
-            use_camera: 0,
+            camera_type: 0,
             is_color: 0,
         }
     }

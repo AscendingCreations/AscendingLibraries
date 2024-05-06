@@ -1,6 +1,6 @@
 use crate::{
-    DrawOrder, DrawType, GpuRenderer, GraphicsError, Index, Mesh2DVertex,
-    OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
+    CameraType, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
+    Mesh2DVertex, OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
 };
 use cosmic_text::Color;
 use lyon::{
@@ -134,7 +134,7 @@ pub struct Mesh2DBuilder {
     bounds: Vec4,
     z: f32,
     high_index: u32,
-    use_camera: bool,
+    camera_type: CameraType,
 }
 
 impl Default for Mesh2DBuilder {
@@ -144,15 +144,15 @@ impl Default for Mesh2DBuilder {
             bounds: Vec4::new(0.0, 0.0, 0.0, 0.0),
             z: 1.0,
             high_index: 0,
-            use_camera: false,
+            camera_type: CameraType::None,
         }
     }
 }
 
 impl Mesh2DBuilder {
-    pub fn with_camera() -> Self {
+    pub fn with_camera(camera_type: CameraType) -> Self {
         Self {
-            use_camera: true,
+            camera_type,
             ..Self::default()
         }
     }
@@ -208,7 +208,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.use_camera,
+                camera: self.camera_type as u32,
             };
             match mode {
                 DrawMode::Fill(fill_options) => {
@@ -251,7 +251,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.use_camera,
+                camera: self.camera_type as u32,
             };
             match mode {
                 DrawMode::Fill(fill_options) => {
@@ -326,7 +326,7 @@ impl Mesh2DBuilder {
         let vb = VertexBuilder {
             z,
             color,
-            camera: self.use_camera,
+            camera: self.camera_type as u32,
         };
         self.polyline_with_vertex_builder(mode, points, is_closed, vb)
     }
@@ -348,10 +348,7 @@ impl Mesh2DBuilder {
             let points: Vec<LPoint> = points
                 .iter()
                 .cloned()
-                .map(|p| {
-                    let mint_point: mint::Point2<f32> = p.into();
-                    tess::math::point(mint_point.x, mint_point.y)
-                })
+                .map(|p| tess::math::point(p.x, p.y))
                 .collect();
             let polygon = Polygon {
                 points: &points,
@@ -391,7 +388,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.use_camera,
+                camera: self.camera_type as u32,
             };
             match mode {
                 DrawMode::Fill(fill_options) => {
@@ -432,7 +429,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.use_camera,
+                camera: self.camera_type as u32,
             };
             let mut path_builder = tess::path::Path::builder();
             path_builder.add_rounded_rectangle(
@@ -483,7 +480,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.use_camera,
+                camera: self.camera_type as u32,
             };
             for tri in tris {
                 assert!(tri.len() == 3);

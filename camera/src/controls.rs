@@ -12,7 +12,7 @@ pub trait Controls {
     fn update(&mut self, delta: f32) -> bool;
 
     /// Retrieves the view matrix.
-    fn view(&self) -> mint::ColumnMatrix4<f32>;
+    fn view(&self) -> Mat4;
 
     ///returns the scale if one exists. otherwise 1.0
     fn scale(&self) -> f32 {
@@ -25,4 +25,5 @@ pub use first_person::{
 };
 pub use flat::{FlatControls, FlatInputs, FlatSettings};
 pub use flying::{FlyingControls, FlyingInputs, FlyingSettings};
+pub use glam::Mat4;
 pub use orbit::{OrbitControls, OrbitInputs, OrbitSettings};

@@ -1,6 +1,6 @@
 [package]
 name = "ascending_graphics"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["S.J.R. van Schaik", "Andrew Wheeler <genusistimelord@gmail.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
@@ -17,7 +17,6 @@ default = []
 [dependencies]
 async-trait.workspace = true
 bytemuck.workspace = true
-mint.workspace = true
 thiserror.workspace = true
 winit.workspace = true
 image.workspace = true

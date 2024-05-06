@@ -6,6 +6,8 @@ struct Global {
     scale: f32,
     size: vec2<f32>,
     seconds: f32,
+    manual_view: mat4x4<f32>,
+    manual_scale: f32,
 };
 
 @group(0)
@@ -21,7 +23,7 @@ struct VertexInput {
     @location(4) color: u32,
     @location(5) frames: vec2<f32>,
     @location(6) animate: u32,
-    @location(7) use_camera: u32,
+    @location(7) camera_type: u32,
     @location(8) time: u32,
     @location(9) layer: i32,
 };
@@ -93,10 +95,36 @@ fn vertex(
         }
     }
 
-    if (vertex.use_camera == 1u) {
-        result.clip_position = (global.proj * global.view) * vec4<f32>(pos, 1.0);
-    } else {
-        result.clip_position = global.proj * vec4<f32>(pos, 1.0);
+    switch vertex.camera_type {
+        case 1u: {
+            result.clip_position = (global.proj * global.view) * vec4<f32>(pos, 1.0);
+        }
+        case 2u: {
+            let scale_mat = mat4x4<f32> (
+                vec4<f32>(global.scale, 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, global.scale, 0.0, 0.0),
+                vec4<f32>(0.0, 0.0, 1.0, 0.0),
+                vec4<f32>(0.0, 0.0, 0.0, 1.0),
+            );
+
+            result.clip_position = (global.proj * global.view * scale_mat) * vec4<f32>(pos, 1.0);
+        }
+        case 3u: {
+            result.clip_position = (global.proj * global.manual_view) * vec4<f32>(pos, 1.0);
+        }
+        case 4u: {
+            let scale_mat = mat4x4<f32> (
+                vec4<f32>(global.manual_scale, 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, global.manual_scale, 0.0, 0.0),
+                vec4<f32>(0.0, 0.0, 1.0, 0.0),
+                vec4<f32>(0.0, 0.0, 0.0, 1.0),
+            );
+
+            result.clip_position = (global.proj * global.manual_view * scale_mat) * vec4<f32>(pos, 1.0);
+        }
+        default: {
+            result.clip_position = global.proj * vec4<f32>(pos, 1.0);
+        }
     }
 
     result.tex_data = tex_data;

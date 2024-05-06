@@ -1,5 +1,6 @@
 use crate::{
-    Bounds, Buffer, BufferLayout, GpuDevice, GpuRenderer, OrderedIndex,
+    Bounds, Buffer, BufferLayout, CameraType, GpuDevice, GpuRenderer,
+    OrderedIndex,
 };
 use std::ops::Range;
 
@@ -8,7 +9,7 @@ pub struct InstanceDetails {
     pub end: u32,
 }
 
-pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>);
+pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>, CameraType);
 
 //This Holds onto all the instances Compressed into a byte array.
 pub struct InstanceBuffer<K: BufferLayout> {
@@ -170,6 +171,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
                                 end: count,
                             },
                             buf.bounds,
+                            buf.camera_type,
                         ));
                     }
 

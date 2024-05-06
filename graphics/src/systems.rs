@@ -31,3 +31,12 @@ pub(crate) use ahash::{AHashMap, AHashSet, AHasher};
 
 pub(crate) type ABuildHasher = std::hash::BuildHasherDefault<AHasher>;
 pub(crate) type AIndexSet<K> = indexmap::IndexSet<K, ABuildHasher>;
+
+#[derive(Copy, Clone, Debug)]
+pub enum CameraType {
+    None,
+    ControlView,
+    ControlViewWithScale,
+    ManualView,
+    ManualViewWithScale,
+}

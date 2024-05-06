@@ -9,7 +9,8 @@ pub use vertex::*;
 use std::iter;
 
 use crate::{
-    AtlasSet, DrawOrder, DrawType, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
+    AtlasSet, CameraType, DrawOrder, DrawType, GpuRenderer, Index,
+    OrderedIndex, Vec2, Vec3,
 };
 use cosmic_text::Color;
 
@@ -113,6 +114,7 @@ pub struct Map {
     pub tilesize: u32,
     // Used to deturmine if the map can be rendered or if its just a preload.
     pub can_render: bool,
+    pub camera_type: CameraType,
     /// if the position or a tile gets changed.
     pub changed: bool,
 }
@@ -158,6 +160,7 @@ impl Map {
                                 + ((posy / self.tilesize) * atlas_width),
                             texture_layer: allocation.layer as u32,
                             color: tile.color.0,
+                            camera_type: self.camera_type as u32,
                         };
 
                         if layer < MapLayers::Fringe {
@@ -221,6 +224,7 @@ impl Map {
             tilesize,
             can_render: false,
             changed: true,
+            camera_type: CameraType::None,
         }
     }
 
@@ -237,6 +241,11 @@ impl Map {
         );
 
         self.tiles[(pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize]
+    }
+
+    pub fn set_camera_type(&mut self, camera_type: CameraType) {
+        self.camera_type = camera_type;
+        self.changed = true;
     }
 
     // this sets the tile's Id within the texture,

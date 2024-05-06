@@ -194,7 +194,7 @@ impl Controls for FirstPersonControls {
         changed
     }
 
-    fn view(&self) -> mint::ColumnMatrix4<f32> {
-        self.view.into()
+    fn view(&self) -> Mat4 {
+        self.view
     }
 }

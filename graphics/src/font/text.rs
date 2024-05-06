@@ -1,6 +1,6 @@
 use crate::{
-    Bounds, Color, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
-    OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
+    Bounds, CameraType, Color, DrawOrder, DrawType, GpuRenderer, GraphicsError,
+    Index, OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
     Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap,
@@ -34,7 +34,7 @@ pub struct Text {
     /// Word Wrap Type. Default is Wrap::Word.
     pub wrap: Wrap,
     /// if the shader should render with the camera's view.
-    pub use_camera: bool,
+    pub camera_type: CameraType,
     /// if anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -206,7 +206,7 @@ impl Text {
                     tex_coord: [u, v],
                     layer: allocation.layer as u32,
                     color: color.0,
-                    use_camera: u32::from(self.use_camera),
+                    camera_type: self.camera_type as u32,
                     is_color: is_color as u32,
                 };
 
@@ -264,13 +264,18 @@ impl Text {
             order: DrawOrder::default(),
             changed: true,
             default_color: Color::rgba(0, 0, 0, 255),
-            use_camera: false,
+            camera_type: CameraType::None,
             cursor: Cursor::default(),
             wrap: Wrap::Word,
             line: 0,
             scroll: cosmic_text::Scroll::default(),
             scale,
         }
+    }
+
+    pub fn set_camera_type(&mut self, camera_type: CameraType) {
+        self.camera_type = camera_type;
+        self.changed = true;
     }
 
     pub fn unload(&self, renderer: &mut GpuRenderer) {

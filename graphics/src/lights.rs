@@ -9,15 +9,15 @@ pub use uniforms::*;
 pub use vertex::*;
 
 use crate::{
-    Color, DrawOrder, DrawType, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
-    Vec4,
+    CameraType, Color, DrawOrder, DrawType, GpuRenderer, Index, OrderedIndex,
+    Vec2, Vec3, Vec4,
 };
 use slotmap::SlotMap;
 use std::mem;
 use wgpu::util::align_to;
 
 pub const MAX_AREA_LIGHTS: usize = 2_000;
-pub const MAX_DIR_LIGHTS: usize = 1_365;
+pub const MAX_DIR_LIGHTS: usize = 1_333;
 
 pub struct AreaLight {
     pub pos: Vec2,
@@ -26,6 +26,7 @@ pub struct AreaLight {
     pub anim_speed: f32,
     pub dither: f32,
     pub animate: bool,
+    pub camera_type: CameraType,
 }
 
 impl AreaLight {
@@ -37,6 +38,7 @@ impl AreaLight {
             dither: self.dither,
             anim_speed: self.anim_speed,
             animate: u32::from(self.animate),
+            camera_type: self.camera_type as u32,
         }
     }
 }
@@ -52,6 +54,7 @@ pub struct DirectionalLight {
     pub fade_distance: f32,
     pub edge_fade_distance: f32,
     pub animate: bool,
+    pub camera_type: CameraType,
 }
 
 impl DirectionalLight {
@@ -67,6 +70,7 @@ impl DirectionalLight {
             angle: self.angle,
             fade_distance: self.fade_distance,
             edge_fade_distance: self.edge_fade_distance,
+            camera_type: self.camera_type as u32,
         }
     }
 }

@@ -80,9 +80,10 @@ where
                 if buffer.vbos.is_clipped() {
                     let mut scissor_is_default = true;
 
-                    for (details, bounds) in vbos {
+                    for (details, bounds, camera_type) in vbos {
                         if let Some(bounds) = bounds {
-                            let bounds = system.world_to_screen(false, bounds);
+                            let bounds =
+                                system.world_to_screen(*camera_type, bounds);
 
                             self.set_scissor_rect(
                                 bounds.x as u32,
@@ -111,7 +112,7 @@ where
                         };
                     }
                 } else {
-                    for (details, _bounds) in vbos {
+                    for (details, _bounds, _camer_type) in vbos {
                         // Indexs can always start at 0 per mesh data.
                         // Base vertex is the Addition to the Index
                         self.draw_indexed(

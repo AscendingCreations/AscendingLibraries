@@ -59,20 +59,15 @@ impl Controls for FlatControls {
         let changed = self.changed;
 
         if changed {
-            self.view = Mat4::IDENTITY
-                * Mat4::from_scale(Vec3::new(
-                    self.settings.zoom,
-                    self.settings.zoom,
-                    1.0,
-                ));
+            self.view = Mat4::IDENTITY;
         }
 
         self.changed = false;
         changed
     }
 
-    fn view(&self) -> mint::ColumnMatrix4<f32> {
-        self.view.into()
+    fn view(&self) -> Mat4 {
+        self.view
     }
 
     fn scale(&self) -> f32 {

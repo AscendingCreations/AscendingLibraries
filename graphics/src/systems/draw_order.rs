@@ -1,4 +1,4 @@
-use crate::{Bounds, Vec2, Vec3};
+use crate::{Bounds, CameraType, Vec2, Vec3};
 use slotmap::new_key_type;
 use std::cmp::Ordering;
 
@@ -66,6 +66,7 @@ pub struct OrderedIndex {
     pub(crate) index_count: u32,
     pub(crate) index_max: u32,
     pub(crate) bounds: Option<Bounds>,
+    pub(crate) camera_type: CameraType,
 }
 
 impl PartialOrd for OrderedIndex {
@@ -96,6 +97,7 @@ impl OrderedIndex {
             index_count: 0,
             index_max,
             bounds: None,
+            camera_type: CameraType::None,
         }
     }
 
@@ -104,6 +106,7 @@ impl OrderedIndex {
         index: Index,
         index_max: u32,
         bounds: Option<Bounds>,
+        camera_type: CameraType,
     ) -> Self {
         Self {
             order,
@@ -111,6 +114,7 @@ impl OrderedIndex {
             index_count: 0,
             index_max,
             bounds,
+            camera_type,
         }
     }
 }

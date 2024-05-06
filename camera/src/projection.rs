@@ -38,11 +38,3 @@ impl From<Projection> for Mat4 {
         }
     }
 }
-
-impl From<Projection> for mint::ColumnMatrix4<f32> {
-    fn from(proj: Projection) -> mint::ColumnMatrix4<f32> {
-        let matrix: Mat4 = proj.into();
-
-        matrix.into()
-    }
-}

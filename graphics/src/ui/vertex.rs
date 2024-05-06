@@ -12,7 +12,7 @@ pub struct RectVertex {
     pub border_color: u32,
     pub layer: u32,
     pub radius: f32,
-    pub use_camera: u32,
+    pub camera_type: u32,
 }
 
 impl Default for RectVertex {
@@ -26,7 +26,7 @@ impl Default for RectVertex {
             border_color: 0,
             layer: 0,
             radius: 1.0,
-            use_camera: 0,
+            camera_type: 0,
         }
     }
 }

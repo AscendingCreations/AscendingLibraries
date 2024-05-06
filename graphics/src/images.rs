@@ -7,8 +7,8 @@ pub use render::*;
 pub use vertex::*;
 
 use crate::{
-    AtlasSet, Bounds, Color, DrawOrder, DrawType, GpuRenderer, Index,
-    OrderedIndex, Vec2, Vec3, Vec4,
+    AtlasSet, Bounds, CameraType, Color, DrawOrder, DrawType, GpuRenderer,
+    Index, OrderedIndex, Vec2, Vec3, Vec4,
 };
 
 pub enum TextDrawOrder {
@@ -30,7 +30,7 @@ pub struct Image {
     pub switch_time: u32,
     /// turn on animation if set.
     pub animate: bool,
-    pub use_camera: bool,
+    pub camera_type: CameraType,
     /// Texture area location in Atlas.
     pub texture: Option<usize>,
     pub store_id: Index,
@@ -54,7 +54,7 @@ impl Image {
             frames: Vec2::default(),
             switch_time: 0,
             animate: false,
-            use_camera: true,
+            camera_type: CameraType::None,
             color: Color::rgba(255, 255, 255, 255),
             texture,
             store_id: renderer.new_buffer(
@@ -108,7 +108,7 @@ impl Image {
             color: self.color.0,
             frames: self.frames.to_array(),
             animate: u32::from(self.animate),
-            use_camera: u32::from(self.use_camera),
+            camera_type: self.camera_type as u32,
             time: self.switch_time,
             layer: allocation.layer as i32,
         };
@@ -141,6 +141,12 @@ impl Image {
             self.create_quad(renderer, atlas);
         }
 
-        OrderedIndex::new_with_bounds(self.order, self.store_id, 0, self.bounds)
+        OrderedIndex::new_with_bounds(
+            self.order,
+            self.store_id,
+            0,
+            self.bounds,
+            self.camera_type,
+        )
     }
 }

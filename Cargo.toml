@@ -5,7 +5,6 @@ members = ["input", "camera", "graphics"]
 [workspace.dependencies]
 async-trait = "0.1.79"
 bytemuck = { version = "1.15.0", features = ["derive"] }
-mint = "0.5.9"
 thiserror = "1.0.58"
 winit = { version = "0.29.15", features = ["serde"] }
 image = "0.25.1"
@@ -27,7 +26,7 @@ slab = "0.4.9"
 [workspace.dependencies.camera]
 package = "ascending_camera"
 path = "./camera"
-version = "0.1.0"
+version = "0.2.0"
 
 [workspace.dependencies.input]
 package = "ascending_input" 

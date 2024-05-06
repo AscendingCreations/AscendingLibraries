@@ -1,6 +1,7 @@
 use crate::{
-    AtlasSet, Bounds, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
-    OrderedIndex, OtherError, RectVertex, Texture, Vec2, Vec3, Vec4,
+    AtlasSet, Bounds, CameraType, DrawOrder, DrawType, GpuRenderer,
+    GraphicsError, Index, OrderedIndex, OtherError, RectVertex, Texture, Vec2,
+    Vec3, Vec4,
 };
 use cosmic_text::Color;
 
@@ -13,7 +14,7 @@ pub struct Rect {
     pub border_width: f32,
     pub border_color: Color,
     pub radius: f32,
-    pub use_camera: bool,
+    pub camera_type: CameraType,
     pub store_id: Index,
     pub order: DrawOrder,
     pub render_layer: u32,
@@ -35,7 +36,7 @@ impl Rect {
             border_width: 0.0,
             border_color: Color::rgba(0, 0, 0, 0),
             radius: 0.0,
-            use_camera: false,
+            camera_type: CameraType::None,
             store_id: renderer.new_buffer(rect_size, 0),
             order: DrawOrder::default(),
             render_layer,
@@ -52,8 +53,8 @@ impl Rect {
         self.bounds = bounds;
     }
 
-    pub fn set_use_camera(&mut self, use_camera: bool) -> &mut Self {
-        self.use_camera = use_camera;
+    pub fn set_use_camera(&mut self, camera_type: CameraType) -> &mut Self {
+        self.camera_type = camera_type;
         self.changed = true;
         self
     }
@@ -152,7 +153,7 @@ impl Rect {
             layer,
             color: self.color.0,
             border_color: self.border_color.0,
-            use_camera: u32::from(self.use_camera),
+            camera_type: self.camera_type as u32,
         };
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
@@ -183,7 +184,13 @@ impl Rect {
             self.changed = false;
         }
 
-        OrderedIndex::new_with_bounds(self.order, self.store_id, 0, self.bounds)
+        OrderedIndex::new_with_bounds(
+            self.order,
+            self.store_id,
+            0,
+            self.bounds,
+            self.camera_type,
+        )
     }
 
     pub fn check_mouse_bounds(&self, mouse_pos: Vec2) -> bool {

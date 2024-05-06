@@ -10,6 +10,7 @@ pub struct AreaLightRaw {
     pub anim_speed: f32,
     pub dither: f32,
     pub animate: u32,
+    pub camera_type: u32,
 }
 
 #[repr(C)]
@@ -25,6 +26,7 @@ pub struct DirectionalLightRaw {
     pub fade_distance: f32,
     pub edge_fade_distance: f32,
     pub animate: u32,
+    pub camera_type: u32,
 }
 
 #[repr(C)]

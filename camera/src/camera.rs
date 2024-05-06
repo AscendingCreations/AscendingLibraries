@@ -1,3 +1,5 @@
+use glam::Mat4;
+
 use super::projection::Projection;
 
 #[derive(Clone, Debug)]
@@ -34,7 +36,7 @@ where
         }
     }
 
-    pub fn projection(&self) -> mint::ColumnMatrix4<f32> {
+    pub fn projection(&self) -> Mat4 {
         self.projection.into()
     }
 
@@ -58,7 +60,7 @@ where
         changed
     }
 
-    pub fn view(&self) -> mint::ColumnMatrix4<f32> {
+    pub fn view(&self) -> Mat4 {
         self.controls.view()
     }
 

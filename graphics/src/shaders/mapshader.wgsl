@@ -6,6 +6,8 @@ struct Global {
     scale: f32,
     size: vec2<f32>,
     seconds: f32,
+    manual_view: mat4x4<f32>,
+    manual_scale: f32,
 };
 
 @group(0)
@@ -20,6 +22,7 @@ struct VertexInput {
     @location(3) tile_id: u32,
     @location(4) texture_layer: u32,
     @location(5) color: u32,
+    @location(6) camera_type: u32,
 };
 
 struct VertexOutput {
@@ -76,7 +79,39 @@ fn vertex(
             result.uv = vec2<f32>(tileposx, tileposy + vertex.tilesize) / fsize;
         }
     }
-    result.clip_position =  (global.proj * global.view) * vec4<f32>(pos, 1.0);
+
+    switch vertex.camera_type {
+        case 1u: {
+            result.clip_position = (global.proj * global.view) * vec4<f32>(pos, 1.0);
+        }
+        case 2u: {
+            let scale_mat = mat4x4<f32> (
+                vec4<f32>(global.scale, 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, global.scale, 0.0, 0.0),
+                vec4<f32>(0.0, 0.0, 1.0, 0.0),
+                vec4<f32>(0.0, 0.0, 0.0, 1.0),
+            );
+
+            result.clip_position = (global.proj * global.view * scale_mat) * vec4<f32>(pos, 1.0);
+        }
+        case 3u: {
+            result.clip_position = (global.proj * global.manual_view) * vec4<f32>(pos, 1.0);
+        }
+        case 4u: {
+            let scale_mat = mat4x4<f32> (
+                vec4<f32>(global.manual_scale, 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, global.manual_scale, 0.0, 0.0),
+                vec4<f32>(0.0, 0.0, 1.0, 0.0),
+                vec4<f32>(0.0, 0.0, 0.0, 1.0),
+            );
+
+            result.clip_position = (global.proj * global.manual_view * scale_mat) * vec4<f32>(pos, 1.0);
+        }
+        default: {
+            result.clip_position = global.proj * vec4<f32>(pos, 1.0);
+        }
+    }
+
     result.color = unpack_color(vertex.color);
 
     let id = global.seconds / (f32(250) / 1000.0);
