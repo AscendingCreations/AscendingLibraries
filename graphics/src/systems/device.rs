@@ -6,11 +6,7 @@ use wgpu::{
     core::instance::RequestAdapterError, Adapter, Backend, Backends,
     DeviceType, Surface, TextureFormat,
 };
-use winit::{
-    dpi::PhysicalSize,
-    event::{Event, WindowEvent},
-    window::Window,
-};
+use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
 ///Handles the Device and Queue returned from WGPU.
 pub struct GpuDevice {
@@ -95,76 +91,70 @@ impl GpuWindow {
     pub fn update(
         &mut self,
         gpu_device: &GpuDevice,
-        event: &Event<()>,
+        event: &WindowEvent,
     ) -> Result<Option<wgpu::SurfaceTexture>, GraphicsError> {
         match event {
-            Event::WindowEvent {
-                ref event,
-                window_id,
-            } if *window_id == self.window.id() => match event {
-                WindowEvent::Resized(physical_size) => {
-                    self.resize(gpu_device, *physical_size)?;
-                    self.inner_size = self.window.inner_size();
+            WindowEvent::Resized(physical_size) => {
+                self.resize(gpu_device, *physical_size)?;
+                self.inner_size = self.window.inner_size();
 
-                    if self.size.width == 0.0
-                        || self.size.height == 0.0
-                        || self.inner_size.width == 0
-                        || self.inner_size.height == 0
-                    {
-                        return Ok(None);
-                    }
-
-                    self.window.request_redraw();
+                if self.size.width == 0.0
+                    || self.size.height == 0.0
+                    || self.inner_size.width == 0
+                    || self.inner_size.height == 0
+                {
+                    return Ok(None);
                 }
-                WindowEvent::RedrawRequested => {
-                    if self.size.width == 0.0
-                        || self.size.height == 0.0
-                        || self.inner_size.width == 0
-                        || self.inner_size.height == 0
-                    {
-                        return Ok(None);
+
+                self.window.request_redraw();
+            }
+            WindowEvent::RedrawRequested => {
+                if self.size.width == 0.0
+                    || self.size.height == 0.0
+                    || self.inner_size.width == 0
+                    || self.inner_size.height == 0
+                {
+                    return Ok(None);
+                }
+
+                match self.surface.get_current_texture() {
+                    Ok(frame) => {
+                        self.window.request_redraw();
+                        return Ok(Some(frame));
                     }
+                    Err(wgpu::SurfaceError::Lost) => {
+                        let size = PhysicalSize::new(
+                            self.size.width as u32,
+                            self.size.height as u32,
+                        );
+                        self.resize(gpu_device, size)?;
+                        self.inner_size = self.window.inner_size();
 
-                    match self.surface.get_current_texture() {
-                        Ok(frame) => {
-                            self.window.request_redraw();
-                            return Ok(Some(frame));
-                        }
-                        Err(wgpu::SurfaceError::Lost) => {
-                            let size = PhysicalSize::new(
-                                self.size.width as u32,
-                                self.size.height as u32,
-                            );
-                            self.resize(gpu_device, size)?;
-                            self.inner_size = self.window.inner_size();
-
-                            if self.size.width == 0.0
-                                || self.size.height == 0.0
-                                || self.inner_size.width == 0
-                                || self.inner_size.height == 0
-                            {
-                                return Ok(None);
-                            }
-                        }
-                        Err(wgpu::SurfaceError::Outdated) => {
+                        if self.size.width == 0.0
+                            || self.size.height == 0.0
+                            || self.inner_size.width == 0
+                            || self.inner_size.height == 0
+                        {
                             return Ok(None);
                         }
-                        Err(e) => return Err(GraphicsError::from(e)),
                     }
+                    Err(wgpu::SurfaceError::Outdated) => {
+                        return Ok(None);
+                    }
+                    Err(e) => return Err(GraphicsError::from(e)),
+                }
 
-                    self.window.request_redraw();
-                }
-                WindowEvent::Moved(_)
-                | WindowEvent::ScaleFactorChanged {
-                    scale_factor: _,
-                    inner_size_writer: _,
-                }
-                | WindowEvent::Focused(true)
-                | WindowEvent::Occluded(false) => {
-                    self.window.request_redraw();
-                }
-                _ => (),
-            },
+                self.window.request_redraw();
+            }
+            WindowEvent::Moved(_)
+            | WindowEvent::ScaleFactorChanged {
+                scale_factor: _,
+                inner_size_writer: _,
+            }
+            | WindowEvent::Focused(true)
+            | WindowEvent::Occluded(false) => {
+                self.window.request_redraw();
+            }
             _ => (),
         }
 

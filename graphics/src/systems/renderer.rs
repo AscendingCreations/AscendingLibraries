@@ -7,7 +7,7 @@ use cosmic_text::FontSystem;
 use slotmap::SlotMap;
 use std::rc::Rc;
 
-use winit::{dpi::PhysicalSize, event::Event, window::Window};
+use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
 ///Handles the Window, Device and buffer stores.
 pub struct GpuRenderer {
@@ -97,7 +97,10 @@ impl GpuRenderer {
         self.window.surface_format
     }
 
-    pub fn update(&mut self, event: &Event<()>) -> Result<bool, GraphicsError> {
+    pub fn update(
+        &mut self,
+        event: &WindowEvent,
+    ) -> Result<bool, GraphicsError> {
         let frame = match self.window.update(&self.device, event)? {
             Some(frame) => frame,
             _ => return Ok(false),
