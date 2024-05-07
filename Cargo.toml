@@ -26,7 +26,7 @@ slab = "0.4.9"
 [workspace.dependencies.camera]
 package = "ascending_camera"
 path = "./camera"
-version = "0.2.0"
+version = "0.3.0"
 
 [workspace.dependencies.input]
 package = "ascending_input" 
