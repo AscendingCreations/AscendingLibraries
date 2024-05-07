@@ -1,12 +1,9 @@
 use super::Controls;
 use glam::{Mat4, Vec3};
+
 #[derive(Clone, Debug, Default)]
 pub struct FlatInputs {
-    /// move in this direction.
-    pub left: f32,
-    pub right: f32,
-    pub up: f32,
-    pub down: f32,
+    pub translation: Vec3,
 }
 
 #[derive(Clone, Debug)]
@@ -34,6 +31,20 @@ impl FlatControls {
         &self.inputs
     }
 
+    pub fn inputs_mut(&mut self) -> &mut FlatInputs {
+        self.changed = true;
+        &mut self.inputs
+    }
+
+    pub fn settings(&self) -> &FlatSettings {
+        &self.settings
+    }
+
+    pub fn settings_mut(&mut self) -> &mut FlatSettings {
+        self.changed = true;
+        &mut self.settings
+    }
+
     pub fn new(settings: FlatSettings) -> Self {
         Self {
             inputs: FlatInputs::default(),
@@ -59,7 +70,7 @@ impl Controls for FlatControls {
         let changed = self.changed;
 
         if changed {
-            self.view = Mat4::IDENTITY;
+            self.view = Mat4::from_translation(self.inputs.translation);
         }
 
         self.changed = false;

@@ -43,6 +43,24 @@ pub struct FirstPersonControls {
 }
 
 impl FirstPersonControls {
+    pub fn inputs(&self) -> &FirstPersonInputs {
+        &self.inputs
+    }
+
+    pub fn inputs_mut(&mut self) -> &mut FirstPersonInputs {
+        self.changed = true;
+        &mut self.inputs
+    }
+
+    pub fn settings(&self) -> &FirstPersonSettings {
+        &self.settings
+    }
+
+    pub fn settings_mut(&mut self) -> &mut FirstPersonSettings {
+        self.changed = true;
+        &mut self.settings
+    }
+
     pub fn direction(&self) -> [f32; 3] {
         self.direction.into()
     }

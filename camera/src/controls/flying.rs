@@ -46,6 +46,24 @@ impl FlyingControls {
         self.direction.into()
     }
 
+    pub fn inputs(&self) -> &FlyingInputs {
+        &self.inputs
+    }
+
+    pub fn inputs_mut(&mut self) -> &mut FlyingInputs {
+        self.changed = true;
+        &mut self.inputs
+    }
+
+    pub fn settings(&self) -> &FlyingSettings {
+        &self.settings
+    }
+
+    pub fn settings_mut(&mut self) -> &mut FlyingSettings {
+        self.changed = true;
+        &mut self.settings
+    }
+
     pub fn new(settings: FlyingSettings, position: [f32; 3]) -> Self {
         let yaw = (-90.0_f32).to_radians();
         let pitch = 0.0_f32;

@@ -67,6 +67,20 @@ impl OrbitControls {
         &self.inputs
     }
 
+    pub fn inputs_mut(&mut self) -> &mut OrbitInputs {
+        self.changed = true;
+        &mut self.inputs
+    }
+
+    pub fn settings(&self) -> &OrbitSettings {
+        &self.settings
+    }
+
+    pub fn settings_mut(&mut self) -> &mut OrbitSettings {
+        self.changed = true;
+        &mut self.settings
+    }
+
     pub fn new(settings: OrbitSettings, center: [f32; 3], radius: f32) -> Self {
         let radius = radius.clamp(settings.min_radius, settings.max_radius);
 
