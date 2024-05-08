@@ -11,33 +11,36 @@ use crate::{
     Index, OrderedIndex, Vec2, Vec3, Vec4,
 };
 
-pub enum TextDrawOrder {
-    BelowLights,
-    AboveLights,
-}
-/// rendering data for all images.
+/// Basic and Fast Image Rendering Type. Best used for Sprites and Objects in the world.
 pub struct Image {
+    /// Position of the object
     pub pos: Vec3,
+    /// Height and Width
     pub hw: Vec2,
-    // used for static offsets or animation Start positions
+    /// Static texture offsets or animation frame positions
     pub uv: Vec4,
-    /// Color dah  number / 255.
+    /// Color.
     pub color: Color,
-    // frames, frames_per_row: this will cycle thru
-    // frames per rox at the uv start.
+    /// frames, frames_per_row: this will cycle thru
+    /// frames per row at the uv start.
     pub frames: Vec2,
     /// in millsecs 1000 = 1sec
     pub switch_time: u32,
     /// turn on animation if set.
     pub animate: bool,
+    /// Global Camera the Shader will use to render the object with
     pub camera_type: CameraType,
     /// Texture area location in Atlas.
     pub texture: Option<usize>,
+    /// Buffer's store Index.
     pub store_id: Index,
+    /// Ordering Type, used to order the Stores in the buffers.
     pub order: DrawOrder,
+    /// Layer this type is rendering on.
     pub render_layer: u32,
+    /// Clip bounds if enabled in the renderer.
     pub bounds: Option<Bounds>,
-    /// if anything got updated we need to update the buffers too.
+    /// When true tells system to update the buffers.
     pub changed: bool,
 }
 
@@ -72,11 +75,72 @@ impl Image {
         renderer.remove_buffer(self.store_id);
     }
 
-    pub fn update_bounds(&mut self, bounds: Option<Bounds>) {
+    pub fn update_bounds(&mut self, bounds: Option<Bounds>) -> &mut Self {
         self.bounds = bounds;
+        self
     }
 
-    pub fn create_quad(
+    pub fn set_pos(&mut self, pos: Vec3) -> &mut Self {
+        self.changed = true;
+        self.pos = pos;
+        self
+    }
+
+    pub fn set_size(&mut self, hw: Vec2) -> &mut Self {
+        self.changed = true;
+        self.hw = hw;
+        self
+    }
+
+    pub fn set_frames(&mut self, frames: Vec2) -> &mut Self {
+        self.changed = true;
+        self.frames = frames;
+        self
+    }
+
+    pub fn set_animate(&mut self, animate: bool) -> &mut Self {
+        self.changed = true;
+        self.animate = animate;
+        self
+    }
+
+    pub fn set_uv(&mut self, uv: Vec4) -> &mut Self {
+        self.changed = true;
+        self.uv = uv;
+        self
+    }
+
+    pub fn set_render_layer(&mut self, render_layer: u32) -> &mut Self {
+        self.changed = true;
+        self.render_layer = render_layer;
+        self
+    }
+
+    pub fn set_texture(&mut self, texture: Option<usize>) -> &mut Self {
+        self.changed = true;
+        self.texture = texture;
+        self
+    }
+
+    pub fn set_color(&mut self, color: Color) -> &mut Self {
+        self.changed = true;
+        self.color = color;
+        self
+    }
+
+    pub fn set_camera_type(&mut self, camera_type: CameraType) -> &mut Self {
+        self.changed = true;
+        self.camera_type = camera_type;
+        self
+    }
+
+    pub fn set_switch_time(&mut self, switch_time: u32) -> &mut Self {
+        self.changed = true;
+        self.switch_time = switch_time;
+        self
+    }
+
+    fn create_quad(
         &mut self,
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
@@ -93,7 +157,7 @@ impl Image {
         };
 
         let (u, v, width, height) = allocation.rect();
-        let (u, v, width, height) = (
+        let tex_data = (
             self.uv.x + u as f32,
             self.uv.y + v as f32,
             self.uv.z.min(width as f32),
@@ -103,8 +167,7 @@ impl Image {
         let instance = ImageVertex {
             position: self.pos.to_array(),
             hw: self.hw.to_array(),
-            #[allow(clippy::tuple_array_conversions)]
-            tex_data: [u, v, width, height],
+            tex_data: tex_data.into(),
             color: self.color.0,
             frames: self.frames.to_array(),
             animate: u32::from(self.animate),
@@ -130,7 +193,9 @@ impl Image {
         self.changed = false;
     }
 
-    /// used to check and update the vertex array.
+    /// Updates the buffer if changed is true.
+    /// Returns OrderIndex used by the renderer to position
+    /// and upload obejcts to the Instance Buffer Arrays on the GPU.
     pub fn update(
         &mut self,
         renderer: &mut GpuRenderer,

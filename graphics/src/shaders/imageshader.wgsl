@@ -40,6 +40,12 @@ struct VertexOutput {
     @location(7) animate: u32,
 };
 
+struct Axises {
+    x: vec4<f32>,
+    y: vec4<f32>,
+    z: vec4<f32>,
+};
+
 @group(1)
 @binding(0)
 var tex: texture_2d_array<f32>;
@@ -123,7 +129,7 @@ fn vertex(
             result.clip_position = (global.proj * global.manual_view * scale_mat) * vec4<f32>(pos, 1.0);
         }
         default: {
-            result.clip_position = global.proj * vec4<f32>(pos, 1.0);
+            result.clip_position = global.proj  * vec4<f32>(pos, 1.0);
         }
     }
 
