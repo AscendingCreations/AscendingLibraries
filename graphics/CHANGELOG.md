@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - (Breaking) updated to support winit 0.30.0.
 - (Breaking) renderer update now takes &WindowEvent.
 
+### Added
+- Z axis angle Rotation and Flip to image.
+
 ## 0.7.0 (24. April, 2024)
 ### Changed
 - (Breaking) system not supports a secondary manual Mat4x4 and Scale.
