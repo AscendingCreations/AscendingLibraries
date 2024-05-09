@@ -1,6 +1,6 @@
 [package]
 name = "ascending_graphics"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["S.J.R. van Schaik", "Andrew Wheeler <genusistimelord@gmail.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2021"
@@ -28,7 +28,6 @@ log.workspace = true
 cosmic-text.workspace = true
 naga.workspace = true
 wgpu.workspace = true
-ritehash.workspace = true
 lru.workspace = true
 glam.workspace = true
 lyon.workspace = true

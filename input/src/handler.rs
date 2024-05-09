@@ -11,8 +11,7 @@ use std::{
 };
 use winit::{
     event::{
-        DeviceEvent, ElementState, Event, KeyEvent, MouseScrollDelta,
-        WindowEvent,
+        DeviceEvent, ElementState, KeyEvent, MouseScrollDelta, WindowEvent,
     },
     keyboard::{self, ModifiersKeyState},
     window::Window,
@@ -107,6 +106,8 @@ where
     pub window_focused: bool,
     ///Input events gathered per the last Click. Will contain multiple events.
     pub input_events: Vec<InputEvent>,
+    ///Input events gathered per the last device protocal. Gets added to input events near the end.
+    device_events: Vec<InputEvent>,
     ///Duration allowed between clicks.
     click_duration: Duration,
 }
@@ -308,19 +309,27 @@ where
             mouse_action_timer: Instant::now(),
             window_focused: true,
             input_events: Vec::with_capacity(4),
+            device_events: Vec::with_capacity(4),
             click_duration,
         }
     }
 
     ///Update the Input Handler based upon the windows events.
-    pub fn update(&mut self, window: &Window, event: &Event<()>, hidpi: f32) {
+    pub fn window_updates(
+        &mut self,
+        window: &Window,
+        event: &WindowEvent,
+        hidpi: f32,
+    ) {
         let mut button_action = None;
 
         //We clear and reset everything here.
         self.last_mouse_position = self.mouse_position;
-        self.mouse_delta = (0.0, 0.0);
-        self.mouse_wheel = (0.0, 0.0);
         self.input_events.clear();
+
+        if !self.device_events.is_empty() {
+            self.input_events.append(&mut self.device_events);
+        }
 
         let timer = Instant::now();
 
@@ -338,208 +347,221 @@ where
             window.request_redraw();
         }
 
-        match *event {
-            Event::WindowEvent {
-                ref event,
-                window_id,
-            } if window_id == window.id() => match event {
-                WindowEvent::KeyboardInput {
-                    event:
-                        KeyEvent {
-                            state,
-                            logical_key,
-                            location,
-                            ..
-                        },
-                    ..
-                } => {
-                    let key = match logical_key {
-                        keyboard::Key::Named(name) => Key::Named(*name),
-                        keyboard::Key::Character(str) => {
-                            let chars: Vec<char> = str.chars().collect();
+        match event {
+            WindowEvent::KeyboardInput {
+                event:
+                    KeyEvent {
+                        state,
+                        logical_key,
+                        location,
+                        ..
+                    },
+                ..
+            } => {
+                let key = match logical_key {
+                    keyboard::Key::Named(name) => Key::Named(*name),
+                    keyboard::Key::Character(str) => {
+                        let chars: Vec<char> = str.chars().collect();
 
-                            if let Some(c) = chars.first() {
-                                Key::Character(*c)
-                            } else {
-                                return;
-                            }
+                        if let Some(c) = chars.first() {
+                            Key::Character(*c)
+                        } else {
+                            return;
                         }
-                        _ => return,
-                    };
+                    }
+                    _ => return,
+                };
 
-                    if *state == ElementState::Pressed {
+                if *state == ElementState::Pressed {
+                    self.input_events.push(InputEvent::KeyInput {
+                        key,
+                        location: *location,
+                        pressed: true,
+                    });
+                    self.keys.insert(key, *location);
+                } else {
+                    if self.keys.contains_key(&key) {
                         self.input_events.push(InputEvent::KeyInput {
                             key,
                             location: *location,
-                            pressed: true,
-                        });
-                        self.keys.insert(key, *location);
-                    } else {
-                        if self.keys.contains_key(&key) {
-                            self.input_events.push(InputEvent::KeyInput {
-                                key,
-                                location: *location,
-                                pressed: false,
-                            })
-                        }
-                        self.keys.remove(&key);
+                            pressed: false,
+                        })
                     }
+                    self.keys.remove(&key);
                 }
-                WindowEvent::MouseInput { state, button, .. } => {
-                    if *state == ElementState::Pressed {
-                        self.mouse_buttons.insert(*button);
-                        self.input_events.push(InputEvent::MouseButton {
-                            button: *button,
-                            pressed: true,
-                        });
+            }
+            WindowEvent::MouseInput { state, button, .. } => {
+                if *state == ElementState::Pressed {
+                    self.mouse_buttons.insert(*button);
+                    self.input_events.push(InputEvent::MouseButton {
+                        button: *button,
+                        pressed: true,
+                    });
 
-                        if button_action != Some(*button) {
-                            match self.mouse_button_action {
-                                MouseButtonAction::None => {
+                    if button_action != Some(*button) {
+                        match self.mouse_button_action {
+                            MouseButtonAction::None => {
+                                self.mouse_button_action =
+                                    MouseButtonAction::Single(*button);
+                                self.mouse_action_timer =
+                                    timer + self.click_duration;
+                            }
+                            MouseButtonAction::Single(btn) => {
+                                if btn == *button {
+                                    self.mouse_button_action =
+                                        MouseButtonAction::Double(btn);
+                                    self.mouse_action_timer =
+                                        timer + self.click_duration;
+                                } else {
+                                    self.input_events.push(
+                                        InputEvent::MouseButtonAction(
+                                            self.mouse_button_action,
+                                        ),
+                                    );
                                     self.mouse_button_action =
                                         MouseButtonAction::Single(*button);
                                     self.mouse_action_timer =
                                         timer + self.click_duration;
                                 }
-                                MouseButtonAction::Single(btn) => {
-                                    if btn == *button {
-                                        self.mouse_button_action =
-                                            MouseButtonAction::Double(btn);
-                                        self.mouse_action_timer =
-                                            timer + self.click_duration;
-                                    } else {
-                                        self.input_events.push(
-                                            InputEvent::MouseButtonAction(
-                                                self.mouse_button_action,
-                                            ),
-                                        );
-                                        self.mouse_button_action =
-                                            MouseButtonAction::Single(*button);
-                                        self.mouse_action_timer =
-                                            timer + self.click_duration;
-                                    }
-                                }
-                                MouseButtonAction::Double(btn) => {
-                                    if btn == *button {
-                                        self.mouse_button_action =
-                                            MouseButtonAction::None;
-                                        self.input_events.push(
-                                            InputEvent::MouseButtonAction(
-                                                MouseButtonAction::Triple(btn),
-                                            ),
-                                        );
-                                    } else {
-                                        self.input_events.push(
-                                            InputEvent::MouseButtonAction(
-                                                self.mouse_button_action,
-                                            ),
-                                        );
-                                        self.mouse_button_action =
-                                            MouseButtonAction::Single(*button);
-                                        self.mouse_action_timer =
-                                            timer + self.click_duration;
-                                    }
-                                }
-                                MouseButtonAction::Triple(_) => {}
                             }
+                            MouseButtonAction::Double(btn) => {
+                                if btn == *button {
+                                    self.mouse_button_action =
+                                        MouseButtonAction::None;
+                                    self.input_events.push(
+                                        InputEvent::MouseButtonAction(
+                                            MouseButtonAction::Triple(btn),
+                                        ),
+                                    );
+                                } else {
+                                    self.input_events.push(
+                                        InputEvent::MouseButtonAction(
+                                            self.mouse_button_action,
+                                        ),
+                                    );
+                                    self.mouse_button_action =
+                                        MouseButtonAction::Single(*button);
+                                    self.mouse_action_timer =
+                                        timer + self.click_duration;
+                                }
+                            }
+                            MouseButtonAction::Triple(_) => {}
                         }
+                    }
+                } else {
+                    if self.mouse_buttons.contains(button) {
+                        self.input_events.push(InputEvent::MouseButton {
+                            button: *button,
+                            pressed: false,
+                        });
+                    }
+                    self.mouse_buttons.remove(button);
+                }
+            }
+            WindowEvent::CursorMoved {
+                position: PhysicalPosition { x, y },
+                ..
+            } => {
+                self.input_events.push(InputEvent::MousePosition);
+                self.physical_mouse_position =
+                    Some(PhysicalPosition { x: *x, y: *y });
+                self.mouse_position =
+                    Some(((*x as f32) * hidpi, (*y as f32) * hidpi));
+            }
+            WindowEvent::Focused(b) => {
+                if !b {
+                    self.keys.clear();
+                    self.mouse_buttons.clear();
+                }
+
+                self.input_events.push(InputEvent::WindowFocused(*b));
+                self.window_focused = *b;
+            }
+            WindowEvent::ModifiersChanged(new_modifiers) => {
+                self.modifiers_state = new_modifiers.state();
+
+                for (state, modifier) in [
+                    (new_modifiers.lshift_state(), Modifier::LShift),
+                    (new_modifiers.rshift_state(), Modifier::RShift),
+                    (new_modifiers.lalt_state(), Modifier::LAlt),
+                    (new_modifiers.ralt_state(), Modifier::RAlt),
+                    (new_modifiers.lcontrol_state(), Modifier::LControl),
+                    (new_modifiers.rcontrol_state(), Modifier::RControl),
+                    (new_modifiers.lsuper_state(), Modifier::LSuper),
+                    (new_modifiers.rsuper_state(), Modifier::RSuper),
+                ] {
+                    if state == ModifiersKeyState::Pressed {
+                        self.input_events.push(InputEvent::Modifier {
+                            modifier,
+                            pressed: true,
+                        });
+                        self.modifiers.insert(modifier);
                     } else {
-                        if self.mouse_buttons.contains(button) {
-                            self.input_events.push(InputEvent::MouseButton {
-                                button: *button,
+                        if self.modifiers.contains(&modifier) {
+                            self.input_events.push(InputEvent::Modifier {
+                                modifier,
                                 pressed: false,
                             });
                         }
-                        self.mouse_buttons.remove(button);
+
+                        self.modifiers.remove(&modifier);
                     }
                 }
-                WindowEvent::CursorMoved {
-                    position: PhysicalPosition { x, y },
-                    ..
-                } => {
-                    self.input_events.push(InputEvent::MousePosition);
-                    self.physical_mouse_position =
-                        Some(PhysicalPosition { x: *x, y: *y });
-                    self.mouse_position =
-                        Some(((*x as f32) * hidpi, (*y as f32) * hidpi));
-                }
-                WindowEvent::Focused(b) => {
-                    if !b {
-                        self.keys.clear();
-                        self.mouse_buttons.clear();
-                    }
-
-                    self.input_events.push(InputEvent::WindowFocused(*b));
-                    self.window_focused = *b;
-                }
-                WindowEvent::ModifiersChanged(new_modifiers) => {
-                    self.modifiers_state = new_modifiers.state();
-
-                    for (state, modifier) in [
-                        (new_modifiers.lshift_state(), Modifier::LShift),
-                        (new_modifiers.rshift_state(), Modifier::RShift),
-                        (new_modifiers.lalt_state(), Modifier::LAlt),
-                        (new_modifiers.ralt_state(), Modifier::RAlt),
-                        (new_modifiers.lcontrol_state(), Modifier::LControl),
-                        (new_modifiers.rcontrol_state(), Modifier::RControl),
-                        (new_modifiers.lsuper_state(), Modifier::LSuper),
-                        (new_modifiers.rsuper_state(), Modifier::RSuper),
-                    ] {
-                        if state == ModifiersKeyState::Pressed {
-                            self.input_events.push(InputEvent::Modifier {
-                                modifier,
-                                pressed: true,
-                            });
-                            self.modifiers.insert(modifier);
-                        } else {
-                            if self.modifiers.contains(&modifier) {
-                                self.input_events.push(InputEvent::Modifier {
-                                    modifier,
-                                    pressed: false,
-                                });
-                            }
-
-                            self.modifiers.remove(&modifier);
-                        }
-                    }
-                }
-                _ => (),
-            },
-            Event::DeviceEvent { ref event, .. } => match *event {
-                DeviceEvent::MouseMotion { delta } => {
-                    self.mouse_delta.0 -= delta.0;
-                    self.mouse_delta.1 -= delta.1;
-                }
-                DeviceEvent::MouseWheel {
-                    delta: MouseScrollDelta::LineDelta(dx, dy),
-                } => {
-                    if dx != 0.0 {
-                        self.mouse_wheel.0 = dx.signum();
-                    }
-
-                    if dy != 0.0 {
-                        self.mouse_wheel.1 = dy.signum();
-                    }
-
-                    self.input_events.push(InputEvent::MouseWheel);
-                }
-                DeviceEvent::MouseWheel {
-                    delta:
-                        MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }),
-                } => {
-                    if x != 0.0 {
-                        self.mouse_wheel.0 = x.signum() as f32;
-                    }
-
-                    if y != 0.0 {
-                        self.mouse_wheel.1 = y.signum() as f32;
-                    }
-
-                    self.input_events.push(InputEvent::MouseWheel);
-                }
-                _ => (),
-            },
+            }
             _ => (),
+        }
+    }
+
+    pub fn device_updates(&mut self, window: &Window, event: &DeviceEvent) {
+        let mut event_redraw = false;
+        //We clear and reset everything here.
+        self.mouse_delta = (0.0, 0.0);
+        self.mouse_wheel = (0.0, 0.0);
+        self.device_events.clear();
+
+        //we enforce it to loop more often to allow for better latency on input returns.
+        if self.mouse_button_action != MouseButtonAction::None {
+            event_redraw = true;
+        }
+
+        match event {
+            DeviceEvent::MouseMotion { delta } => {
+                self.mouse_delta.0 -= delta.0;
+                self.mouse_delta.1 -= delta.1;
+            }
+            DeviceEvent::MouseWheel {
+                delta: MouseScrollDelta::LineDelta(dx, dy),
+            } => {
+                if *dx != 0.0 {
+                    self.mouse_wheel.0 = dx.signum();
+                }
+
+                if *dy != 0.0 {
+                    self.mouse_wheel.1 = dy.signum();
+                }
+
+                self.device_events.push(InputEvent::MouseWheel);
+                event_redraw = true;
+            }
+            DeviceEvent::MouseWheel {
+                delta: MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }),
+            } => {
+                if *x != 0.0 {
+                    self.mouse_wheel.0 = x.signum() as f32;
+                }
+
+                if *y != 0.0 {
+                    self.mouse_wheel.1 = y.signum() as f32;
+                }
+
+                self.device_events.push(InputEvent::MouseWheel);
+                event_redraw = true;
+            }
+            _ => (),
+        }
+
+        if event_redraw {
+            window.request_redraw();
         }
     }
 }

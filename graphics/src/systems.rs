@@ -40,3 +40,11 @@ pub enum CameraType {
     ManualView,
     ManualViewWithScale,
 }
+
+#[derive(Copy, Clone, Debug)]
+pub enum FlipStyle {
+    None,
+    Horizontal,
+    Vertical,
+    Both,
+}
