@@ -7,8 +7,8 @@ pub use render::*;
 pub use vertex::*;
 
 use crate::{
-    AtlasSet, Bounds, CameraType, Color, DrawOrder, DrawType, GpuRenderer,
-    Index, OrderedIndex, Vec2, Vec3, Vec4,
+    AtlasSet, Bounds, CameraType, Color, DrawOrder, DrawType, FlipStyle,
+    GpuRenderer, Index, OrderedIndex, Vec2, Vec3, Vec4,
 };
 
 /// Basic and Fast Image Rendering Type. Best used for Sprites and Objects in the world.
@@ -40,6 +40,10 @@ pub struct Image {
     pub render_layer: u32,
     /// Clip bounds if enabled in the renderer.
     pub bounds: Option<Bounds>,
+    /// Directional Flip.
+    pub flip_style: FlipStyle,
+    /// direct angle of rotation from the center Axis.
+    pub rotation_angle: f32,
     /// When true tells system to update the buffers.
     pub changed: bool,
 }
@@ -67,6 +71,8 @@ impl Image {
             order: DrawOrder::default(),
             render_layer,
             bounds: None,
+            flip_style: FlipStyle::None,
+            rotation_angle: 0.0,
             changed: true,
         }
     }
@@ -77,6 +83,18 @@ impl Image {
 
     pub fn update_bounds(&mut self, bounds: Option<Bounds>) -> &mut Self {
         self.bounds = bounds;
+        self
+    }
+
+    pub fn set_flip_style(&mut self, flip_style: FlipStyle) -> &mut Self {
+        self.changed = true;
+        self.flip_style = flip_style;
+        self
+    }
+
+    pub fn set_rotation_angle(&mut self, rotation_angle: f32) -> &mut Self {
+        self.changed = true;
+        self.rotation_angle = rotation_angle;
         self
     }
 
@@ -174,6 +192,8 @@ impl Image {
             camera_type: self.camera_type as u32,
             time: self.switch_time,
             layer: allocation.layer as i32,
+            flip_style: self.flip_style as u32,
+            angle: self.rotation_angle,
         };
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
