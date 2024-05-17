@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.8.1 (17. May, 2024)
+### fixed
+- fixed Y ordering offsets.
+
 ## 0.8.0 (24. April, 2024)
 ### Changed
 - (Breaking) updated to support winit 0.30.0.
