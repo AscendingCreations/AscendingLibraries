@@ -32,8 +32,8 @@ impl Ord for DrawOrder {
         self.layer
             .cmp(&other.layer)
             .then(self.alpha.cmp(&other.alpha))
-            .then(self.x.cmp(&other.x))
             .then(self.y.cmp(&other.y).reverse())
+            .then(self.x.cmp(&other.x))
             .then(self.z.cmp(&other.z).reverse())
     }
 }
