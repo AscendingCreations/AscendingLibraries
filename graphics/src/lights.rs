@@ -137,7 +137,7 @@ impl Lights {
 
         let size = renderer.size();
         self.order = DrawOrder::new(
-            false,
+            self.world_color.w < 1.0,
             &Vec3::default(),
             self.render_layer,
             &Vec2::new(size.width, size.height),
