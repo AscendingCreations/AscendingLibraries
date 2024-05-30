@@ -65,16 +65,6 @@ fn unpack_color(color: u32) -> vec4<f32> {
     );
 }
 
-fn unpack_linear_color(color: u32) -> vec4<f32> {
-    return vec4<f32>(
-        srgb_to_linear(f32((color & 0xff0000u) >> 16u) / 255.0),
-        srgb_to_linear(f32((color & 0xff00u) >> 8u) / 255.0),
-        srgb_to_linear(f32((color & 0xffu)) / 255.0),
-        f32((color & 0xff000000u) >> 24u) / 255.0,
-    );
-}
-
-
 @vertex
 fn vertex(
     vertex: VertexInput,
@@ -85,10 +75,8 @@ fn vertex(
 
     if vertex.is_color == 1u {
         size = textureDimensions(emoji_tex);
-        result.color = unpack_color(vertex.color);
     } else {
         size = textureDimensions(tex);
-        result.color = unpack_color(vertex.color);
     }
 
     let fsize = vec2<f32> (f32(size.x), f32(size.y));
@@ -147,6 +135,7 @@ fn vertex(
 
     result.layer = i32(vertex.layer);
     result.is_color = vertex.is_color;
+    result.color = unpack_color(vertex.color);
     return result;
 }
 
