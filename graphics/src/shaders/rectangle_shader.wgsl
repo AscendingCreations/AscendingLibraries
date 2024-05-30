@@ -59,11 +59,7 @@ fn unpack_tex_data(data: vec2<u32>) -> vec4<u32> {
 }
 
 fn srgb_to_linear(c: f32) -> f32 {
-    if c <= 0.04045 {
-        return c / 12.92;
-    } else {
-        return pow((c + 0.055) / 1.055, 2.4);
-    }
+    return pow(c, 0.4545454545454545);
 }
 
 fn unpack_color(color: u32) -> vec4<f32> {
