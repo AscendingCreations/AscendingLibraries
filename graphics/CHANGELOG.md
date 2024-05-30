@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.8.2 (30. May, 2024)
+### fixed
+- sRGB to Linear color within shader to give same or closer results to Paint and other editing programs that use RGB
+
 ## 0.8.1 (17. May, 2024)
 ### fixed
 - fixed Y ordering offsets.
