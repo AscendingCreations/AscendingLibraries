@@ -58,13 +58,21 @@ fn unpack_tex_data(data: vec2<u32>) -> vec4<u32> {
     );
 }
 
+fn srgb_to_linear(c: f32) -> f32 {
+    if c <= 0.04045 {
+        return c / 12.92;
+    } else {
+        return pow((c + 0.055) / 1.055, 2.4);
+    }
+}
+
 fn unpack_color(color: u32) -> vec4<f32> {
     return vec4<f32>(
-        f32((color & 0xff0000u) >> 16u),
-        f32((color & 0xff00u) >> 8u),
-        f32((color & 0xffu)),
-        f32((color & 0xff000000u) >> 24u),
-    ) / 255.0;
+        srgb_to_linear(f32((color & 0xff0000u) >> 16u) / 255.0),
+        srgb_to_linear(f32((color & 0xff00u) >> 8u) / 255.0),
+        srgb_to_linear(f32((color & 0xffu)) / 255.0),
+        f32((color & 0xff000000u) >> 24u) / 255.0,
+    );
 }
 
 @vertex
