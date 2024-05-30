@@ -5,12 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Changed
+- Added Rendering layer to Text, Mesh.
+
+### Fixed
+- Ensure all renderers use Alpha checks and Rendering Layer for Ordering
+
 ## 0.8.2 (30. May, 2024)
-### fixed
+### Fixed
 - sRGB to Linear color within shader to give same or closer results to Paint and other editing programs that use RGB
 
 ## 0.8.1 (17. May, 2024)
-### fixed
+### Fixed
 - fixed Y ordering offsets.
 
 ## 0.8.0 (24. April, 2024)
