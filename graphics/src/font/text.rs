@@ -24,6 +24,8 @@ pub struct Text {
     pub default_color: Color,
     pub bounds: Option<Bounds>,
     pub store_id: Index,
+    /// Layer this type is rendering on.
+    pub render_layer: u32,
     pub order: DrawOrder,
     /// Cursor the shaping is set too.
     pub cursor: Cursor,
@@ -50,7 +52,7 @@ impl Text {
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
         self.text_buf.clear();
         self.text_buf.reserve_exact(count);
-
+        let mut is_alpha = false;
         let mut width = 0.0;
         let mut total_lines: usize = 0;
 
@@ -150,6 +152,10 @@ impl Text {
                         None => self.default_color,
                     });
 
+                if color.a() < 255 {
+                    is_alpha = true;
+                }
+
                 let screensize = renderer.size();
 
                 if let Some(bounds) = self.bounds {
@@ -224,9 +230,9 @@ impl Text {
         let (max_width, max_height) = self.buffer.size();
 
         self.order = DrawOrder::new(
-            false,
+            is_alpha,
             &self.pos,
-            1,
+            self.render_layer,
             &Vec2::new(
                 width.min(max_width),
                 (total_lines as f32 * self.buffer.metrics().line_height)
@@ -246,6 +252,7 @@ impl Text {
         pos: Vec3,
         size: Vec2,
         scale: f32,
+        render_layer: u32,
     ) -> Self {
         let text_starter_size =
             bytemuck::bytes_of(&TextVertex::default()).len() * 64;
@@ -270,6 +277,7 @@ impl Text {
             line: 0,
             scroll: cosmic_text::Scroll::default(),
             scale,
+            render_layer,
         }
     }
 

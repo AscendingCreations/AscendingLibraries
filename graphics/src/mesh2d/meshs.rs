@@ -34,13 +34,15 @@ pub struct Mesh2D {
     pub indices: Vec<u32>,
     pub vbo_store_id: Index,
     pub order: DrawOrder,
+    /// Layer this type is rendering on.
+    pub render_layer: u32,
     pub high_index: u32,
     // if anything got updated we need to update the buffers too.
     pub changed: bool,
 }
 
 impl Mesh2D {
-    pub fn new(renderer: &mut GpuRenderer) -> Self {
+    pub fn new(renderer: &mut GpuRenderer, render_layer: u32) -> Self {
         Self {
             position: Vec3::default(),
             size: Vec2::default(),
@@ -51,6 +53,7 @@ impl Mesh2D {
             vertices: Vec::new(),
             indices: Vec::new(),
             high_index: 0,
+            render_layer,
         }
     }
 
@@ -100,9 +103,9 @@ impl Mesh2D {
         }
 
         self.order = DrawOrder::new(
-            false,
+            self.color.a() < 255,
             &self.position,
-            1,
+            self.render_layer,
             &self.size,
             DrawType::Mesh2D,
         );
