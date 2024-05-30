@@ -164,9 +164,9 @@ impl Rect {
         }
 
         self.order = DrawOrder::new(
-            false,
+            self.radius > 0.0,
             &self.position,
-            1,
+            self.render_layer,
             &self.size,
             DrawType::Rectangle,
         );
