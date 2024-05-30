@@ -113,7 +113,7 @@ fn vertex(
 
     result.tex_coords = global.inverse_proj * result.clip_position;
     result.tex_coords = result.tex_coords / result.tex_coords.w;
-    result.col = vertex.world_color;
+    result.col = vec4<f32>(srgb_to_linear(vertex.world_color.r), srgb_to_linear(vertex.world_color.g), srgb_to_linear(vertex.world_color.b), vertex.world_color.a);
     result.enable_lights = vertex.enable_lights;
     result.dir_count = vertex.dir_count;
     result.area_count = vertex.area_count;
