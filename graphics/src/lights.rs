@@ -9,7 +9,7 @@ pub use uniforms::*;
 pub use vertex::*;
 
 use crate::{
-    CameraType, Color, DrawOrder, DrawType, GpuRenderer, Index, OrderedIndex,
+    CameraType, Color, DrawOrder, GpuRenderer, Index, OrderedIndex,
     Vec2, Vec3, Vec4,
 };
 use slotmap::SlotMap;
@@ -135,13 +135,10 @@ impl Lights {
             store.changed = true;
         }
 
-        let size = renderer.size();
         self.order = DrawOrder::new(
             self.world_color.w < 1.0,
             &Vec3::default(),
             self.render_layer,
-            &Vec2::new(size.width, size.height),
-            DrawType::Lights,
         );
         self.changed = false;
     }

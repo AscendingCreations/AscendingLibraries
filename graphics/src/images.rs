@@ -7,7 +7,7 @@ pub use render::*;
 pub use vertex::*;
 
 use crate::{
-    AtlasSet, Bounds, CameraType, Color, DrawOrder, DrawType, FlipStyle,
+    AtlasSet, Bounds, CameraType, Color, DrawOrder, FlipStyle,
     GpuRenderer, Index, OrderedIndex, Vec2, Vec3, Vec4,
 };
 
@@ -203,13 +203,8 @@ impl Image {
             store.changed = true;
         }
 
-        self.order = DrawOrder::new(
-            self.color.a() < 255,
-            &self.pos,
-            self.render_layer,
-            &self.hw,
-            DrawType::Image,
-        );
+        self.order =
+            DrawOrder::new(self.color.a() < 255, &self.pos, self.render_layer);
         self.changed = false;
     }
 

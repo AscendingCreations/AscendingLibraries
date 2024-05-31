@@ -1,6 +1,6 @@
 use crate::{
-    CameraType, DrawOrder, DrawType, GpuRenderer, GraphicsError, Index,
-    Mesh2DVertex, OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
+    CameraType, DrawOrder, GpuRenderer, GraphicsError, Index, Mesh2DVertex,
+    OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
 };
 use cosmic_text::Color;
 use lyon::{
@@ -106,8 +106,6 @@ impl Mesh2D {
             self.color.a() < 255,
             &self.position,
             self.render_layer,
-            &self.size,
-            DrawType::Mesh2D,
         );
     }
 

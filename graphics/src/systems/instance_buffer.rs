@@ -51,17 +51,17 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         &mut self,
         renderer: &GpuRenderer,
         index: OrderedIndex,
-        layer: usize,
+        buffer_layer: usize,
     ) {
         if let Some(store) = renderer.get_buffer(index.index) {
-            let offset = layer.saturating_add(1);
+            let offset = buffer_layer.saturating_add(1);
 
             if self.unprocessed.len() < offset {
                 for i in self.unprocessed.len()..offset {
-                    //Push the layer buffer. if this is a layer we are adding data too lets
-                    //give it a starting size. this cna be adjusted later for better performance
+                    //Push the buffer_layer. if this is a layer we are adding data too lets
+                    //give it a starting size. this can be adjusted later for better performance
                     //versus ram usage.
-                    self.unprocessed.push(if i == layer {
+                    self.unprocessed.push(if i == buffer_layer {
                         Vec::with_capacity(self.layer_size)
                     } else {
                         Vec::new()
@@ -71,7 +71,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
 
             self.needed_size += store.store.len();
 
-            if let Some(unprocessed) = self.unprocessed.get_mut(layer) {
+            if let Some(unprocessed) = self.unprocessed.get_mut(buffer_layer) {
                 unprocessed.push(index);
             }
         }

@@ -1,4 +1,4 @@
-use crate::{Bounds, CameraType, Vec2, Vec3};
+use crate::{Bounds, CameraType, Vec3};
 use slotmap::new_key_type;
 use std::cmp::Ordering;
 
@@ -8,17 +8,26 @@ new_key_type! {
 
 pub type Index = AscendingKey;
 
+/// Draw Order in which Buffers are sorted by for optimal rendering.
+/// Positions are all calculated as (pos * 10000.0) as u32 to increase speed of sorting.
+/// Sort Order is order_layer -> alpha -> y reversed -> x -> z reversed.
 #[derive(Copy, Clone, PartialEq, Eq, Default)]
 pub struct DrawOrder {
-    pub layer: u32, // lowest to highest. for spliting different types into layers.
-    pub alpha: bool, // alpha always is highest
-    pub x: u32,     // Lower is lower
-    pub y: u32,     // higher is lower
-    pub z: u32,     // lower is higher
-    // used for layer lookups.
-    pub width: u32,
-    pub height: u32,
-    pub draw_type: DrawType,
+    /// Layer to sort the buffer by. This is not the same as buffer_layer.
+    /// Sorted by lowest to highest. First to Sort by.
+    pub order_layer: u32,
+    /// If the Buffer includes any Alpha Rendering.
+    /// This placed the buffer first above none Alpha in the Order Layer.
+    pub alpha: bool,
+    /// X Position on the Screen. Sorted After Y.
+    /// Sorted by lowest to highest.
+    pub x: u32,
+    /// Y Position on the Screen. Sorted After Alpha.
+    /// Sorted by highest to lowest.
+    pub y: u32,
+    /// Z Position on the Screen. Sorted After X.
+    /// Sorted by highest to lowest.
+    pub z: u32,
 }
 
 impl PartialOrd for DrawOrder {
@@ -29,8 +38,8 @@ impl PartialOrd for DrawOrder {
 
 impl Ord for DrawOrder {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.layer
-            .cmp(&other.layer)
+        self.order_layer
+            .cmp(&other.order_layer)
             .then(self.alpha.cmp(&other.alpha))
             .then(self.y.cmp(&other.y).reverse())
             .then(self.x.cmp(&other.x))
@@ -39,33 +48,32 @@ impl Ord for DrawOrder {
 }
 
 impl DrawOrder {
-    pub fn new(
-        alpha: bool,
-        pos: &Vec3,
-        layer: u32,
-        size: &Vec2,
-        draw_type: DrawType,
-    ) -> Self {
+    pub fn new(alpha: bool, pos: &Vec3, layer: u32) -> Self {
         Self {
-            layer,
+            order_layer: layer,
             alpha,
-            x: (pos.x * 100.0) as u32,
-            y: (pos.y * 100.0) as u32,
-            z: (pos.z * 100.0) as u32,
-            width: size.x as u32,
-            height: size.y as u32,
-            draw_type,
+            x: (pos.x * 10000.0) as u32,
+            y: (pos.y * 10000.0) as u32,
+            z: (pos.z * 10000.0) as u32,
         }
     }
 }
 
+/// OrderIndex Contains the information needed to Order the buffers and
+/// to set the buffers up for rendering.
 #[derive(Copy, Clone)]
 pub struct OrderedIndex {
+    /// The Draw Order of the Buffer.
     pub(crate) order: DrawOrder,
+    /// The Index to the Buffer.
     pub(crate) index: Index,
+    /// Stores the VBO buffers indices count.
     pub(crate) index_count: u32,
+    /// Stores the VBO buffers indices max count.
     pub(crate) index_max: u32,
+    /// Stores buffers optional Bounds for scissor clipping.
     pub(crate) bounds: Option<Bounds>,
+    /// Stores the buffers Camera Type for Rendering Aspects.
     pub(crate) camera_type: CameraType,
 }
 
@@ -117,15 +125,4 @@ impl OrderedIndex {
             camera_type,
         }
     }
-}
-
-#[derive(Copy, Clone, Default, PartialEq, Eq)]
-pub enum DrawType {
-    #[default]
-    Map,
-    Image,
-    Rectangle,
-    Text,
-    Mesh2D,
-    Lights,
 }

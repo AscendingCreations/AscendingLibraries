@@ -1,6 +1,6 @@
 use crate::{
-    Bounds, CameraType, Color, DrawOrder, DrawType, GpuRenderer, GraphicsError,
-    Index, OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
+    Bounds, CameraType, Color, DrawOrder, GpuRenderer, GraphicsError, Index,
+    OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
     Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap,
@@ -54,11 +54,9 @@ impl Text {
         self.text_buf.reserve_exact(count);
         let mut is_alpha = false;
         let mut width = 0.0;
-        let mut total_lines: usize = 0;
 
         for run in self.buffer.layout_runs() {
             width = run.line_w.max(width);
-            total_lines += 1;
 
             for glyph in run.glyphs.iter() {
                 let physical_glyph = glyph.physical(
@@ -227,19 +225,7 @@ impl Text {
             store.changed = true;
         }
 
-        let (max_width, max_height) = self.buffer.size();
-
-        self.order = DrawOrder::new(
-            is_alpha,
-            &self.pos,
-            self.render_layer,
-            &Vec2::new(
-                width.min(max_width),
-                (total_lines as f32 * self.buffer.metrics().line_height)
-                    .min(max_height),
-            ),
-            DrawType::Text,
-        );
+        self.order = DrawOrder::new(is_alpha, &self.pos, self.render_layer);
 
         self.changed = false;
         self.buffer.set_redraw(false);

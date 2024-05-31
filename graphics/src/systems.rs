@@ -16,7 +16,7 @@ pub use buffer::{
     AsBufferPass, Buffer, BufferData, BufferLayout, BufferPass, BufferStore,
 };
 pub use device::*;
-pub use draw_order::{DrawOrder, DrawType, Index, OrderedIndex};
+pub use draw_order::{DrawOrder, Index, OrderedIndex};
 pub use instance_buffer::*;
 pub use layout::*;
 pub use pass::*;

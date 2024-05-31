@@ -1,5 +1,5 @@
 use crate::{
-    AtlasSet, Bounds, CameraType, DrawOrder, DrawType, GpuRenderer,
+    AtlasSet, Bounds, CameraType, DrawOrder, GpuRenderer,
     GraphicsError, Index, OrderedIndex, OtherError, RectVertex, Texture, Vec2,
     Vec3, Vec4,
 };
@@ -167,8 +167,6 @@ impl Rect {
             self.radius > 0.0,
             &self.position,
             self.render_layer,
-            &self.size,
-            DrawType::Rectangle,
         );
     }
 

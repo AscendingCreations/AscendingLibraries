@@ -9,7 +9,7 @@ pub use vertex::*;
 use std::iter;
 
 use crate::{
-    AtlasSet, CameraType, DrawOrder, DrawType, GpuRenderer, Index,
+    AtlasSet, CameraType, DrawOrder, GpuRenderer, Index,
     OrderedIndex, Vec2, Vec3,
 };
 use cosmic_text::Color;
@@ -173,8 +173,6 @@ impl Map {
             }
         }
 
-        let size = (self.tilesize * 32) as f32;
-
         if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
             let bytes = bytemuck::cast_slice(&self.lower_buffer);
             store.store.resize_with(bytes.len(), || 0);
@@ -189,21 +187,11 @@ impl Map {
             store.changed = true;
         }
 
-        self.orders[0] = DrawOrder::new(
-            false,
-            &Vec3::new(self.pos.x, self.pos.y, 9.0),
-            0,
-            &Vec2::new(size, size),
-            DrawType::Map,
-        );
+        self.orders[0] =
+            DrawOrder::new(false, &Vec3::new(self.pos.x, self.pos.y, 9.0), 0);
 
-        self.orders[1] = DrawOrder::new(
-            false,
-            &Vec3::new(self.pos.x, self.pos.y, 5.0),
-            0,
-            &Vec2::new(size, size),
-            DrawType::Map,
-        );
+        self.orders[1] =
+            DrawOrder::new(false, &Vec3::new(self.pos.x, self.pos.y, 5.0), 0);
         self.changed = false;
     }
 
