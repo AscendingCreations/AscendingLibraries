@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
 ### Changed
-- Added Rendering layer to Text, Mesh.
+- (Breaking)Added Rendering layer to Text, Mesh.
+- (Breaking) DrawOrder Width, Height and DrawType Removed. 
+- (Breaking) DrawType Removed.
 
 ### Fixed
 - Ensure all renderers use Alpha checks and Rendering Layer for Ordering
