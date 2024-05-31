@@ -1,5 +1,5 @@
 use crate::{
-    BufferLayout, GpuDevice, LayoutStorage, PipeLineLayout, StaticBufferObject,
+    BufferLayout, GpuDevice, LayoutStorage, PipeLineLayout, StaticVertexBuffer,
     SystemLayout, TextVertex, TextureLayout,
 };
 use bytemuck::{Pod, Zeroable};
@@ -47,10 +47,10 @@ impl PipeLineLayout for TextRenderPipeline {
                     entry_point: "vertex",
                     buffers: &[
                         wgpu::VertexBufferLayout {
-                            array_stride: StaticBufferObject::stride(),
+                            array_stride: StaticVertexBuffer::stride(),
                             step_mode: wgpu::VertexStepMode::Vertex,
                             attributes: &[
-                                StaticBufferObject::vertex_attribute(),
+                                StaticVertexBuffer::vertex_attribute(),
                             ],
                         },
                         wgpu::VertexBufferLayout {

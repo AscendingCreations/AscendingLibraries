@@ -1,6 +1,6 @@
 use crate::{
     AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer,
-    OrderedIndex, SetBuffers, StaticBufferObject, Text, TextRenderPipeline,
+    OrderedIndex, SetBuffers, StaticVertexBuffer, Text, TextRenderPipeline,
     TextVertex, Vec2,
 };
 use cosmic_text::{CacheKey, SwashCache};
@@ -112,7 +112,7 @@ where
                     renderer.get_pipelines(TextRenderPipeline).unwrap(),
                 );
                 self.draw_indexed(
-                    0..StaticBufferObject::index_count(),
+                    0..StaticVertexBuffer::index_count(),
                     0,
                     details.start..details.end,
                 );

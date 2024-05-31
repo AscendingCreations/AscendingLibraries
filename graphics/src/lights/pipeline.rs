@@ -1,6 +1,6 @@
 use crate::{
     AreaLightLayout, BufferLayout, DirLightLayout, GpuDevice, LayoutStorage,
-    LightsVertex, PipeLineLayout, StaticBufferObject, SystemLayout,
+    LightsVertex, PipeLineLayout, StaticVertexBuffer, SystemLayout,
 };
 use bytemuck::{Pod, Zeroable};
 
@@ -49,10 +49,10 @@ impl PipeLineLayout for LightRenderPipeline {
                     entry_point: "vertex",
                     buffers: &[
                         wgpu::VertexBufferLayout {
-                            array_stride: StaticBufferObject::stride(),
+                            array_stride: StaticVertexBuffer::stride(),
                             step_mode: wgpu::VertexStepMode::Vertex,
                             attributes: &[
-                                StaticBufferObject::vertex_attribute(),
+                                StaticVertexBuffer::vertex_attribute(),
                             ],
                         },
                         wgpu::VertexBufferLayout {

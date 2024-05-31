@@ -3,6 +3,7 @@ use bytemuck::{Pod, Zeroable};
 use std::mem;
 use wgpu::util::DeviceExt;
 
+/// Preset Vertex layout for reuse.
 #[repr(C)]
 #[derive(Clone, Copy, Zeroable, Pod)]
 pub struct Vertex {
@@ -26,17 +27,14 @@ const VERTS: [Vertex; 4] = [
     },
 ];
 
-// This is to be used along with Instances.
-// This its the reusable VBO and IBO per each instance.
-// The GPU will point to the Instance per each Vertex object and then
-// Move the index by one to the next instance.
-// This only works for things that dont need custom VBO/IBO's
-pub struct StaticBufferObject {
+/// StaticVertexBuffer holds premade vbo and ibo buffers that can be reused between
+/// InstanceBuffered Objects. This Decreases GPU memory and boosts speed.
+pub struct StaticVertexBuffer {
     pub vbo: wgpu::Buffer,
     pub ibo: wgpu::Buffer,
 }
 
-impl<'a> AsBufferPass<'a> for StaticBufferObject {
+impl<'a> AsBufferPass<'a> for StaticVertexBuffer {
     fn as_buffer_pass(&'a self) -> BufferPass<'a> {
         BufferPass {
             vertex_buffer: &self.vbo,
@@ -45,8 +43,8 @@ impl<'a> AsBufferPass<'a> for StaticBufferObject {
     }
 }
 
-impl StaticBufferObject {
-    /// Used to create vbo/ibo from the static context.
+impl StaticVertexBuffer {
+    /// Used to create [`wgpu::BufferSlice`] from the static context.
     pub fn create_buffer(gpu_device: &GpuDevice) -> Self {
         Self {
             vbo: gpu_device.device().create_buffer_init(
@@ -80,21 +78,22 @@ impl StaticBufferObject {
         }
     }
 
+    /// Returns the stride of the [`StaticVertexBuffer`]
     pub fn stride() -> u64 {
         mem::size_of::<Vertex>() as u64
     }
 
-    /// Returns wgpu::BufferSlice of indices.
+    /// Returns the [`wgpu::BufferSlice`] of indices.
     pub fn indices(&self) -> wgpu::BufferSlice {
         self.ibo.slice(..)
     }
 
-    /// creates a the static vbo/ibo.
+    /// creates a new [`StaticVertexBuffer`]
     pub fn new(gpu_device: &GpuDevice) -> Self {
         Self::create_buffer(gpu_device)
     }
 
-    /// Returns wgpu::BufferSlice of vertices.
+    /// Returns the [`wgpu::BufferSlice`] of vertices.
     pub fn vertices(&self) -> wgpu::BufferSlice {
         self.vbo.slice(..)
     }

@@ -1,7 +1,7 @@
 use crate::{
     BufferPass, BufferStore, GpuDevice, GpuWindow, GraphicsError, Index,
     Layout, LayoutStorage, OtherError, PipeLineLayout, PipelineStorage,
-    StaticBufferObject,
+    StaticVertexBuffer,
 };
 use cosmic_text::FontSystem;
 use slotmap::SlotMap;
@@ -20,7 +20,7 @@ pub struct GpuRenderer {
     pub(crate) framebuffer: Option<wgpu::TextureView>,
     pub(crate) frame: Option<wgpu::SurfaceTexture>,
     pub font_sys: FontSystem,
-    pub buffer_object: StaticBufferObject,
+    pub buffer_object: StaticVertexBuffer,
 }
 
 pub trait SetBuffers<'a, 'b>
@@ -45,7 +45,7 @@ where
 
 impl GpuRenderer {
     pub fn new(window: GpuWindow, device: GpuDevice) -> Self {
-        let buffer_object = StaticBufferObject::create_buffer(&device);
+        let buffer_object = StaticVertexBuffer::create_buffer(&device);
         let depth_buffer = window.create_depth_texture(&device);
 
         Self {

@@ -2,7 +2,7 @@ use log::warn;
 
 use crate::{
     AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer, Map,
-    MapRenderPipeline, MapVertex, OrderedIndex, SetBuffers, StaticBufferObject,
+    MapRenderPipeline, MapVertex, OrderedIndex, SetBuffers, StaticVertexBuffer,
 };
 
 pub struct MapRenderer {
@@ -88,7 +88,7 @@ where
                     renderer.get_pipelines(MapRenderPipeline).unwrap(),
                 );
                 self.draw_indexed(
-                    0..StaticBufferObject::index_count(),
+                    0..StaticVertexBuffer::index_count(),
                     0,
                     details.start..details.end,
                 );

@@ -1,6 +1,6 @@
 use crate::{
     AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer, OrderedIndex, Rect,
-    RectRenderPipeline, RectVertex, StaticBufferObject, System,
+    RectRenderPipeline, RectVertex, StaticVertexBuffer, System,
 };
 
 pub struct RectRenderer {
@@ -102,7 +102,7 @@ where
                         }
 
                         self.draw_indexed(
-                            0..StaticBufferObject::index_count(),
+                            0..StaticVertexBuffer::index_count(),
                             0,
                             details.start..details.end,
                         );
@@ -128,7 +128,7 @@ where
                 );
 
                 self.draw_indexed(
-                    0..StaticBufferObject::index_count(),
+                    0..StaticVertexBuffer::index_count(),
                     0,
                     details.start..details.end,
                 );

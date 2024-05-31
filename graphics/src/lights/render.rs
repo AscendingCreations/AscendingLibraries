@@ -3,7 +3,7 @@ use std::{iter, mem};
 use crate::{
     AreaLightLayout, AreaLightRaw, DirLightLayout, DirectionalLightRaw,
     GpuRenderer, GraphicsError, InstanceBuffer, LightRenderPipeline, Lights,
-    LightsVertex, OrderedIndex, StaticBufferObject, MAX_AREA_LIGHTS,
+    LightsVertex, OrderedIndex, StaticVertexBuffer, MAX_AREA_LIGHTS,
     MAX_DIR_LIGHTS,
 };
 
@@ -159,7 +159,7 @@ where
                 );
 
                 self.draw_indexed(
-                    0..StaticBufferObject::index_count(),
+                    0..StaticVertexBuffer::index_count(),
                     0,
                     details.start..details.end,
                 );

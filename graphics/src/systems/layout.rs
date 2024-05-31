@@ -5,12 +5,15 @@ use std::{
     rc::Rc,
 };
 
+/// Trait used to Create and Store [`wgpu::BindGroupLayout`] within a HashMap.
 pub trait Layout: Pod + Zeroable {
+    /// Creates the [`wgpu::BindGroupLayout`] to be added to the HashMap
     fn create_layout(
         &self,
         gpu_device: &mut GpuDevice,
     ) -> wgpu::BindGroupLayout;
 
+    /// Gives a Hashable Key of the [`wgpu::BindGroupLayout`] to use to Retrieve it from the HashMap.
     fn layout_key(&self) -> (TypeId, Vec<u8>) {
         let type_id = self.type_id();
         let bytes: Vec<u8> =
@@ -20,6 +23,7 @@ pub trait Layout: Pod + Zeroable {
     }
 }
 
+/// [`wgpu::BindGroupLayout`] Storage within a HashMap
 pub struct LayoutStorage {
     pub(crate) bind_group_map:
         AHashMap<(TypeId, Vec<u8>), Rc<wgpu::BindGroupLayout>>,
@@ -32,6 +36,8 @@ impl LayoutStorage {
         }
     }
 
+    /// Creates a new [`wgpu::BindGroupLayout`] from [`Layout`] and adds it to the internal map.
+    /// Returns an Rc<wgpu::BindGroupLayout>
     pub fn create_layout<K: Layout>(
         &mut self,
         device: &mut GpuDevice,
