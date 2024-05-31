@@ -6,6 +6,7 @@ new_key_type! {
     pub struct AscendingKey;
 }
 
+/// Buffer Index Re-type.
 pub type Index = AscendingKey;
 
 /// Draw Order in which Buffers are sorted by for optimal rendering.
@@ -48,9 +49,10 @@ impl Ord for DrawOrder {
 }
 
 impl DrawOrder {
-    pub fn new(alpha: bool, pos: &Vec3, layer: u32) -> Self {
+    /// Creates a DrawOrder with alpha, position and order_layer.
+    pub fn new(alpha: bool, pos: &Vec3, order_layer: u32) -> Self {
         Self {
-            order_layer: layer,
+            order_layer,
             alpha,
             x: (pos.x * 10000.0) as u32,
             y: (pos.y * 10000.0) as u32,
@@ -98,6 +100,7 @@ impl Ord for OrderedIndex {
 }
 
 impl OrderedIndex {
+    /// Creates a OrderedIndex with DrawOrder, Buffer Index and Index Max.
     pub fn new(order: DrawOrder, index: Index, index_max: u32) -> Self {
         Self {
             order,
@@ -109,6 +112,8 @@ impl OrderedIndex {
         }
     }
 
+    /// Creates a OrderedIndex with DrawOrder, Buffer Index and Index Max,
+    /// Clip bounds and Camera Type.
     pub fn new_with_bounds(
         order: DrawOrder,
         index: Index,

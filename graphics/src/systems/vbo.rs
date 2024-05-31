@@ -3,30 +3,46 @@ use crate::{
     CameraType, GpuDevice, GpuRenderer, OrderedIndex,
 };
 use std::ops::Range;
-//This Holds onto all the Vertexs Compressed into a byte array.
-//This is Used for objects that need more advanced VBO/IBO other wise use the Instance buffers.
 
+/// Details for the Objects Memory location within the Vertex Buffer and Index Buffers.
+/// This is used to deturmine if the buffers location has changed or not for
+/// reuploading the buffer.
 #[derive(Copy, Clone)]
 pub struct IndexDetails {
+    /// Start location of the Index Buffer.
     pub indices_start: u32,
+    /// End location of the Index Buffer.
     pub indices_end: u32,
+    /// Start location of the vertex buffers base.
     pub vertex_base: i32,
 }
 
+/// Clipped buffers Tuple type.
 pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>, CameraType);
 
-pub struct GpuBuffer<K: BufferLayout> {
-    unprocessed: Vec<Vec<OrderedIndex>>,
+/// VertexBuffer holds all the Details to render with Verticies and indicies.
+/// This stores and handles the orders of all rendered objects to try and reduce the amount
+/// of GPU uploads we make.
+pub struct VertexBuffer<K: BufferLayout> {
+    /// Unprocessed Buffer Data.
+    pub unprocessed: Vec<Vec<OrderedIndex>>,
+    /// Buffers ready to Render
     pub buffers: Vec<Vec<ClippedIndexDetails>>,
+    /// The main Vertex Buffer within GPU memory.
     pub vertex_buffer: Buffer<K>,
-    vertex_needed: usize,
+    /// The main Index Buffer within GPU memory.
     pub index_buffer: Buffer<K>,
-    index_needed: usize,
+    /// Size each Buffer Layer gets allocated to for Future buffers.
     pub layer_size: usize,
+    /// Used to Resize the vertex buffer if new data will not fit within.
+    vertex_needed: usize,
+    /// Used to Resize the index buffer if new data will not fit within.
+    index_needed: usize,
+    /// Deturmines if we need to use Clip the buffer during Rendering.
     is_clipped: bool,
 }
 
-impl<'a, K: BufferLayout> AsBufferPass<'a> for GpuBuffer<K> {
+impl<'a, K: BufferLayout> AsBufferPass<'a> for VertexBuffer<K> {
     fn as_buffer_pass(&'a self) -> BufferPass<'a> {
         BufferPass {
             vertex_buffer: &self.vertex_buffer.buffer,
@@ -35,14 +51,20 @@ impl<'a, K: BufferLayout> AsBufferPass<'a> for GpuBuffer<K> {
     }
 }
 
-impl<K: BufferLayout> GpuBuffer<K> {
-    /// Used to create GpuBuffer from a (Vertex:Vec<u8>, Indices:Vec<u8>).
+impl<K: BufferLayout> VertexBuffer<K> {
+    /// Used to create and [`VertexBuffer`].
+    /// Only use this for creating a reusable buffer.
+    ///
+    /// # Arguments
+    /// - buffers: The (Vertex:Vec<u8>, Indices:Vec<u8>) to Create the Buffer with.
+    /// - layer_size: The capacity allocated for any future elements per new Buffer Layer.
+    ///
     pub fn create_buffer(
         gpu_device: &GpuDevice,
         buffers: &BufferData,
         layer_size: usize,
     ) -> Self {
-        GpuBuffer {
+        VertexBuffer {
             unprocessed: Vec::new(),
             buffers: Vec::new(),
             vertex_buffer: Buffer::new(
@@ -64,14 +86,21 @@ impl<K: BufferLayout> GpuBuffer<K> {
         }
     }
 
+    /// Adds the Buffer to the unprocessed list so it can be processed in [`VertexBuffer::finalize`]
+    /// This must be called in order to Render the Object.
+    ///
+    /// # Arguments
+    /// - index: The Order Index of the Object we want to render.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
         mut index: OrderedIndex,
-        layer: usize,
+        buffer_layer: usize,
     ) {
         if let Some(store) = renderer.get_buffer(index.index) {
-            let offset = layer.saturating_add(1);
+            let offset = buffer_layer.saturating_add(1);
             // add in the missing layers this is better than keeping a hash since
             // if at anytime a process adds new data to a older layer it will already Exist.
             if self.unprocessed.len() < offset {
@@ -79,7 +108,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
                     //Push the layer buffer. if this is a layer we are adding data too lets
                     //give it a starting size. this cna be adjusted later for better performance
                     //versus ram usage.
-                    self.unprocessed.push(if i == layer {
+                    self.unprocessed.push(if i == buffer_layer {
                         Vec::with_capacity(32)
                     } else {
                         Vec::new()
@@ -92,12 +121,14 @@ impl<K: BufferLayout> GpuBuffer<K> {
 
             index.index_count = store.indexs.len() as u32 / 4;
 
-            if let Some(unprocessed) = self.unprocessed.get_mut(layer) {
+            if let Some(unprocessed) = self.unprocessed.get_mut(buffer_layer) {
                 unprocessed.push(index);
             }
         }
     }
 
+    /// Processes all unprocessed listed buffers and uploads any changes to the gpu
+    /// This must be called after [`VertexBuffer::add_buffer_store`] in order to Render the Objects.
     pub fn finalize(&mut self, renderer: &mut GpuRenderer) {
         let (
             mut changed,
@@ -245,7 +276,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
         )
     }
 
-    /// Returns the index_count.
+    /// Returns the index count.
     pub fn index_count(&self) -> usize {
         self.index_buffer.count
     }
@@ -255,7 +286,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
         self.index_buffer.max
     }
 
-    /// Returns wgpu::BufferSlice of indices.
+    /// Returns [`wgpu::BufferSlice`] of indices.
     /// bounds is used to set a specific Range if needed.
     /// If bounds is None then range is 0..index_count.
     pub fn indices(&self, bounds: Option<Range<u64>>) -> wgpu::BufferSlice {
@@ -268,8 +299,12 @@ impl<K: BufferLayout> GpuBuffer<K> {
         self.index_buffer.buffer_slice(range)
     }
 
-    /// creates a new pre initlized VertexBuffer with a default size.
-    /// default size is based on the initial BufferPass::vertices length.
+    /// Creates an [`VertexBuffer`] with a default buffer size.
+    /// Buffer size is based on the initial [`crate::BufferLayout::default_buffer`] length.
+    ///
+    /// # Arguments
+    /// - layer_size: The capacity allocated for any future elements per new Buffer Layer.
+    ///
     pub fn new(device: &GpuDevice, layer_size: usize) -> Self {
         Self::create_buffer(device, &K::default_buffer(), layer_size)
     }
@@ -284,6 +319,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
         self.vertex_buffer.count
     }
 
+    /// Returns if the vertex buffer is empty
     pub fn is_empty(&self) -> bool {
         self.vertex_buffer.count == 0
     }
@@ -312,7 +348,7 @@ impl<K: BufferLayout> GpuBuffer<K> {
         K::stride()
     }
 
-    /// Returns wgpu::BufferSlice of vertices.
+    /// Returns [`wgpu::BufferSlice`] of vertices.
     /// bounds is used to set a specific Range if needed.
     /// If bounds is None then range is 0..vertex_count.
     pub fn vertices(&self, bounds: Option<Range<u64>>) -> wgpu::BufferSlice {
@@ -325,9 +361,13 @@ impl<K: BufferLayout> GpuBuffer<K> {
         self.vertex_buffer.buffer_slice(range)
     }
 
-    /// Creates a GpuBuffer based on capacity.
-    /// Capacity is the amount of objects to initialize for.
-    /// Capacity * 2 == the reserved space for the indices.
+    /// Creates an [`VertexBuffer`] with a buffer capacity.
+    /// Buffer size is based on the initial [`crate::BufferLayout::default_buffer`] length.
+    ///
+    /// # Arguments
+    /// - capacity: The capacity of the Buffers instances for future allocation * 2.
+    /// - layer_size: The capacity allocated for any future elements per new Buffer Layer.
+    ///
     pub fn with_capacity(
         gpu_device: &GpuDevice,
         capacity: usize,

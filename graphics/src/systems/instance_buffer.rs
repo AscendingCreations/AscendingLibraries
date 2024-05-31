@@ -4,28 +4,47 @@ use crate::{
 };
 use std::ops::Range;
 
+/// Details for the Objects Memory location within the instance Buffer.
+/// This is used to deturmine if the buffers location has changed or not for
+/// reuploading the buffer.
 pub struct InstanceDetails {
+    /// Start location of the Buffer.
     pub start: u32,
+    /// End location of the Buffer.
     pub end: u32,
 }
 
+/// Clipped buffers Tuple type.
 pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>, CameraType);
 
-//This Holds onto all the instances Compressed into a byte array.
+/// Instance buffer holds all the Details to render with instances with a Static VBO.
+/// This stores and handles the orders of all rendered objects to try and reduce the amount
+/// of GPU uploads we make.
 pub struct InstanceBuffer<K: BufferLayout> {
+    /// Unprocessed Buffer Data.
     pub unprocessed: Vec<Vec<OrderedIndex>>,
+    /// Buffers ready to Render
     pub buffers: Vec<Option<InstanceDetails>>,
+    /// Clipped Buffers ready to Render.
     pub clipped_buffers: Vec<Vec<ClippedInstanceDetails>>,
+    /// The main Buffer within GPU memory.
     pub buffer: Buffer<K>,
+    /// Size each Buffer Layer gets allocated to for Future buffers.
     pub layer_size: usize,
-    // this is a calculation of the buffers size when being marked as ready to add into the buffer.
+    /// Used to Resize the buffer if new data will not fit within.
     needed_size: usize,
+    /// Deturmines if we need to use clipped_buffers or Buffers for Rendering.
     is_clipped: bool,
 }
 
 impl<K: BufferLayout> InstanceBuffer<K> {
-    /// Used to create GpuBuffer from a BufferPass.
+    /// Used to create and [`InstanceBuffer`].
     /// Only use this for creating a reusable buffer.
+    ///
+    /// # Arguments
+    /// - data: The contents to Create the Buffer with.
+    /// - layer_size: The capacity allocated for any future elements per new Buffer Layer.
+    ///
     pub fn create_buffer(
         gpu_device: &GpuDevice,
         data: &[u8],
@@ -47,6 +66,13 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         }
     }
 
+    /// Adds the Buffer to the unprocessed list so it can be processed in [`InstanceBuffer::finalize`]
+    /// This must be called in order to Render the Object.
+    ///
+    /// # Arguments
+    /// - index: The Order Index of the Object we want to render.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
@@ -108,6 +134,8 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         }
     }
 
+    /// Processes all unprocessed listed buffers and uploads any changes to the gpu
+    /// This must be called after [`InstanceBuffer::add_buffer_store`] in order to Render the Objects.
     pub fn finalize(&mut self, renderer: &mut GpuRenderer) {
         let (mut changed, mut pos, mut count) = (false, 0, 0);
 
@@ -199,8 +227,12 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         );
     }
 
-    /// creates a new pre initlized InstanceBuffer with a default size.
-    /// default size is based on the initial InstanceLayout::default_buffer length.
+    /// Creates an [`InstanceBuffer`] with a default buffer size.
+    /// Buffer size is based on the initial [`crate::BufferLayout::default_buffer`] length.
+    ///
+    /// # Arguments
+    /// - layer_size: The capacity allocated for any future elements per new Buffer Layer.
+    ///
     pub fn new(gpu_device: &GpuDevice, layer_size: usize) -> Self {
         Self::create_buffer(
             gpu_device,
@@ -209,21 +241,22 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         )
     }
 
-    /// Returns the elements count.
+    /// Returns the instances count.
     pub fn count(&self) -> u32 {
         self.buffer.count as u32
     }
 
-    /// Returns the elements byte count.
+    /// Returns the instances byte count.
     pub fn len(&self) -> u64 {
         self.buffer.len as u64
     }
 
+    /// Returns if the instance buffer is empty
     pub fn is_empty(&self) -> bool {
         self.buffer.is_empty()
     }
 
-    /// Returns vertex_buffer's max size in bytes.
+    /// Returns instance buffers max size in bytes.
     pub fn max(&self) -> usize {
         self.buffer.max
     }
@@ -247,7 +280,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         K::stride()
     }
 
-    /// Returns wgpu::BufferSlice of vertices.
+    /// Returns [`wgpu::BufferSlice`] of vertices.
     /// bounds is used to set a specific Range if needed.
     /// If bounds is None then range is 0..vertex_count.
     pub fn instances(&self, bounds: Option<Range<u64>>) -> wgpu::BufferSlice {
@@ -260,8 +293,13 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         self.buffer.buffer_slice(range)
     }
 
-    /// Creates a Buffer based on capacity.
-    /// Capacity is the amount of objects to initialize for.
+    /// Creates an InstanceBuffer with a buffer capacity.
+    /// Buffer size is based on the initial [`crate::BufferLayout::default_buffer`] length.
+    ///
+    /// # Arguments
+    /// - capacity: The capacity of the Buffers instances for future allocation.
+    /// - layer_size: The capacity allocated for any future elements per new Buffer Layer.
+    ///
     pub fn with_capacity(
         gpu_device: &GpuDevice,
         capacity: usize,
