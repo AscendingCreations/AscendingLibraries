@@ -8,7 +8,7 @@ use wgpu::{
 };
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
-///Handles the Device and Queue returned from WGPU.
+/// Handles the [`wgpu::Device`] and [`wgpu::Queue`] returned from WGPU.
 pub struct GpuDevice {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -24,13 +24,20 @@ impl GpuDevice {
     }
 }
 
+/// Our own Adapter Power Settings.
+/// Not to be confused with [`wgpu::PowerPreference`].
+///
 #[derive(Default, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum AdapterPowerSettings {
+    /// Target Lower Powered GPU's First.
     LowPower,
+    /// Target High Powers GPU's First.
     #[default]
     HighPower,
 }
 
+/// Options used to Find and load a GPU Adapter to render from.
+///
 #[derive(Debug)]
 pub struct AdapterOptions {
     /// Power preference for the adapter.
@@ -42,22 +49,36 @@ pub struct AdapterOptions {
     pub compatible_surface: Option<Surface<'static>>,
 }
 
-///Handles the Window, Adapter and Surface information.
+/// Handles the [`wgpu::Adapter`], [`wgpu::Surface`], [`Window`].
+/// Also used to Keep track of [`wgpu::TextureFormat`], [`wgpu::SurfaceConfiguration`]
+/// and [`Window`] Sizes.
+///
 pub struct GpuWindow {
+    /// GPU Adapter we will render from.
     pub(crate) adapter: wgpu::Adapter,
+    /// Window Surface we will Render Too.
     pub(crate) surface: wgpu::Surface<'static>,
+    /// Window we are using to Render Too.
     pub(crate) window: Arc<Window>,
+    /// Current Allowed surface_format of the GPU and Window.
     pub(crate) surface_format: wgpu::TextureFormat,
+    /// Windows Overall Size.
     pub(crate) size: PhysicalSize<f32>,
+    /// Windows Inner Size.
     pub(crate) inner_size: PhysicalSize<u32>,
+    /// Currently Accepted Surface configurations.
     pub(crate) surface_config: wgpu::SurfaceConfiguration,
 }
 
 impl GpuWindow {
+    /// Returns a reference to a [`wgpu::Adapter`].
+    ///
     pub fn adapter(&self) -> &wgpu::Adapter {
         &self.adapter
     }
 
+    /// Resizes the [`wgpu::Surface`].
+    ///
     pub fn resize(
         &mut self,
         gpu_device: &GpuDevice,
@@ -76,18 +97,26 @@ impl GpuWindow {
         Ok(())
     }
 
+    /// Returns the Size of the [`wgpu::Surface`].
+    ///
     pub fn size(&self) -> PhysicalSize<f32> {
         self.size
     }
 
+    /// Returns Reference to the [`wgpu::Surface`].
+    ///
     pub fn surface(&self) -> &wgpu::Surface {
         &self.surface
     }
 
+    /// Returns the [`wgpu::TextureFormat`].
+    ///
     pub fn surface_format(&self) -> wgpu::TextureFormat {
         self.surface_format
     }
 
+    /// Resizes the [`wgpu::Surface`] and/or requests a redraw event for the Window.
+    ///
     pub fn update(
         &mut self,
         gpu_device: &GpuDevice,
@@ -161,10 +190,15 @@ impl GpuWindow {
         Ok(None)
     }
 
+    /// Returns a Reference to [`Window`].
+    ///
     pub fn window(&self) -> &Window {
         &self.window
     }
 
+    /// Creates a Depth Texture from the [`GpuDevice`]
+    /// Using the size of the current [`wgpu::Surface`].
+    ///
     pub fn create_depth_texture(
         &self,
         gpu_device: &GpuDevice,
@@ -195,8 +229,12 @@ impl GpuWindow {
     }
 }
 
+/// Trait used to Allow the [`wgpu::Adapter`] to Create a [`GpuRenderer`].
+///
 #[async_trait]
 pub trait AdapterExt {
+    /// Creates a [`GpuRenderer`].
+    ///
     async fn create_renderer(
         self,
         instance: &wgpu::Instance,
@@ -277,8 +315,13 @@ impl AdapterExt for wgpu::Adapter {
     }
 }
 
+/// Trait used to Allow the [`wgpu::Instance`] to Create a [`GpuRenderer`].
+/// And get Adapters.
+///
 #[async_trait]
 pub trait InstanceExt {
+    /// Creates a [`GpuRenderer`].
+    ///
     async fn create_device(
         &self,
         window: Arc<Window>,
@@ -288,6 +331,8 @@ pub trait InstanceExt {
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError>;
 
+    /// Gets a list of Avaliable Adapters based upon the [`AdapterOptions`].
+    ///
     fn get_adapters(&self, options: AdapterOptions) -> Vec<(Adapter, u32)>;
 }
 

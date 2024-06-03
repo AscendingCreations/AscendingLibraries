@@ -38,7 +38,7 @@ pub struct InstanceBuffer<K: BufferLayout> {
 }
 
 impl<K: BufferLayout> InstanceBuffer<K> {
-    /// Used to create and [`InstanceBuffer`].
+    /// Used to create a [`InstanceBuffer`].
     /// Only use this for creating a reusable buffer.
     ///
     /// # Arguments

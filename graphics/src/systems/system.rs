@@ -5,6 +5,7 @@ use glam::{Mat4, Vec2, Vec3, Vec4};
 use input::FrameTime;
 use wgpu::util::DeviceExt;
 
+/// System Layout send to all the Shaders for struct Global.
 #[repr(C)]
 #[derive(Clone, Copy, Hash, Pod, Zeroable)]
 pub struct SystemLayout;
@@ -33,6 +34,7 @@ impl Layout for SystemLayout {
     }
 }
 
+/// System handler that keeps track of Data needed for the shaders struct Global.
 pub struct System<Controls: camera::controls::Controls> {
     camera: camera::Camera<Controls>,
     pub screen_size: [f32; 2],

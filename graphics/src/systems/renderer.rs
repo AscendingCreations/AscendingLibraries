@@ -9,7 +9,9 @@ use std::rc::Rc;
 
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
-///Handles the Window, Device and buffer stores.
+/// Handles the [`GpuWindow`], [`GpuDevice`] and [`BufferStore`]'s.
+/// Also handles other information important to Rendering to the GPU.
+///
 pub struct GpuRenderer {
     pub(crate) window: GpuWindow,
     pub(crate) device: GpuDevice,
@@ -23,10 +25,13 @@ pub struct GpuRenderer {
     pub buffer_object: StaticVertexBuffer,
 }
 
+/// Trait to allow [`wgpu::RenderPass`] to Set the Vertex and Index buffers.
+///
 pub trait SetBuffers<'a, 'b>
 where
     'b: 'a,
 {
+    /// Sets the Vertex and Index buffers from a [`BufferPass`]
     fn set_buffers(&mut self, buffer: BufferPass<'b>);
 }
 
@@ -44,6 +49,8 @@ where
 }
 
 impl GpuRenderer {
+    /// Creates a New GpuRenderer.
+    ///
     pub fn new(window: GpuWindow, device: GpuDevice) -> Self {
         let buffer_object = StaticVertexBuffer::create_buffer(&device);
         let depth_buffer = window.create_depth_texture(&device);
@@ -62,10 +69,14 @@ impl GpuRenderer {
         }
     }
 
+    /// Returns a reference to [`wgpu::Adapter`].
+    ///
     pub fn adapter(&self) -> &wgpu::Adapter {
         self.window.adapter()
     }
 
+    /// Resizes the Window.
+    ///
     pub fn resize(
         &mut self,
         size: PhysicalSize<u32>,
@@ -73,30 +84,46 @@ impl GpuRenderer {
         self.window.resize(&self.device, size)
     }
 
+    /// Returns a reference to the Optional [`wgpu::TextureView`]: frame buffer.
+    ///
     pub fn frame_buffer(&self) -> &Option<wgpu::TextureView> {
         &self.framebuffer
     }
 
+    /// Returns a reference to [`wgpu::TextureView`].
+    ///
     pub fn depth_buffer(&self) -> &wgpu::TextureView {
         &self.depthbuffer
     }
 
+    /// Returns the windows [`PhysicalSize`].
+    ///
     pub fn size(&self) -> PhysicalSize<f32> {
         self.window.size
     }
 
+    /// Returns the windows inner [`PhysicalSize`].
+    ///
     pub fn inner_size(&self) -> PhysicalSize<u32> {
         self.window.inner_size
     }
 
+    /// Returns a reference to [`wgpu::Surface`].
+    ///
     pub fn surface(&self) -> &wgpu::Surface {
         &self.window.surface
     }
 
+    /// Returns the surfaces [`wgpu::TextureFormat`].
+    ///
     pub fn surface_format(&self) -> wgpu::TextureFormat {
         self.window.surface_format
     }
 
+    /// Called to update the Optional Framebuffer with a Buffer we use to render.
+    /// Will return weither the frame buffer could have been processed or not.
+    /// If not we should skip rendering till we can get a frame buffer.
+    ///
     pub fn update(
         &mut self,
         event: &WindowEvent,
@@ -116,14 +143,21 @@ impl GpuRenderer {
         Ok(true)
     }
 
+    /// Returns a reference to [`Window`].
+    ///
     pub fn window(&self) -> &Window {
         &self.window.window
     }
 
+    /// Updates the Internally Stored Depth Buffer.
+    ///
     pub fn update_depth_texture(&mut self) {
         self.depthbuffer = self.window.create_depth_texture(&self.device);
     }
 
+    /// Presents the Current frame Buffer to the Window if Some().
+    /// If the frame buffer does not Exist will return a Error.
+    ///
     pub fn present(&mut self) -> Result<(), GraphicsError> {
         self.framebuffer = None;
 
@@ -138,26 +172,39 @@ impl GpuRenderer {
         }
     }
 
+    /// Returns a reference to [`wgpu::Device`].
+    ///
     pub fn device(&self) -> &wgpu::Device {
         &self.device.device
     }
 
+    /// Returns a reference to [`GpuDevice`].
+    ///
     pub fn gpu_device(&self) -> &GpuDevice {
         &self.device
     }
 
+    /// Returns a reference to [`wgpu::Queue`].
+    ///
     pub fn queue(&self) -> &wgpu::Queue {
         &self.device.queue
     }
 
+    /// Returns a reference to [`FontSystem`].
+    ///
     pub fn font_sys(&self) -> &FontSystem {
         &self.font_sys
     }
 
+    /// Returns a mutable reference to [`FontSystem`].
+    ///
     pub fn font_sys_mut(&mut self) -> &mut FontSystem {
         &mut self.font_sys
     }
 
+    /// Creates a New [`BufferStore`] with set sizes for Rendering Object Data Storage and
+    /// Returns its [`Index`] for Referencing it.
+    ///
     pub fn new_buffer(
         &mut self,
         store_size: usize,
@@ -167,22 +214,33 @@ impl GpuRenderer {
             .insert(BufferStore::new(store_size, index_size))
     }
 
+    /// Creates a New [`BufferStore`] with default sizes for Rendering Object Data Storage and
+    /// Returns its [`Index`] for Referencing it.
+    ///
     pub fn default_buffer(&mut self) -> Index {
         self.buffer_stores.insert(BufferStore::default())
     }
 
+    /// Removes a [`BufferStore`] using its [`Index`].
+    ///
     pub fn remove_buffer(&mut self, index: Index) {
         let _ = self.buffer_stores.remove(index);
     }
 
+    /// Gets a optional reference to [`BufferStore`] using its [`Index`].
+    ///
     pub fn get_buffer(&self, index: Index) -> Option<&BufferStore> {
         self.buffer_stores.get(index)
     }
 
+    /// Gets a optional mutable reference to [`BufferStore`] using its [`Index`].
+    ///
     pub fn get_buffer_mut(&mut self, index: Index) -> Option<&mut BufferStore> {
         self.buffer_stores.get_mut(index)
     }
 
+    /// Creates new BindGroupLayout from Generic K and Returns a Reference Counter to them.
+    ///
     pub fn create_layout<K: Layout>(
         &mut self,
         layout: K,
@@ -190,6 +248,8 @@ impl GpuRenderer {
         self.layout_storage.create_layout(&mut self.device, layout)
     }
 
+    /// Creates each supported rendering objects pipeline.
+    ///
     pub fn create_pipelines(&mut self, surface_format: wgpu::TextureFormat) {
         self.pipeline_storage.create_pipeline(
             &mut self.device,
@@ -234,6 +294,8 @@ impl GpuRenderer {
         );
     }
 
+    /// Gets a optional reference of [`wgpu::RenderPipeline`]
+    ///
     pub fn get_pipelines<K: PipeLineLayout>(
         &self,
         pipeline: K,

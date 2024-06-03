@@ -3,8 +3,10 @@ use bytemuck::{Pod, Zeroable};
 use std::any::{Any, TypeId};
 
 /// Trait used to Create and Load [`wgpu::RenderPipeline`] to and from a HashMap.
+///
 pub trait PipeLineLayout: Pod + Zeroable {
     /// Creates the [`wgpu::RenderPipeline`] to be added to the HashMap
+    ///
     fn create_layout(
         &self,
         gpu_device: &mut GpuDevice,
@@ -13,6 +15,7 @@ pub trait PipeLineLayout: Pod + Zeroable {
     ) -> wgpu::RenderPipeline;
 
     /// Gives a Hashable Key of the [`wgpu::RenderPipeline`] to use to Retrieve it from the HashMap.
+    ///
     fn layout_key(&self) -> (TypeId, Vec<u8>) {
         let type_id = self.type_id();
         let bytes: Vec<u8> =
@@ -23,12 +26,14 @@ pub trait PipeLineLayout: Pod + Zeroable {
 }
 
 /// [`wgpu::RenderPipeline`] Storage using a hashmap.
+///
 pub struct PipelineStorage {
     pub(crate) map: AHashMap<(TypeId, Vec<u8>), wgpu::RenderPipeline>,
 }
 
 impl PipelineStorage {
     /// Creates a new [`PipelineStorage`] with default HashMap.
+    ///
     pub fn new() -> Self {
         Self {
             map: AHashMap::default(),
@@ -36,6 +41,7 @@ impl PipelineStorage {
     }
 
     /// Creates a new [`wgpu::RenderPipeline`] from [`PipeLineLayout`] and adds it to the internal map.
+    ///
     pub fn create_pipeline<K: PipeLineLayout>(
         &mut self,
         device: &mut GpuDevice,
@@ -52,6 +58,7 @@ impl PipelineStorage {
     }
 
     /// Retrieves a Reference to a [`wgpu::RenderPipeline`] within the internal map for rendering.
+    ///
     pub fn get_pipeline<K: PipeLineLayout>(
         &self,
         pipeline: K,

@@ -52,7 +52,7 @@ impl<'a, K: BufferLayout> AsBufferPass<'a> for VertexBuffer<K> {
 }
 
 impl<K: BufferLayout> VertexBuffer<K> {
-    /// Used to create and [`VertexBuffer`].
+    /// Used to create a [`VertexBuffer`].
     /// Only use this for creating a reusable buffer.
     ///
     /// # Arguments
