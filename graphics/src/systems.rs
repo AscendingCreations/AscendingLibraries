@@ -32,6 +32,8 @@ pub(crate) use ahash::{AHashMap, AHashSet, AHasher};
 pub(crate) type ABuildHasher = std::hash::BuildHasherDefault<AHasher>;
 pub(crate) type AIndexSet<K> = indexmap::IndexSet<K, ABuildHasher>;
 
+/// Type of Camera to use within the Shader per rendered Object.
+///
 #[derive(Copy, Clone, Debug)]
 pub enum CameraType {
     None,
@@ -41,6 +43,8 @@ pub enum CameraType {
     ManualViewWithScale,
 }
 
+/// Type of Texture Flipping in shader.
+///
 #[derive(Copy, Clone, Debug)]
 pub enum FlipStyle {
     None,

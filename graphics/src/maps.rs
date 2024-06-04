@@ -9,8 +9,8 @@ pub use vertex::*;
 use std::iter;
 
 use crate::{
-    AtlasSet, CameraType, DrawOrder, GpuRenderer, Index,
-    OrderedIndex, Vec2, Vec3,
+    AtlasSet, CameraType, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2,
+    Vec3,
 };
 use cosmic_text::Color;
 
@@ -93,6 +93,7 @@ pub const TILE_COUNT: usize = 9216;
 pub const LOWER_COUNT: usize = 7168;
 pub const UPPER_COUNT: usize = 2048;
 
+/// Handler for rendering Map to GPU.
 pub struct Map {
     /// X, Y, GroupID for loaded map.
     /// Add this to the higher up Map struct.
@@ -109,17 +110,19 @@ pub struct Map {
     pub orders: [DrawOrder; 2],
     /// count if any Filled Tiles Exist. this is to optimize out empty maps in rendering.
     pub filled_tiles: [u16; MapLayers::Count as usize],
-    // The size of the Tile to render. for spacing tiles out upon
-    // vertex creation. Default will be 20.
+    /// The size of the Tile to render. for spacing tiles out upon
+    /// vertex creation. Default will be 20.
     pub tilesize: u32,
-    // Used to deturmine if the map can be rendered or if its just a preload.
+    /// Used to deturmine if the map can be rendered or if its just a preload.
     pub can_render: bool,
     pub camera_type: CameraType,
-    /// if the position or a tile gets changed.
+    /// If the position or a tile gets changed.
     pub changed: bool,
 }
 
 impl Map {
+    /// Updates the [`Map`]'s Buffers to prepare them for rendering.
+    ///
     pub fn create_quad(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -195,6 +198,8 @@ impl Map {
         self.changed = false;
     }
 
+    /// Creates a new [`Map`] with tilesize.
+    ///
     pub fn new(renderer: &mut GpuRenderer, tilesize: u32) -> Self {
         let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
 
@@ -216,12 +221,17 @@ impl Map {
         }
     }
 
+    /// Unloades the [`Map`]'s buffer from the buffer store.
+    ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         for index in &self.stores {
             renderer.remove_buffer(*index);
         }
     }
 
+    /// gets the [`TileData`] based upon the tiles x, y, and [`MapLayers`].
+    /// [`MapLayers::Ground`] is Layer 0.
+    ///
     pub fn get_tile(&self, pos: (u32, u32, u32)) -> TileData {
         assert!(
             pos.0 < 32 || pos.1 < 32 || pos.2 < 9,
@@ -231,14 +241,17 @@ impl Map {
         self.tiles[(pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize]
     }
 
+    /// Sets the [`CameraType`] this object will use to Render with.
+    ///
     pub fn set_camera_type(&mut self, camera_type: CameraType) {
         self.camera_type = camera_type;
         self.changed = true;
     }
 
-    // this sets the tile's Id within the texture,
-    //layer within the texture array and Alpha for its transparency.
-    // This allows us to loop through the tiles Shader side efficiently.
+    /// This sets the tile's Id within the texture,
+    /// layer within the texture array and Alpha for its transparency.
+    /// This allows us to loop through the tiles Shader side efficiently.
+    ///
     pub fn set_tile(&mut self, pos: (u32, u32, u32), tile: TileData) {
         if pos.0 >= 32 || pos.1 >= 32 || pos.2 >= 9 {
             return;
@@ -260,7 +273,9 @@ impl Map {
         self.changed = true;
     }
 
-    /// used to check and update the vertex array or Texture witht he image buffer.
+    /// Used to check and update the [`Map`]'s Buffer for Rendering.
+    /// Returns an Optional vec![Lower, Upper] [`OrderedIndex`] to use in Rendering.
+    ///
     pub fn update(
         &mut self,
         renderer: &mut GpuRenderer,

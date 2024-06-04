@@ -36,12 +36,20 @@ impl Layout for SystemLayout {
 
 /// System handler that keeps track of Data needed for the shaders struct Global.
 pub struct System<Controls: camera::controls::Controls> {
+    /// Camera controller to use to get the
+    /// projection, view, eye, inverse view and scale.
     camera: camera::Camera<Controls>,
+    /// Screen Size used within the shaders.
     pub screen_size: [f32; 2],
+    /// Buffer to shader struct Global
     global_buffer: wgpu::Buffer,
+    /// Bind group for shader struct Global.
     bind_group: wgpu::BindGroup,
+    /// Manual View secondary to the camera View.
     manual_view: Mat4,
+    /// Manual Scale Secondary to camera Scale
     manual_scale: f32,
+    /// If the manual changed or not for uploading.
     manual_changed: bool,
 }
 
@@ -49,22 +57,32 @@ impl<Controls> System<Controls>
 where
     Controls: camera::controls::Controls,
 {
+    /// Returns a reference too [`wgpu::BindGroup`].
+    ///
     pub fn bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
     }
 
+    /// Returns a reference too [`Controls`].
+    ///
     pub fn controls(&self) -> &Controls {
         self.camera.controls()
     }
 
+    /// Returns a mutable reference too [`Controls`].
+    ///
     pub fn controls_mut(&mut self) -> &mut Controls {
         self.camera.controls_mut()
     }
 
+    /// Returns the eye positions.
+    ///
     pub fn eye(&self) -> [f32; 3] {
         self.camera.eye()
     }
 
+    /// Creates a new [`System`]
+    ///
     pub fn new(
         renderer: &mut GpuRenderer,
         projection: Projection,
@@ -135,42 +153,60 @@ where
         }
     }
 
+    /// Returns the Projection Matrix 4x4.
+    ///
     pub fn projection(&self) -> Mat4 {
         self.camera.projection()
     }
 
+    /// Sets the Camera controls to a new controls.
+    ///
     pub fn set_controls(&mut self, controls: Controls) -> Controls {
         self.camera.set_controls(controls)
     }
 
+    /// Sets Camera Project to a new Projection.
+    ///
     pub fn set_projection(&mut self, projection: Projection) {
         self.camera.set_projection(projection);
     }
 
+    /// Sets Manual to a new View and Scale.
+    ///
     pub fn set_manual_view(&mut self, view: Mat4, scale: f32) {
         self.manual_view = view;
         self.manual_scale = scale;
         self.manual_changed = true;
     }
 
+    /// Returns Manual views Matrix 4x4.
+    ///
     pub fn manual_view(&self) -> Mat4 {
         self.manual_view
     }
 
+    /// Returns mutable reference to Manual views Matrix 4x4.
+    ///
     pub fn mut_manual_view(&mut self) -> &mut Mat4 {
         self.manual_changed = true;
         &mut self.manual_view
     }
 
+    /// Returns Manual Scale.
+    ///
     pub fn manual_scale(&self) -> f32 {
         self.manual_scale
     }
 
+    /// Returns mutable reference to Manual Scale.
+    ///
     pub fn mut_manual_scale(&mut self) -> &mut f32 {
         self.manual_changed = true;
         &mut self.manual_scale
     }
 
+    /// Updates the GPU's shader struct Global with new Time and new changes.
+    ///
     pub fn update(&mut self, renderer: &GpuRenderer, frame_time: &FrameTime) {
         if self.camera.update(frame_time.delta_seconds()) {
             let proj = self.camera.projection();
@@ -216,6 +252,8 @@ where
         }
     }
 
+    /// Updates the GPU's shader struct Global with new screen size information.
+    ///
     pub fn update_screen(
         &mut self,
         renderer: &GpuRenderer,
@@ -232,10 +270,14 @@ where
         }
     }
 
+    /// Returns the Cameras view Matrix 4x4
+    ///
     pub fn view(&self) -> Mat4 {
         self.camera.view()
     }
 
+    /// Used to convert bounds information from World into Screen locations with view.
+    ///
     pub fn projected_world_to_screen(
         &self,
         camera_type: CameraType,
@@ -282,6 +324,8 @@ where
         Vec4::new(xy.x, xy.y - objh, bw, bh)
     }
 
+    /// Used to convert bounds information from World into Screen locations without view.
+    ///
     pub fn world_to_screen(
         &self,
         camera_type: CameraType,
@@ -317,6 +361,8 @@ where
         Vec4::new(xy.x, xy.y - objh, bw, bh)
     }
 
+    /// Used to convert bounds information from World into Screen locations.
+    ///
     pub fn world_to_screen_direct(
         screen_size: [f32; 2],
         scale: f32,

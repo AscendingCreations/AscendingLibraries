@@ -1,8 +1,9 @@
 use crate::{AtlasSet, GpuRenderer, Texture};
 use image::{EncodableLayout, ImageBuffer, RgbaImage};
 
-//used to map the tile in the tilesheet back visually
-//this is only needed for the Editor.
+/// Used to map the tile in the tilesheet back visually
+/// this is only needed for the Editor.
+///
 #[derive(Debug)]
 pub struct Tile {
     /// Location of the tile within the loaded Texture.
@@ -13,14 +14,20 @@ pub struct Tile {
 }
 
 #[derive(Debug, Default)]
-//Loads the tiles from a tilesheet into a texture.
-//If this is used then you can not unload tiles or add new tiles
-//to any tilesheet loaded in th emiddle other than the very last tilesheet.
+/// Loads the tiles from a tilesheet into a texture.
+/// If this is used then you can not unload tiles or add new tiles
+/// to any tilesheet loaded in th emiddle other than the very last tilesheet.
+///
 pub struct TileSheet {
     pub tiles: Vec<Tile>,
 }
 
 impl TileSheet {
+    /// Creates a New [`TileSheet`] from a [`Texture`].
+    /// This splits the [`Texture`] into [`Tile`]'s using tilesize and places them into the [`AtlasSet`].
+    ///
+    /// Returns a Optional [`TileSheet`] upon successful completion.
+    ///
     pub fn new(
         texture: Texture,
         renderer: &GpuRenderer,
@@ -103,6 +110,11 @@ impl TileSheet {
         Some(TileSheet { tiles })
     }
 
+    /// Appends new [`Tile`] from a [`Texture`].
+    /// This splits the [`Texture`] into [`Tile`]'s using tilesize and places them into the [`AtlasSet`].
+    ///
+    /// Returns a Some(()) upon successful completion.
+    ///
     pub fn upload(
         &mut self,
         texture: Texture,

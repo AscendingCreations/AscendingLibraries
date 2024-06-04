@@ -9,8 +9,8 @@ pub use uniforms::*;
 pub use vertex::*;
 
 use crate::{
-    CameraType, Color, DrawOrder, GpuRenderer, Index, OrderedIndex,
-    Vec2, Vec3, Vec4,
+    CameraType, Color, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
+    Vec4,
 };
 use slotmap::SlotMap;
 use std::mem;
@@ -19,6 +19,8 @@ use wgpu::util::align_to;
 pub const MAX_AREA_LIGHTS: usize = 2_000;
 pub const MAX_DIR_LIGHTS: usize = 1_333;
 
+/// Area Lights rendered in the light system.
+///
 pub struct AreaLight {
     pub pos: Vec2,
     pub color: Color,
@@ -43,6 +45,8 @@ impl AreaLight {
     }
 }
 
+/// Directional Lights rendered in the light system.
+///
 pub struct DirectionalLight {
     pub pos: Vec2,
     pub color: Color,
@@ -75,25 +79,39 @@ impl DirectionalLight {
     }
 }
 
-/// rendering data for world Light and all Lights.
+/// Rendering data for world Light and all Lights.
 pub struct Lights {
+    /// Z Position of the Main Light Layer.
     pub z: f32,
+    /// Color of the main light layer.
     pub world_color: Vec4,
+    /// If the [`AreaLight`] and [`DirectionalLight`] are enabled.
     pub enable_lights: bool,
+    /// [`Index`] of the Rendering Buffer.
     pub store_id: Index,
+    /// DrawOrder of the world Lights.
     pub order: DrawOrder,
+    /// Rendering Layer of the world lights used in DrawOrder.
     pub render_layer: u32,
+    /// SlotMap storage of [`AreaLight`]'s.
     pub area_lights: SlotMap<Index, AreaLight>,
+    /// SlotMap storage of [`DirectionalLight`]'s.
     pub directional_lights: SlotMap<Index, DirectionalLight>,
+    /// Count of [`AreaLight`]'s.
     pub area_count: u32,
+    /// Count of [`DirectionalLight`]'s.
     pub dir_count: u32,
-    /// if anything got updated we need to update the buffers too.
+    /// If Main Light layer got updated we need to update the buffers too.
     pub changed: bool,
+    /// If any [`DirectionalLight`] got updated we need to update the buffers too.
     pub directionals_changed: bool,
+    /// If any [`AreaLight`] got updated we need to update the buffers too.
     pub areas_changed: bool,
 }
 
 impl Lights {
+    /// Creates a new [`Lights`].
+    ///
     pub fn new(renderer: &mut GpuRenderer, render_layer: u32, z: f32) -> Self {
         Self {
             z,
@@ -119,6 +137,8 @@ impl Lights {
         renderer.remove_buffer(self.store_id);
     }
 
+    /// Updates the [`Lights`]'s Buffers to prepare them for rendering.
+    ///
     pub fn create_quad(&mut self, renderer: &mut GpuRenderer) {
         let instance = LightsVertex {
             world_color: self.world_color.to_array(),
@@ -143,6 +163,9 @@ impl Lights {
         self.changed = false;
     }
 
+    /// Inserts a [`AreaLight`] into [`Lights`].
+    /// Returns the [`AreaLight`]'s [`Index`].
+    ///
     pub fn insert_area_light(&mut self, light: AreaLight) -> Option<Index> {
         if self.area_lights.len() + 1 >= MAX_AREA_LIGHTS {
             return None;
@@ -153,17 +176,24 @@ impl Lights {
         Some(self.area_lights.insert(light))
     }
 
+    /// Removes a [`AreaLight`] by its [`Index`].
+    ///
     pub fn remove_area_light(&mut self, key: Index) {
         self.areas_changed = true;
         self.changed = true;
         self.area_lights.remove(key);
     }
 
+    /// Gets a Optional mutable reference of a [`Index`]ed [`AreaLight`].
+    ///
     pub fn get_mut_area_light(&mut self, key: Index) -> Option<&mut AreaLight> {
         self.areas_changed = true;
         self.area_lights.get_mut(key)
     }
 
+    /// Inserts a [`DirectionalLight`] into [`Lights`].
+    /// Returns the [`DirectionalLight`]'s [`Index`].
+    ///
     pub fn insert_directional_light(
         &mut self,
         light: DirectionalLight,
@@ -177,12 +207,16 @@ impl Lights {
         Some(self.directional_lights.insert(light))
     }
 
+    /// Removes a [`DirectionalLight`] by its [`Index`].
+    ///
     pub fn remove_directional_light(&mut self, key: Index) {
         self.directionals_changed = true;
         self.changed = true;
         self.directional_lights.remove(key);
     }
 
+    /// Gets a Optional mutable reference of a [`Index`]ed [`DirectionalLight`].
+    ///
     pub fn get_mut_directional_light(
         &mut self,
         key: Index,
@@ -191,7 +225,9 @@ impl Lights {
         self.directional_lights.get_mut(key)
     }
 
-    /// used to check and update the vertex array.
+    /// Used to check and update the vertex array.
+    /// Returns a [`OrderedIndex`] used in Rendering.
+    ///
     pub fn update(
         &mut self,
         renderer: &mut GpuRenderer,
