@@ -1,6 +1,8 @@
 use crate::{BufferData, BufferLayout};
 use std::iter;
 
+/// Vertex Details for [`crate::Text`] that matches the Shaders Vertex Layout.
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TextVertex {
@@ -33,7 +35,6 @@ impl BufferLayout for TextVertex {
             .to_vec()
     }
 
-    ///default set as large enough to contain 1024 glyphs.
     fn default_buffer() -> BufferData {
         Self::with_capacity(1024, 0)
     }

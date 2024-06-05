@@ -21,15 +21,23 @@ pub struct TextOptions {
 pub struct Text {
     /// Cosmic Text [`Buffer`].
     pub buffer: Buffer,
+    /// Position on the Screen.
     pub pos: Vec3,
+    /// Width and Height of the Text Area.
     pub size: Vec2,
+    /// Scale of the Text.
     pub scale: f32,
+    /// rendering offsets from pos.
     pub offsets: Vec2,
+    /// Default Text Font Color.
     pub default_color: Color,
+    /// Optional Clip Bounds of Text.
     pub bounds: Option<Bounds>,
+    /// Instance Buffer Store Index of Text Buffer.
     pub store_id: Index,
-    /// Layer this type is rendering on.
+    /// Rendering Layer of the Text used in DrawOrder.
     pub render_layer: u32,
+    /// the draw order of the Text. created/updated when update is called.
     pub order: DrawOrder,
     /// Cursor the shaping is set too.
     pub cursor: Cursor,
@@ -39,13 +47,15 @@ pub struct Text {
     pub scroll: cosmic_text::Scroll,
     /// Word Wrap Type. Default is Wrap::Word.
     pub wrap: Wrap,
-    /// if the shader should render with the camera's view.
+    /// [`CameraType`] used to render with.
     pub camera_type: CameraType,
-    /// if anything got updated we need to update the buffers too.
+    /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
 
 impl Text {
+    /// Updates the [`Text`]'s Buffers to prepare them for rendering.
+    ///
     pub fn create_quad(
         &mut self,
         cache: &mut SwashCache,
@@ -235,6 +245,8 @@ impl Text {
         Ok(())
     }
 
+    /// Creates a new [`Text`].
+    ///
     pub fn new(
         renderer: &mut GpuRenderer,
         metrics: Option<Metrics>,
@@ -269,16 +281,21 @@ impl Text {
         }
     }
 
+    /// Sets the [`Text`]'s [`CameraType`] for rendering.
+    ///
     pub fn set_camera_type(&mut self, camera_type: CameraType) {
         self.camera_type = camera_type;
         self.changed = true;
     }
 
+    /// Unloads the [`Text`] from the Instance Buffers Store.
+    ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
     }
 
-    /// resets the TextRender bytes to empty for new bytes
+    /// Resets the [`Text`] to contain the new text only.
+    ///
     pub fn set_text(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -292,7 +309,8 @@ impl Text {
         self
     }
 
-    /// resets the TextRender bytes to empty for new bytes
+    /// Resets the [`Text`] to contain the new span of text only.
+    ///
     pub fn set_rich_text<'r, 's, I>(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -313,13 +331,15 @@ impl Text {
         self
     }
 
-    /// For more advanced shaping and usage. Use set_changed() to set if you need it to make changes or not.
+    /// For more advanced shaping and usage. Use [`Text::set_change`] to set if you need it to make changes or not.
     /// This will not set the change to true. when changes are made you must set changed to true.
+    ///
     pub fn get_text_buffer(&mut self) -> &mut Buffer {
         &mut self.buffer
     }
 
-    /// cursor shaping sets the scroll.
+    /// cursor shaping sets the [`Text`]'s location to shape from and sets the buffers scroll.
+    ///
     pub fn shape_until_cursor(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -340,7 +360,8 @@ impl Text {
         self
     }
 
-    /// Line shaping does not use scroll or cursor for shaping.
+    /// cursor shaping sets the [`Text`]'s location to shape from.
+    ///
     pub fn shape_until(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -359,7 +380,8 @@ impl Text {
         self
     }
 
-    /// Does not use cursor or line but will use the last set scroll.
+    /// scroll shaping sets the [`Text`]'s location to shape from.
+    ///
     pub fn shape_until_scroll(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -372,6 +394,8 @@ impl Text {
         self
     }
 
+    /// sets scroll for shaping and sets the [`Text`]'s location to shape from.
+    ///
     pub fn set_scroll(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -388,11 +412,15 @@ impl Text {
         self
     }
 
+    /// Sets the [`Text`] as changed for updating.
+    ///
     pub fn set_change(&mut self, changed: bool) -> &mut Self {
         self.changed = changed;
         self
     }
 
+    /// Sets the [`Text`] wrapping.
+    ///
     pub fn set_wrap(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -407,30 +435,40 @@ impl Text {
         self
     }
 
+    /// Sets the [`Text`]'s optional clipping bounds.
+    ///
     pub fn set_bounds(&mut self, bounds: Option<Bounds>) -> &mut Self {
         self.bounds = bounds;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Text`]'s screen Posaition.
+    ///
     pub fn set_position(&mut self, position: Vec3) -> &mut Self {
         self.pos = position;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Text`]'s default color.
+    ///
     pub fn set_default_color(&mut self, color: Color) -> &mut Self {
         self.default_color = color;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Text`]'s rendering offset.
+    ///
     pub fn set_offset(&mut self, offsets: Vec2) -> &mut Self {
         self.offsets = offsets;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Text`]'s cosmic text buffer size.
+    ///
     pub fn set_buffer_size(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -446,7 +484,8 @@ impl Text {
         self
     }
 
-    /// resets the TextRender bytes to empty for new bytes
+    /// clears the [`Text`] buffer.
+    ///
     pub fn clear(&mut self, renderer: &mut GpuRenderer) -> &mut Self {
         self.buffer.set_text(
             &mut renderer.font_sys,
@@ -458,13 +497,15 @@ impl Text {
         self
     }
 
-    ///returns how many lines exist in the buffer.
+    /// Returns how many lines exist in the buffer.
+    ///
     pub fn visible_lines(&self) -> i32 {
         self.buffer.visible_lines()
     }
 
-    /// used to check and update the vertex array.
-    /// must call build_layout before you can Call this.
+    // Used to check and update the vertex array.
+    /// Returns a [`OrderedIndex`] used in Rendering.
+    ///
     pub fn update(
         &mut self,
         cache: &mut SwashCache,
@@ -478,6 +519,8 @@ impl Text {
         Ok(OrderedIndex::new(self.order, self.store_id, 0))
     }
 
+    /// Checks if mouse_pos is within the [`Text`]'s location.
+    ///
     pub fn check_mouse_bounds(&self, mouse_pos: Vec2) -> bool {
         mouse_pos[0] > self.pos.x
             && mouse_pos[0] < self.pos.x + self.size.x
@@ -485,6 +528,8 @@ impl Text {
             && mouse_pos[1] < self.pos.y + self.size.y
     }
 
+    /// measure's the [`Text`]'s Rendering Size.
+    ///
     pub fn measure(&self) -> Vec2 {
         let (width, total_lines) = self.buffer.layout_runs().fold(
             (0.0, 0usize),
@@ -504,6 +549,7 @@ impl Text {
 
     /// Allows measuring the String for how big it will be when Rendering.
     /// This will not create any buffers in the rendering system.
+    ///
     pub fn measure_string(
         font_system: &mut FontSystem,
         text: &str,

@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - (Breaking) DrawType Removed.
 - (Breaking) Rename GpuBuffer as VertexBuffer.
 - (Breaking) Bounds functions now use Vec2 instead of Vec3 since we do not use Z.
+- (Breaking) Removed tex_buf from Text to reduce Ram usage.
 
 ### Fixed
 - Ensure all renderers use Alpha checks and Rendering Layer for Ordering
