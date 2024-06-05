@@ -1,6 +1,8 @@
 use crate::{BufferData, BufferLayout};
 use std::iter;
 
+/// Vertex Details for [`crate::Lights`] that matches the Shaders Vertex Layout.
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct LightsVertex {
@@ -28,7 +30,6 @@ impl BufferLayout for LightsVertex {
         wgpu::vertex_attr_array![1 => Float32x4, 2 => Uint32, 3 => Uint32, 4 => Uint32, 5 => Float32 ].to_vec()
     }
 
-    ///default set as large enough to contain 10_000 sprites.
     fn default_buffer() -> BufferData {
         Self::with_capacity(10_000, 0)
     }

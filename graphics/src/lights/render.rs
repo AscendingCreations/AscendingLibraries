@@ -10,15 +10,24 @@ use crate::{
 use log::warn;
 use wgpu::util::{align_to, DeviceExt};
 
+/// Instance Buffer Setup for [`Lights`].
+///
 pub struct LightRenderer {
+    /// Instance Buffer holding all Rendering information for [`Lights`].
     pub buffer: InstanceBuffer<LightsVertex>,
+    /// Uniform buffer for the array of [`crate::AreaLight`]'s.
     area_buffer: wgpu::Buffer,
+    /// Uniform buffer for the array of [`crate::DirectionalLight`]'s.
     dir_buffer: wgpu::Buffer,
+    /// Uniform buffer BindGroup for the array of [`crate::AreaLight`]'s.
     area_bind_group: wgpu::BindGroup,
+    /// Uniform buffer BindGroup for the array of [`crate::DirectionalLight`]'s.
     dir_bind_group: wgpu::BindGroup,
 }
 
 impl LightRenderer {
+    /// Creates a new [`LightRenderer`].
+    ///
     pub fn new(renderer: &mut GpuRenderer) -> Result<Self, GraphicsError> {
         // The size + Padding == 32.
         let area_alignment: usize =
@@ -94,6 +103,13 @@ impl LightRenderer {
         })
     }
 
+    /// Adds a Buffer [`OrderedIndex`] to the Rendering Store to get processed.
+    /// This must be done before [`LightRenderer::finalize`] but after [`Lights::update`] in order for it to Render.
+    ///
+    /// # Arguments
+    /// - index: The [`OrderedIndex`] of the Object we want to render.
+    /// - layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
@@ -103,10 +119,20 @@ impl LightRenderer {
         self.buffer.add_buffer_store(renderer, index, layer);
     }
 
+    /// Finalizes the Buffer by processing staged [`OrderedIndex`]'s and uploading it to the GPU.
+    /// Must be called after all the [`LightRenderer::add_buffer_store`]'s.
+    ///
     pub fn finalize(&mut self, renderer: &mut GpuRenderer) {
         self.buffer.finalize(renderer)
     }
 
+    /// Updates a [`Lights`] and adds its [`OrderedIndex`] to staging using [`LightRenderer::add_buffer_store`].
+    /// This must be done before [`LightRenderer::finalize`] in order for it to Render.
+    ///
+    /// # Arguments
+    /// - lights: [`Lights`] we want to update and prepare for rendering.
+    /// - layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn lights_update(
         &mut self,
         lights: &mut Lights,
@@ -122,6 +148,8 @@ impl LightRenderer {
         self.add_buffer_store(renderer, index, layer);
     }
 
+    /// Lights does not use Scissor Clipping
+    ///
     pub fn use_clipping(&mut self) {
         warn!("Light does not use Clipping.");
     }

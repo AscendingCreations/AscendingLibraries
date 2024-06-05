@@ -3,17 +3,29 @@ use crate::{
     RectRenderPipeline, RectVertex, StaticVertexBuffer, System,
 };
 
+/// Instance Buffer Setup for [`Rect`].
+///
 pub struct RectRenderer {
+    /// Instance Buffer holding all Rendering information for Rect.
     pub buffer: InstanceBuffer<RectVertex>,
 }
 
 impl RectRenderer {
+    /// Creates a new [`RectRenderer`].
+    ///
     pub fn new(renderer: &GpuRenderer) -> Result<Self, GraphicsError> {
         Ok(Self {
             buffer: InstanceBuffer::new(renderer.gpu_device(), 512),
         })
     }
 
+    /// Adds a Buffer [`OrderedIndex`] to the Rendering Store to get processed.
+    /// This must be done before [`RectRenderer::finalize`] but after [`Rect::update`] in order for it to Render.
+    ///
+    /// # Arguments
+    /// - index: The [`OrderedIndex`] of the Object we want to render.
+    /// - layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
@@ -23,10 +35,21 @@ impl RectRenderer {
         self.buffer.add_buffer_store(renderer, index, layer);
     }
 
+    /// Finalizes the Buffer by processing staged [`OrderedIndex`]'s and uploading it to the GPU.
+    /// Must be called after all the [`RectRenderer::add_buffer_store`]'s.
+    ///
     pub fn finalize(&mut self, renderer: &mut GpuRenderer) {
         self.buffer.finalize(renderer)
     }
 
+    /// Updates a [`Rect`] and adds its [`OrderedIndex`] to staging using [`RectRenderer::add_buffer_store`].
+    /// This must be done before [`RectRenderer::finalize`] in order for it to Render.
+    ///
+    /// # Arguments
+    /// - rect: [`Rect`] we want to update and prepare for rendering.
+    /// - atlas: [`AtlasSet`] the [`Rect`] needs to render with.
+    /// - layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn rect_update(
         &mut self,
         rect: &mut Rect,
@@ -39,16 +62,22 @@ impl RectRenderer {
         self.add_buffer_store(renderer, index, layer);
     }
 
+    /// Sets the Instance Buffer to enable Rendering With Scissor Clipping.
+    /// This must be Set for the Optional Bounds to be used.
+    ///
     pub fn use_clipping(&mut self) {
         self.buffer.set_as_clipped();
     }
 }
 
+/// Trait used to Grant Direct Rect Rendering to [`wgpu::RenderPass`]
 pub trait RenderRects<'a, 'b, Controls>
 where
     'b: 'a,
     Controls: camera::controls::Controls,
 {
+    /// Renders the all [`Rect`] to screen that have been processed and finalized.
+    ///
     fn render_rects(
         &mut self,
         renderer: &'b GpuRenderer,

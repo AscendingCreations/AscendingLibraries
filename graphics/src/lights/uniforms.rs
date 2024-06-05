@@ -1,6 +1,8 @@
 use crate::{GpuDevice, Layout};
 use bytemuck::{Pod, Zeroable};
 
+/// Uniform Details for [crate::AreaLight`] that matches the Shaders Uniform Layout.
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct AreaLightRaw {
@@ -13,6 +15,8 @@ pub struct AreaLightRaw {
     pub camera_type: u32,
 }
 
+/// Uniform Details for [crate::DirectionalLight`] that matches the Shaders Uniform Layout.
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct DirectionalLightRaw {
@@ -29,6 +33,8 @@ pub struct DirectionalLightRaw {
     pub camera_type: u32,
 }
 
+/// Uniform Layout for [crate::AreaLight`].
+///
 #[repr(C)]
 #[derive(Clone, Copy, Hash, Pod, Zeroable)]
 pub struct AreaLightLayout;
@@ -56,6 +62,8 @@ impl Layout for AreaLightLayout {
     }
 }
 
+/// Uniform Layout for [crate::DirectionalLight`].
+///
 #[repr(C)]
 #[derive(Clone, Copy, Hash, Pod, Zeroable)]
 pub struct DirLightLayout;

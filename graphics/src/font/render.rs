@@ -6,12 +6,18 @@ use crate::{
 use cosmic_text::{CacheKey, SwashCache};
 use log::{error, warn};
 
+/// [`Text`] text and Emoji AtlasSet holder.
+///
 pub struct TextAtlas {
+    /// AtlasSet holding data from Text only.
     pub(crate) text: AtlasSet<CacheKey, Vec2>,
+    /// AtlasSet holding data from Colored Emoji's only.
     pub(crate) emoji: AtlasSet<CacheKey, Vec2>,
 }
 
 impl TextAtlas {
+    /// Creates a new [`TextAtlas`].
+    ///
     pub fn new(renderer: &mut GpuRenderer) -> Result<Self, GraphicsError> {
         Ok(Self {
             text: AtlasSet::new(renderer, wgpu::TextureFormat::R8Unorm, false),
@@ -23,18 +29,24 @@ impl TextAtlas {
         })
     }
 
+    /// Calles Trim on both internal [`AtlasSet`]'s
+    ///
     pub fn trim(&mut self) {
         self.emoji.trim();
         self.text.trim();
     }
 }
 
+/// Instance Buffer Setup for [`Text`].
+///
 pub struct TextRenderer {
     pub(crate) buffer: InstanceBuffer<TextVertex>,
     pub(crate) swash_cache: SwashCache,
 }
 
 impl TextRenderer {
+    /// Creates a new [`TextRenderer`].
+    ///
     pub fn new(renderer: &GpuRenderer) -> Result<Self, GraphicsError> {
         Ok(Self {
             buffer: InstanceBuffer::new(renderer.gpu_device(), 1024),
@@ -42,6 +54,13 @@ impl TextRenderer {
         })
     }
 
+    /// Adds a Buffer [`OrderedIndex`] to the Rendering Store to get processed.
+    /// This must be done before [`TextRenderer::finalize`] but after [`Text::update`] in order for it to Render.
+    ///
+    /// # Arguments
+    /// - index: The [`OrderedIndex`] of the Object we want to render.
+    /// - layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
@@ -51,10 +70,21 @@ impl TextRenderer {
         self.buffer.add_buffer_store(renderer, index, layer);
     }
 
+    /// Finalizes the Buffer by processing staged [`OrderedIndex`]'s and uploading it to the GPU.
+    /// Must be called after all the [`TextRenderer::add_buffer_store`]'s.
+    ///
     pub fn finalize(&mut self, renderer: &mut GpuRenderer) {
         self.buffer.finalize(renderer)
     }
 
+    /// Updates a [`Text`] and adds its [`OrderedIndex`] to staging using [`TextRenderer::add_buffer_store`].
+    /// This must be done before [`TextRenderer::finalize`] in order for it to Render.
+    ///
+    /// # Arguments
+    /// - text: [`Text`] we want to update and prepare for rendering.
+    /// - atlas: [`TextAtlas`] the [`Text`] needs to render with.
+    /// - layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn text_update(
         &mut self,
         text: &mut Text,
@@ -68,6 +98,9 @@ impl TextRenderer {
         Ok(())
     }
 
+    /// [`Text`] does not use Scissor Clipping.
+    /// It uses its own Internal Bounds Clipper.
+    ///
     pub fn use_clipping(&mut self) {
         warn!("Text uses its own Clipping.");
     }

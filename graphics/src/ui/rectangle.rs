@@ -1,29 +1,46 @@
 use crate::{
-    AtlasSet, Bounds, CameraType, DrawOrder, GpuRenderer,
-    GraphicsError, Index, OrderedIndex, OtherError, RectVertex, Texture, Vec2,
-    Vec3, Vec4,
+    AtlasSet, Bounds, CameraType, DrawOrder, GpuRenderer, GraphicsError, Index,
+    OrderedIndex, OtherError, RectVertex, Texture, Vec2, Vec3, Vec4,
 };
 use cosmic_text::Color;
 
+/// Rectangle to render to screen.
+/// Can contain a Images otherwise just colors.
+///
 pub struct Rect {
+    /// Position on the Screen.
     pub position: Vec3,
+    /// Width and Height of the Rect.
     pub size: Vec2,
+    /// Color of the Rect.
     pub color: Color,
+    /// Optional Image Index.
     pub image: Option<usize>,
+    /// Texture X, Y, W and H if any apply.
     pub uv: Vec4,
+    /// Width of the Rects Border.
     pub border_width: f32,
+    /// Color of the Rects Border.
     pub border_color: Color,
+    /// Rectangle Radius.
     pub radius: f32,
+    /// [`CameraType`] used to render with.
     pub camera_type: CameraType,
+    /// Instance Buffers Store ID.
     pub store_id: Index,
+    /// the draw order of the rect. created/updated when update is called.
     pub order: DrawOrder,
+    /// Rendering Layer of the rect used in DrawOrder.
     pub render_layer: u32,
+    /// Optional Bounds for Clipping the Rect too.
     pub bounds: Option<Bounds>,
-    /// if anything got updated we need to update the buffers too.
+    /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
 
 impl Rect {
+    /// Creates a new [`Rect`] with rendering layer.
+    ///
     pub fn new(renderer: &mut GpuRenderer, render_layer: u32) -> Self {
         let rect_size = bytemuck::bytes_of(&RectVertex::default()).len();
 
@@ -45,32 +62,44 @@ impl Rect {
         }
     }
 
+    /// Unloads the [`Rect`] from the Instance Buffers Store.
+    /// 
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
     }
 
+    /// Updates the [`Rect`]'s Clipping Bounds.
+    /// 
     pub fn update_bounds(&mut self, bounds: Option<Bounds>) {
         self.bounds = bounds;
     }
 
+    /// Sets the [`Rect`]'s [`CameraType`] for rendering.
+    /// 
     pub fn set_use_camera(&mut self, camera_type: CameraType) -> &mut Self {
         self.camera_type = camera_type;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Rect`]'s Color.
+    /// 
     pub fn set_color(&mut self, color: Color) -> &mut Self {
         self.color = color;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Rect`]'s Border Color.
+    /// 
     pub fn set_border_color(&mut self, color: Color) -> &mut Self {
         self.border_color = color;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Rect`]'s Texture.
+    /// 
     pub fn set_texture(
         &mut self,
         renderer: &GpuRenderer,
@@ -89,37 +118,48 @@ impl Rect {
         Ok(self)
     }
 
-    //Set the Rendering Offset of the container.
+    /// Sets the [`Rect`]'s Texture X,Y, W, H details.
+    /// 
     pub fn set_container_uv(&mut self, uv: Vec4) -> &mut Self {
         self.uv = uv;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Rect`]'s Position.
+    /// 
     pub fn set_position(&mut self, position: Vec3) -> &mut Self {
         self.position = position;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Rect`]'s Width and Height.
+    /// 
     pub fn set_size(&mut self, size: Vec2) -> &mut Self {
         self.size = size;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Rect`]'s Border Width.
+    /// 
     pub fn set_border_width(&mut self, size: f32) -> &mut Self {
         self.border_width = size;
         self.changed = true;
         self
     }
 
+    /// Sets the [`Rect`]'s Corner Radius.
+    /// 
     pub fn set_radius(&mut self, radius: f32) -> &mut Self {
         self.radius = radius;
         self.changed = true;
         self
     }
 
+    /// Updates the [`Rect`]'s Buffers to prepare them for rendering.
+    ///
     pub fn create_quad(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -170,7 +210,9 @@ impl Rect {
         );
     }
 
-    /// used to check and update the ShapeVertex array.
+    /// Used to check and update the vertex array.
+    /// Returns a [`OrderedIndex`] used in Rendering.
+    ///
     pub fn update(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -191,6 +233,8 @@ impl Rect {
         )
     }
 
+    /// Checks if the Mouse position is within the Rects location.
+    /// 
     pub fn check_mouse_bounds(&self, mouse_pos: Vec2) -> bool {
         if self.radius > 0.0 {
             let pos = [self.position.x, self.position.y];

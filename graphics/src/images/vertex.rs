@@ -1,6 +1,8 @@
 use crate::{BufferData, BufferLayout};
 use std::iter;
 
+/// Vertex Details for [`crate::Image`] that matches the Shaders Vertex Layout.
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct ImageVertex {
@@ -41,7 +43,6 @@ impl BufferLayout for ImageVertex {
             .to_vec()
     }
 
-    ///default set as large enough to contain 10_000 sprites.
     fn default_buffer() -> BufferData {
         Self::with_capacity(10_000, 0)
     }

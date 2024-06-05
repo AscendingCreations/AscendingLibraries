@@ -4,6 +4,8 @@ use crate::{
 };
 use bytemuck::{Pod, Zeroable};
 
+/// [`crate::Lights`] RenderPipeline Layout
+///
 #[repr(C)]
 #[derive(Clone, Copy, Hash, Pod, Zeroable)]
 pub struct LightRenderPipeline;

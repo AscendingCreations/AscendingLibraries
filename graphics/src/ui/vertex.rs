@@ -1,17 +1,28 @@
 use crate::{BufferData, BufferLayout};
 use std::iter;
 
+/// Vertex Details for [`crate::Rect`] that matches the Shaders Vertex Layout.
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct RectVertex {
+    /// Position on the Screen.
     pub position: [f32; 3],
+    /// Width and Height of the Rect.
     pub size: [f32; 2],
+    /// Texture X, Y, W and H if any apply.
     pub uv: [f32; 4],
+    /// Color of the Rect.
     pub color: u32,
+    /// Width of the Rects Border.
     pub border_width: f32,
+    /// Color of the Rects Border.
     pub border_color: u32,
+    /// Texture Array Layer if one applies.
     pub layer: u32,
+    /// Rectangle Radius.
     pub radius: f32,
+    /// Camera Type numberical.
     pub camera_type: u32,
 }
 
@@ -37,7 +48,7 @@ impl BufferLayout for RectVertex {
             .to_vec()
     }
 
-    ///default set as large enough to contain 1_000 shapes.
+    // default set as large enough to contain 1_000 shapes.
     fn default_buffer() -> BufferData {
         Self::with_capacity(1_000, 0)
     }

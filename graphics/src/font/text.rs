@@ -6,6 +6,8 @@ use cosmic_text::{
     Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap,
 };
 
+/// [`Text`] Option Handler for [`Text::measure_string`].
+///
 pub struct TextOptions {
     pub shaping: cosmic_text::Shaping,
     pub metrics: Option<Metrics>,
@@ -14,9 +16,11 @@ pub struct TextOptions {
     pub wrap: Wrap,
 }
 
+/// Text to render to screen.
+///
 pub struct Text {
+    /// Cosmic Text [`Buffer`].
     pub buffer: Buffer,
-    pub text_buf: Vec<TextVertex>,
     pub pos: Vec3,
     pub size: Vec2,
     pub scale: f32,
@@ -50,8 +54,7 @@ impl Text {
     ) -> Result<(), GraphicsError> {
         let count: usize =
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
-        self.text_buf.clear();
-        self.text_buf.reserve_exact(count);
+        let mut text_buf = Vec::with_capacity(count);
         let mut is_alpha = false;
         let mut width = 0.0;
 
@@ -214,12 +217,12 @@ impl Text {
                     is_color: is_color as u32,
                 };
 
-                self.text_buf.push(default);
+                text_buf.push(default);
             }
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            let bytes: &[u8] = bytemuck::cast_slice(&self.text_buf);
+            let bytes: &[u8] = bytemuck::cast_slice(&text_buf);
             store.store.resize_with(bytes.len(), || 0);
             store.store.copy_from_slice(bytes);
             store.changed = true;
@@ -248,7 +251,6 @@ impl Text {
                 &mut renderer.font_sys,
                 metrics.unwrap_or(Metrics::new(16.0, 16.0).scale(scale)),
             ),
-            text_buf: Vec::with_capacity(64),
             pos,
             size,
             offsets: Vec2 { x: 0.0, y: 0.0 },
