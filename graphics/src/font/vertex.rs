@@ -36,7 +36,7 @@ impl BufferLayout for TextVertex {
     }
 
     fn default_buffer() -> BufferData {
-        Self::with_capacity(1024, 0)
+        Self::with_capacity(4096, 0)
     }
 
     fn with_capacity(
