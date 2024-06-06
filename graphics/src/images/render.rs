@@ -23,15 +23,15 @@ impl ImageRenderer {
     ///
     /// # Arguments
     /// - index: The [`OrderedIndex`] of the Object we want to render.
-    /// - layer: The Buffer Layer we want to add this Object too.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
         index: OrderedIndex,
-        layer: usize,
+        buffer_layer: usize,
     ) {
-        self.buffer.add_buffer_store(renderer, index, layer);
+        self.buffer.add_buffer_store(renderer, index, buffer_layer);
     }
 
     /// Finalizes the Buffer by processing staged [`OrderedIndex`]'s and uploading it to the GPU.
@@ -47,18 +47,18 @@ impl ImageRenderer {
     /// # Arguments
     /// - image: [`Image`] we want to update and prepare for rendering.
     /// - atlas: [`AtlasSet`] the [`Image`] needs to render with.
-    /// - layer: The Buffer Layer we want to add this Object too.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
     pub fn image_update(
         &mut self,
         image: &mut Image,
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
-        layer: usize,
+        buffer_layer: usize,
     ) {
         let index = image.update(renderer, atlas);
 
-        self.add_buffer_store(renderer, index, layer);
+        self.add_buffer_store(renderer, index, buffer_layer);
     }
 
     /// Sets the Instance Buffer to enable Rendering With Scissor Clipping.
@@ -69,18 +69,21 @@ impl ImageRenderer {
     }
 }
 
+/// Trait used to Grant Direct [`Image`] Rendering to [`wgpu::RenderPass`]
 pub trait RenderImage<'a, 'b, Controls>
 where
     'b: 'a,
     Controls: camera::controls::Controls,
 {
+    /// Renders the all [`Image`]'s within the buffer layer to screen that have been processed and finalized.
+    ///
     fn render_image(
         &mut self,
         renderer: &'b GpuRenderer,
         buffer: &'b ImageRenderer,
         atlas: &'b AtlasSet,
         system: &'b System<Controls>,
-        layer: usize,
+        buffer_layer: usize,
     );
 }
 
@@ -95,10 +98,12 @@ where
         buffer: &'b ImageRenderer,
         atlas: &'b AtlasSet,
         system: &'b System<Controls>,
-        layer: usize,
+        buffer_layer: usize,
     ) {
         if buffer.buffer.is_clipped() {
-            if let Some(details) = buffer.buffer.clipped_buffers.get(layer) {
+            if let Some(details) =
+                buffer.buffer.clipped_buffers.get(buffer_layer)
+            {
                 let mut scissor_is_default = true;
 
                 if buffer.buffer.count() > 0 {
@@ -139,7 +144,9 @@ where
                     }
                 }
             }
-        } else if let Some(Some(details)) = buffer.buffer.buffers.get(layer) {
+        } else if let Some(Some(details)) =
+            buffer.buffer.buffers.get(buffer_layer)
+        {
             if buffer.buffer.count() > 0 {
                 self.set_bind_group(1, atlas.bind_group(), &[]);
                 self.set_vertex_buffer(1, buffer.buffer.instances(None));

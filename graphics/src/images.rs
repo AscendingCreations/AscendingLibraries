@@ -7,8 +7,8 @@ pub use render::*;
 pub use vertex::*;
 
 use crate::{
-    AtlasSet, Bounds, CameraType, Color, DrawOrder, FlipStyle,
-    GpuRenderer, Index, OrderedIndex, Vec2, Vec3, Vec4,
+    AtlasSet, Bounds, CameraType, Color, DrawOrder, FlipStyle, GpuRenderer,
+    Index, OrderedIndex, Vec2, Vec3, Vec4,
 };
 
 /// Basic and Fast Image Rendering Type. Best used for Sprites and Objects in the world.
@@ -49,6 +49,8 @@ pub struct Image {
 }
 
 impl Image {
+    /// Creates a new [`Image`] with rendering layer.
+    ///
     pub fn new(
         texture: Option<usize>,
         renderer: &mut GpuRenderer,
@@ -77,87 +79,117 @@ impl Image {
         }
     }
 
+    /// Unloads the [`Image`] from the Instance Buffers Store.
+    ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
     }
 
+    /// Updates the [`Image`]'s Optional Clipping Bounds.
+    ///
     pub fn update_bounds(&mut self, bounds: Option<Bounds>) -> &mut Self {
         self.bounds = bounds;
         self
     }
 
+    /// Updates the [`Image`]'s [`FlipStyle`].
+    ///
     pub fn set_flip_style(&mut self, flip_style: FlipStyle) -> &mut Self {
         self.changed = true;
         self.flip_style = flip_style;
         self
     }
 
+    /// Updates the [`Image`]'s rotation.
+    ///
     pub fn set_rotation_angle(&mut self, rotation_angle: f32) -> &mut Self {
         self.changed = true;
         self.rotation_angle = rotation_angle;
         self
     }
 
+    /// Updates the [`Image`]'s position.
+    ///
     pub fn set_pos(&mut self, pos: Vec3) -> &mut Self {
         self.changed = true;
         self.pos = pos;
         self
     }
 
+    /// Updates the [`Image`]'s width and height.
+    ///
     pub fn set_size(&mut self, hw: Vec2) -> &mut Self {
         self.changed = true;
         self.hw = hw;
         self
     }
 
+    /// Updates the [`Image`]'s animation frames.
+    ///
     pub fn set_frames(&mut self, frames: Vec2) -> &mut Self {
         self.changed = true;
         self.frames = frames;
         self
     }
 
+    /// Updates the [`Image`]'s animate boolean.
+    ///
     pub fn set_animate(&mut self, animate: bool) -> &mut Self {
         self.changed = true;
         self.animate = animate;
         self
     }
 
+    /// Updates the [`Image`]'s texture x, y, w, h
+    ///
     pub fn set_uv(&mut self, uv: Vec4) -> &mut Self {
         self.changed = true;
         self.uv = uv;
         self
     }
 
+    /// Updates the [`Image`]'s rendering layer.
+    ///
     pub fn set_render_layer(&mut self, render_layer: u32) -> &mut Self {
         self.changed = true;
         self.render_layer = render_layer;
         self
     }
 
+    /// Updates the [`Image`]'s Texture ID.
+    ///
     pub fn set_texture(&mut self, texture: Option<usize>) -> &mut Self {
         self.changed = true;
         self.texture = texture;
         self
     }
 
+    /// Updates the [`Image`]'s [`Color`].
+    ///
     pub fn set_color(&mut self, color: Color) -> &mut Self {
         self.changed = true;
         self.color = color;
         self
     }
 
+    /// Updates the [`Image`]'s [`CameraType`].
+    ///
     pub fn set_camera_type(&mut self, camera_type: CameraType) -> &mut Self {
         self.changed = true;
         self.camera_type = camera_type;
         self
     }
 
+    /// Updates the [`Image`]'s animation switch time.
+    ///
     pub fn set_switch_time(&mut self, switch_time: u32) -> &mut Self {
         self.changed = true;
         self.switch_time = switch_time;
         self
     }
 
+    /// Updates the [`Image`]'s Buffers to prepare them for rendering.
+    ///
     fn create_quad(
         &mut self,
         renderer: &mut GpuRenderer,
@@ -208,15 +240,14 @@ impl Image {
         self.changed = false;
     }
 
-    /// Updates the buffer if changed is true.
-    /// Returns OrderIndex used by the renderer to position
-    /// and upload obejcts to the Instance Buffer Arrays on the GPU.
+    /// Used to check and update the vertex array.
+    /// Returns a [`OrderedIndex`] used in Rendering.
+    ///
     pub fn update(
         &mut self,
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
     ) -> OrderedIndex {
-        // if pos or tex_pos or color changed.
         if self.changed {
             self.create_quad(renderer, atlas);
         }

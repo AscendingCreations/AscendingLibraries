@@ -3,10 +3,10 @@ use crate::{
     RectRenderPipeline, RectVertex, StaticVertexBuffer, System,
 };
 
-/// Instance Buffer Setup for [`Rect`].
+/// Instance Buffer Setup for [`Rect`]'s.
 ///
 pub struct RectRenderer {
-    /// Instance Buffer holding all Rendering information for Rect.
+    /// Instance Buffer holding all Rendering information for [`Rect`]'s.
     pub buffer: InstanceBuffer<RectVertex>,
 }
 
@@ -24,15 +24,15 @@ impl RectRenderer {
     ///
     /// # Arguments
     /// - index: The [`OrderedIndex`] of the Object we want to render.
-    /// - layer: The Buffer Layer we want to add this Object too.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
         index: OrderedIndex,
-        layer: usize,
+        buffer_layer: usize,
     ) {
-        self.buffer.add_buffer_store(renderer, index, layer);
+        self.buffer.add_buffer_store(renderer, index, buffer_layer);
     }
 
     /// Finalizes the Buffer by processing staged [`OrderedIndex`]'s and uploading it to the GPU.
@@ -48,18 +48,18 @@ impl RectRenderer {
     /// # Arguments
     /// - rect: [`Rect`] we want to update and prepare for rendering.
     /// - atlas: [`AtlasSet`] the [`Rect`] needs to render with.
-    /// - layer: The Buffer Layer we want to add this Object too.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
     pub fn rect_update(
         &mut self,
         rect: &mut Rect,
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
-        layer: usize,
+        buffer_layer: usize,
     ) {
         let index = rect.update(renderer, atlas);
 
-        self.add_buffer_store(renderer, index, layer);
+        self.add_buffer_store(renderer, index, buffer_layer);
     }
 
     /// Sets the Instance Buffer to enable Rendering With Scissor Clipping.
@@ -70,13 +70,13 @@ impl RectRenderer {
     }
 }
 
-/// Trait used to Grant Direct Rect Rendering to [`wgpu::RenderPass`]
+/// Trait used to Grant Direct [`Rect`] Rendering to [`wgpu::RenderPass`]
 pub trait RenderRects<'a, 'b, Controls>
 where
     'b: 'a,
     Controls: camera::controls::Controls,
 {
-    /// Renders the all [`Rect`] to screen that have been processed and finalized.
+    /// Renders the all [`Rect`]'s within the buffer layer to screen that have been processed and finalized.
     ///
     fn render_rects(
         &mut self,
@@ -84,7 +84,7 @@ where
         buffer: &'b RectRenderer,
         atlas: &'b AtlasSet,
         system: &'b System<Controls>,
-        layer: usize,
+        buffer_layer: usize,
     );
 }
 
@@ -99,10 +99,12 @@ where
         buffer: &'b RectRenderer,
         atlas: &'b AtlasSet,
         system: &'b System<Controls>,
-        layer: usize,
+        buffer_layer: usize,
     ) {
         if buffer.buffer.is_clipped() {
-            if let Some(details) = buffer.buffer.clipped_buffers.get(layer) {
+            if let Some(details) =
+                buffer.buffer.clipped_buffers.get(buffer_layer)
+            {
                 let mut scissor_is_default = true;
 
                 if buffer.buffer.count() > 0 {
@@ -148,7 +150,9 @@ where
                     }
                 }
             }
-        } else if let Some(Some(details)) = buffer.buffer.buffers.get(layer) {
+        } else if let Some(Some(details)) =
+            buffer.buffer.buffers.get(buffer_layer)
+        {
             if buffer.buffer.count() > 0 {
                 self.set_bind_group(1, &atlas.texture_group.bind_group, &[]);
                 self.set_vertex_buffer(1, buffer.buffer.instances(None));

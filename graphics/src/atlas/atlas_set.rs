@@ -36,7 +36,7 @@ use wgpu::BindGroup;
  * TODO Add limitations to a migrating texture so we only move a bit at a time.
  * TODO Add Ability to Tell user through API that Vertexs and Indicies need to be
  * TODO reloaded upon migration changes.
- *
+ * TODO Also make use_ref_count do auto migrations once a set threashold is reached.
 */
 pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
     /// Texture in GRAM
@@ -235,6 +235,12 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         renderer.queue().submit(std::iter::once(encoder.finish()));
     }
 
+    /// Creates a new [`AtlasSet`].
+    ///
+    /// # Arguments
+    /// - format: [`wgpu::TextureFormat`] the texture layers will need to be.
+    /// - use_ref_count: Mostly used for Glyph Storage and Auto Removal.
+    ///
     pub fn new(
         renderer: &mut GpuRenderer,
         format: wgpu::TextureFormat,
@@ -298,6 +304,8 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         }
     }
 
+    /// Uploads a new Texture Byte Array into the GPU AtlasSets Layer.
+    ///
     pub fn upload_allocation(
         &mut self,
         buffer: &[u8],
@@ -339,6 +347,11 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         );
     }
 
+    /// Clears all information of stored Textures and Allocations.
+    ///
+    /// This Does not Empty the [`AtlasSet`]s GPU Texture Buffer.
+    /// As we normally just overwrite the buffer when we add new Allocations.
+    ///
     pub fn clear(&mut self) {
         for layer in self.layers.iter_mut() {
             layer.allocator.clear();
@@ -351,10 +364,14 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     }
 
     //TODO Make function that checks for unloading and migrating.
+    /// Clears the last_used cache's.
+    ///
     pub fn trim(&mut self) {
         self.last_used.clear();
     }
 
+    /// Promotes the cache's Allocation by key making it recently used..
+    ///
     pub fn promote_by_key(&mut self, key: U) {
         if let Some(id) = self.lookup.get(&key) {
             self.cache.promote(id);
@@ -362,16 +379,21 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         }
     }
 
+    /// Promotes the cache's Allocation by index making it recently used..
+    ///
     pub fn promote(&mut self, id: usize) {
         self.cache.promote(&id);
         self.last_used.insert(id);
     }
 
-    /// Get the ID of a image if it is loaded.
+    /// Gets the [`Allocation`]'s index if it exists.
+    ///
     pub fn lookup(&self, key: &U) -> Option<usize> {
         self.lookup.get(key).copied()
     }
 
+    /// Gets using key the reference of [`Allocation`] with key if it exists.
+    ///
     pub fn peek_by_key(&mut self, key: &U) -> Option<&(Allocation<Data>, U)> {
         if let Some(id) = self.lookup.get(key) {
             self.store.get(*id)
@@ -380,18 +402,27 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         }
     }
 
+    /// Gets using index the reference of [`Allocation`] with key if it exists.
+    ///
     pub fn peek(&mut self, id: usize) -> Option<&(Allocation<Data>, U)> {
         self.store.get(id)
     }
 
+    /// If [`Allocation`] using key exists.
+    ///
     pub fn contains_key(&mut self, key: &U) -> bool {
         self.lookup.contains_key(key)
     }
 
+    /// If [`Allocation`] at id exists.
+    ///
     pub fn contains(&mut self, id: usize) -> bool {
         self.store.contains(id)
     }
 
+    /// Gets using key the [`Allocation`] if it exists.
+    /// Also Increments the Cache and adds to last_used list.
+    ///
     pub fn get_by_key(&mut self, key: &U) -> Option<Allocation<Data>> {
         let id = *self.lookup.get(key)?;
         if let Some((allocation, _)) = self.store.get(id) {
@@ -403,6 +434,9 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         None
     }
 
+    /// Gets using index the [`Allocation`] if it exists.
+    /// Also Increments the Cache and adds to last_used list.
+    ///
     pub fn get(&mut self, id: usize) -> Option<Allocation<Data>> {
         if let Some((allocation, _)) = self.store.get(id) {
             self.cache.promote(&id);
@@ -413,14 +447,14 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         None
     }
 
-    /**
-     * Removing will leave anything using the texture inable to load the correct texture if
-     * a new texture is loaded in the olds place.
-     * TODO Redo texture system so texture allocations are not held by the images but instead
-     * TODO are held by the system so we can reload images later on if they got unloaded.
-     *
-     * returns the layer id if removed otherwise None for everything else.
-     **/
+    /// Removed Texture by key.
+    /// Removing will leave anything using the texture inable to load the correct texture if
+    /// a new texture is loaded in the olds place.
+    /// TODO Redo texture system so texture allocations are not held by the images but instead
+    /// TODO are held by the system so we can reload images later on if they got unloaded.
+    ///
+    /// returns the layer id if removed otherwise None for everything else.
+    ///
     pub fn remove_by_key(&mut self, key: &U) -> Option<usize> {
         let id = *self.lookup.get(key)?;
         let refcount = self.cache.pop(&id)?.saturating_sub(1);
@@ -439,7 +473,14 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         Some(allocation.layer)
     }
 
-    // returns the layer id if removed otherwise None for everything else.
+    /// Removed Texture by index.
+    /// Removing will leave anything using the texture inable to load the correct texture if
+    /// a new texture is loaded in the olds place.
+    /// TODO Redo texture system so texture allocations are not held by the images but instead
+    /// TODO are held by the system so we can reload images later on if they got unloaded.
+    ///
+    /// returns the layer id if removed otherwise None for everything else.
+    ///
     pub fn remove(&mut self, id: usize) -> Option<usize> {
         let refcount = self.cache.pop(&id)?.saturating_sub(1);
 
@@ -457,6 +498,14 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         Some(allocation.layer)
     }
 
+    /// Uploads Texture byte array to the AtlasSet returning the created [`Allocation`]s Index.
+    ///
+    /// # Arguments
+    /// - bytes: Textures Byte array.
+    /// - width: Width of the Texture.
+    /// - height: Height of the Texture.
+    /// - data: any specail generic data for the texture.
+    ///
     #[allow(clippy::too_many_arguments)]
     pub fn upload(
         &mut self,
@@ -487,6 +536,14 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         }
     }
 
+    /// Uploads Texture byte array to the AtlasSet returning the created [`Allocation`] and Index.
+    ///
+    /// # Arguments
+    /// - bytes: Textures Byte array.
+    /// - width: Width of the Texture.
+    /// - height: Height of the Texture.
+    /// - data: any specail generic data for the texture.
+    ///
     #[allow(clippy::too_many_arguments)]
     pub fn upload_with_alloc(
         &mut self,
@@ -518,6 +575,8 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         }
     }
 
+    /// Returns the Width and Height of the [`AtlasSet`] and how many Layers Exist.
+    ///
     pub fn size(&self) -> UVec3 {
         UVec3::new(
             self.extent.width,
@@ -526,6 +585,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         )
     }
 
+    /// Returns a [`BindGroup`] Reference to the AtlasSets Texture Binding.
     pub fn bind_group(&self) -> &BindGroup {
         &self.texture_group.bind_group
     }

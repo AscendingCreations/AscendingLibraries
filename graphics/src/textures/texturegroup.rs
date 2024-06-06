@@ -1,5 +1,7 @@
 use crate::{GpuRenderer, Layout};
 
+/// [`crate::AtlasSet`] rendering [`wgpu::BindGroup`]
+///
 pub struct TextureGroup {
     pub bind_group: wgpu::BindGroup,
 }

@@ -7,54 +7,79 @@ pub struct Mesh2DRenderer {
     pub vbos: VertexBuffer<Mesh2DVertex>,
 }
 
-//TODO: Update this to take in instance buffer index too.
 impl Mesh2DRenderer {
+    /// Creates a new [`Mesh2DRenderer`].
+    ///
     pub fn new(renderer: &GpuRenderer) -> Result<Self, GraphicsError> {
         Ok(Self {
             vbos: VertexBuffer::new(renderer.gpu_device(), 512),
         })
     }
 
+    /// Adds a Buffer [`OrderedIndex`] to the Rendering Store to get processed.
+    /// This must be done before [`Mesh2DRenderer::finalize`] but after [`Mesh2D::update`] in order for it to Render.
+    ///
+    /// # Arguments
+    /// - index: The [`OrderedIndex`] of the Object we want to render.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
         index: OrderedIndex,
-        layer: usize,
+        buffer_layer: usize,
     ) {
-        self.vbos.add_buffer_store(renderer, index, layer);
+        self.vbos.add_buffer_store(renderer, index, buffer_layer);
     }
 
+    /// Finalizes the Buffer by processing staged [`OrderedIndex`]'s and uploading it to the GPU.
+    /// Must be called after all the [`Mesh2DRenderer::add_buffer_store`]'s.
+    ///
     pub fn finalize(&mut self, renderer: &mut GpuRenderer) {
         self.vbos.finalize(renderer);
     }
 
+    /// Updates a [`Mesh2D`] and adds its [`OrderedIndex`] to staging using [`Mesh2DRenderer::add_buffer_store`].
+    /// This must be done before [`Mesh2DRenderer::finalize`] in order for it to Render.
+    ///
+    /// # Arguments
+    /// - mesh: [`Mesh2D`] we want to update and prepare for rendering.
+    /// - atlas: [`AtlasSet`] the [`Mesh2D`] needs to render with.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
+    ///
     pub fn mesh_update(
         &mut self,
         mesh: &mut Mesh2D,
         renderer: &mut GpuRenderer,
-        layer: usize,
+        buffer_layer: usize,
     ) {
         let index = mesh.update(renderer);
 
-        self.add_buffer_store(renderer, index, layer);
+        self.add_buffer_store(renderer, index, buffer_layer);
     }
 
+    /// Sets the Instance Buffer to enable Rendering With Scissor Clipping.
+    /// This must be Set for the Optional Bounds to be used.
+    ///
     pub fn use_clipping(&mut self) {
         self.vbos.set_as_clipped();
     }
 }
 
+/// Trait used to Grant Direct [`Mesh2D`] Rendering to [`wgpu::RenderPass`]
 pub trait RenderMesh2D<'a, 'b, Controls>
 where
     'b: 'a,
     Controls: camera::controls::Controls,
 {
+    /// Renders the all [`Mesh2D`]'s within the buffer layer to screen that have been processed and finalized.
+    ///
     fn render_2dmeshs(
         &mut self,
         renderer: &'b GpuRenderer,
         buffer: &'b Mesh2DRenderer,
         system: &'b System<Controls>,
-        layer: usize,
+        buffer_layer: usize,
     );
 }
 
@@ -68,9 +93,9 @@ where
         renderer: &'b GpuRenderer,
         buffer: &'b Mesh2DRenderer,
         system: &'b System<Controls>,
-        layer: usize,
+        buffer_layer: usize,
     ) {
-        if let Some(vbos) = buffer.vbos.buffers.get(layer) {
+        if let Some(vbos) = buffer.vbos.buffers.get(buffer_layer) {
             if !vbos.is_empty() {
                 self.set_buffers(buffer.vbos.as_buffer_pass());
                 self.set_pipeline(

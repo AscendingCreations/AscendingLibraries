@@ -4,6 +4,8 @@ use crate::{
 };
 use bytemuck::{Pod, Zeroable};
 
+/// [`crate::Mesh2D`] RenderPipeline Layout
+///
 #[repr(C)]
 #[derive(Clone, Copy, Hash, Pod, Zeroable)]
 pub struct Mesh2DRenderPipeline;

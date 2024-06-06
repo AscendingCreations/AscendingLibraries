@@ -3,6 +3,8 @@ use cosmic_text::Color;
 use lyon::{math::Point as LPoint, tessellation as tess};
 use std::iter;
 
+/// Vertex Details for [`crate::Mesh2D`] that matches the Shaders Vertex Layout.
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Mesh2DVertex {
@@ -27,7 +29,6 @@ impl BufferLayout for Mesh2DVertex {
             .to_vec()
     }
 
-    //default set as large enough to contain 1_000 vertices.
     fn default_buffer() -> BufferData {
         Self::with_capacity(1_000, 6_000)
     }
@@ -56,6 +57,8 @@ impl BufferLayout for Mesh2DVertex {
     }
 }
 
+/// Vertex Builder details [`crate::Mesh2DBuilder`].
+///
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub struct VertexBuilder {
     pub z: f32,

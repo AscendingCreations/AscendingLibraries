@@ -59,15 +59,15 @@ impl TextRenderer {
     ///
     /// # Arguments
     /// - index: The [`OrderedIndex`] of the Object we want to render.
-    /// - layer: The Buffer Layer we want to add this Object too.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
         index: OrderedIndex,
-        layer: usize,
+        buffer_layer: usize,
     ) {
-        self.buffer.add_buffer_store(renderer, index, layer);
+        self.buffer.add_buffer_store(renderer, index, buffer_layer);
     }
 
     /// Finalizes the Buffer by processing staged [`OrderedIndex`]'s and uploading it to the GPU.
@@ -83,18 +83,18 @@ impl TextRenderer {
     /// # Arguments
     /// - text: [`Text`] we want to update and prepare for rendering.
     /// - atlas: [`TextAtlas`] the [`Text`] needs to render with.
-    /// - layer: The Buffer Layer we want to add this Object too.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
     pub fn text_update(
         &mut self,
         text: &mut Text,
         atlas: &mut TextAtlas,
         renderer: &mut GpuRenderer,
-        layer: usize,
+        buffer_layer: usize,
     ) -> Result<(), GraphicsError> {
         let index = text.update(&mut self.swash_cache, atlas, renderer)?;
 
-        self.add_buffer_store(renderer, index, layer);
+        self.add_buffer_store(renderer, index, buffer_layer);
         Ok(())
     }
 
@@ -106,16 +106,19 @@ impl TextRenderer {
     }
 }
 
+/// Trait used to Grant Direct [`Text`] Rendering to [`wgpu::RenderPass`]
 pub trait RenderText<'a, 'b>
 where
     'b: 'a,
 {
+    /// Renders the all [`Text`]'s within the buffer layer to screen that have been processed and finalized.
+    ///
     fn render_text(
         &mut self,
         renderer: &'b GpuRenderer,
         buffer: &'b TextRenderer,
         atlas: &'b TextAtlas,
-        layer: usize,
+        buffer_layer: usize,
     );
 }
 
@@ -128,14 +131,14 @@ where
         renderer: &'b GpuRenderer,
         buffer: &'b TextRenderer,
         atlas: &'b TextAtlas,
-        layer: usize,
+        buffer_layer: usize,
     ) {
         if buffer.buffer.is_clipped() {
             error!("Text uses its own clipping mechanisim it does not need to be clipped by the clipper.");
             return;
         }
 
-        if let Some(Some(details)) = buffer.buffer.buffers.get(layer) {
+        if let Some(Some(details)) = buffer.buffer.buffers.get(buffer_layer) {
             if buffer.buffer.count() > 0 {
                 self.set_buffers(renderer.buffer_object.as_buffer_pass());
                 self.set_bind_group(1, atlas.text.bind_group(), &[]);

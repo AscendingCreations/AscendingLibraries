@@ -1,6 +1,8 @@
 use crate::{GpuDevice, Layout};
 use bytemuck::{Pod, Zeroable};
 
+/// [`crate::AtlasSet`] rendering Layout
+///
 #[repr(C)]
 #[derive(Clone, Copy, Hash, Pod, Zeroable)]
 pub struct TextureLayout;

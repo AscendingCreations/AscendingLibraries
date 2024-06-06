@@ -108,15 +108,15 @@ impl LightRenderer {
     ///
     /// # Arguments
     /// - index: The [`OrderedIndex`] of the Object we want to render.
-    /// - layer: The Buffer Layer we want to add this Object too.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
         index: OrderedIndex,
-        layer: usize,
+        buffer_layer: usize,
     ) {
-        self.buffer.add_buffer_store(renderer, index, layer);
+        self.buffer.add_buffer_store(renderer, index, buffer_layer);
     }
 
     /// Finalizes the Buffer by processing staged [`OrderedIndex`]'s and uploading it to the GPU.
@@ -131,13 +131,13 @@ impl LightRenderer {
     ///
     /// # Arguments
     /// - lights: [`Lights`] we want to update and prepare for rendering.
-    /// - layer: The Buffer Layer we want to add this Object too.
+    /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
     pub fn lights_update(
         &mut self,
         lights: &mut Lights,
         renderer: &mut GpuRenderer,
-        layer: usize,
+        buffer_layer: usize,
     ) {
         let index = lights.update(
             renderer,
@@ -145,25 +145,28 @@ impl LightRenderer {
             &mut self.dir_buffer,
         );
 
-        self.add_buffer_store(renderer, index, layer);
+        self.add_buffer_store(renderer, index, buffer_layer);
     }
 
-    /// Lights does not use Scissor Clipping
+    /// Lights do not use Scissor Clipping
     ///
     pub fn use_clipping(&mut self) {
         warn!("Light does not use Clipping.");
     }
 }
 
+/// Trait used to Grant Direct [`Lights`] Rendering to [`wgpu::RenderPass`]
 pub trait RenderLights<'a, 'b>
 where
     'b: 'a,
 {
+    /// Renders the all [`Lights`]'s within the buffer layer to screen that have been processed and finalized.
+    ///
     fn render_lights(
         &mut self,
         renderer: &'b GpuRenderer,
         buffer: &'b LightRenderer,
-        layer: usize,
+        buffer_layer: usize,
     );
 }
 
@@ -175,9 +178,9 @@ where
         &mut self,
         renderer: &'b GpuRenderer,
         buffer: &'b LightRenderer,
-        layer: usize,
+        buffer_layer: usize,
     ) {
-        if let Some(Some(details)) = buffer.buffer.buffers.get(layer) {
+        if let Some(Some(details)) = buffer.buffer.buffers.get(buffer_layer) {
             if buffer.buffer.count() > 0 {
                 self.set_bind_group(1, &buffer.area_bind_group, &[]);
                 self.set_bind_group(2, &buffer.dir_bind_group, &[]);

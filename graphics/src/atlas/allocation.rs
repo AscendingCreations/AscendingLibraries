@@ -1,8 +1,12 @@
+/// [`guillotiere::Allocation`] handler for [`crate::AtlasSet`].
+///
 #[derive(Copy, Clone, Debug)]
 pub struct Allocation<Data: Copy + Default = i32> {
+    /// Texture Allocations within the Texture.
     pub allocation: guillotiere::Allocation,
+    /// Texture Atlas Array Layer.
     pub layer: usize,
-    //Store any Extra data per Allocation.
+    /// Store any Extra data per Allocation.
     pub data: Data,
 }
 

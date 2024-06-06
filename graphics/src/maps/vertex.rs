@@ -1,9 +1,10 @@
 use crate::{BufferData, BufferLayout};
 use std::iter;
 
+/// Vertex Details for [`crate::Map`] that matches the Shaders Vertex Layout.
+///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-/// 4 of these per each layer.
 pub struct MapVertex {
     pub position: [f32; 3],
     pub tilesize: f32,
@@ -32,7 +33,6 @@ impl BufferLayout for MapVertex {
             .to_vec()
     }
 
-    /// default set as 8,192 tile per map.
     fn default_buffer() -> BufferData {
         Self::with_capacity(9_216, 0)
     }
