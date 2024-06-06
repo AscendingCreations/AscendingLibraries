@@ -136,7 +136,7 @@ dependencies = [
 
 [[package]]
 name = "ascending_graphics"
-version = "0.8.2"
+version = "0.9.0"
 dependencies = [
  "ahash",
  "ascending_camera",
