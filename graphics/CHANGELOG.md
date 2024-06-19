@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.10.0 (19. June, 2024)
 ### Changed
 - (Breaking) Removed Visible lines function in Text as Cosmic removed it as well.
 - (Breaking) Updated to cosmic-text 0.12.0

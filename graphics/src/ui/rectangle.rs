@@ -63,19 +63,19 @@ impl Rect {
     }
 
     /// Unloads the [`Rect`] from the Instance Buffers Store.
-    /// 
+    ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
     }
 
     /// Updates the [`Rect`]'s Clipping Bounds.
-    /// 
+    ///
     pub fn update_bounds(&mut self, bounds: Option<Bounds>) {
         self.bounds = bounds;
     }
 
     /// Sets the [`Rect`]'s [`CameraType`] for rendering.
-    /// 
+    ///
     pub fn set_use_camera(&mut self, camera_type: CameraType) -> &mut Self {
         self.camera_type = camera_type;
         self.changed = true;
@@ -83,7 +83,7 @@ impl Rect {
     }
 
     /// Sets the [`Rect`]'s Color.
-    /// 
+    ///
     pub fn set_color(&mut self, color: Color) -> &mut Self {
         self.color = color;
         self.changed = true;
@@ -91,7 +91,7 @@ impl Rect {
     }
 
     /// Sets the [`Rect`]'s Border Color.
-    /// 
+    ///
     pub fn set_border_color(&mut self, color: Color) -> &mut Self {
         self.border_color = color;
         self.changed = true;
@@ -99,7 +99,7 @@ impl Rect {
     }
 
     /// Sets the [`Rect`]'s Texture.
-    /// 
+    ///
     pub fn set_texture(
         &mut self,
         renderer: &GpuRenderer,
@@ -119,7 +119,7 @@ impl Rect {
     }
 
     /// Sets the [`Rect`]'s Texture X,Y, W, H details.
-    /// 
+    ///
     pub fn set_container_uv(&mut self, uv: Vec4) -> &mut Self {
         self.uv = uv;
         self.changed = true;
@@ -127,7 +127,7 @@ impl Rect {
     }
 
     /// Sets the [`Rect`]'s Position.
-    /// 
+    ///
     pub fn set_position(&mut self, position: Vec3) -> &mut Self {
         self.position = position;
         self.changed = true;
@@ -135,7 +135,7 @@ impl Rect {
     }
 
     /// Sets the [`Rect`]'s Width and Height.
-    /// 
+    ///
     pub fn set_size(&mut self, size: Vec2) -> &mut Self {
         self.size = size;
         self.changed = true;
@@ -143,7 +143,7 @@ impl Rect {
     }
 
     /// Sets the [`Rect`]'s Border Width.
-    /// 
+    ///
     pub fn set_border_width(&mut self, size: f32) -> &mut Self {
         self.border_width = size;
         self.changed = true;
@@ -151,7 +151,7 @@ impl Rect {
     }
 
     /// Sets the [`Rect`]'s Corner Radius.
-    /// 
+    ///
     pub fn set_radius(&mut self, radius: f32) -> &mut Self {
         self.radius = radius;
         self.changed = true;
@@ -234,7 +234,7 @@ impl Rect {
     }
 
     /// Checks if the Mouse position is within the Rects location.
-    /// 
+    ///
     pub fn check_mouse_bounds(&self, mouse_pos: Vec2) -> bool {
         if self.radius > 0.0 {
             let pos = [self.position.x, self.position.y];
