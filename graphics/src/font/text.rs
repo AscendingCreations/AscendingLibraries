@@ -11,9 +11,20 @@ use cosmic_text::{
 pub struct TextOptions {
     pub shaping: cosmic_text::Shaping,
     pub metrics: Option<Metrics>,
-    pub buffer_size: Vec2,
+    pub buffer_width: Option<f32>,
+    pub buffer_height: Option<f32>,
     pub scale: f32,
     pub wrap: Wrap,
+}
+
+/// [`Text`] visible width and lines details
+pub struct VisibleDetails {
+    /// Visible Width the Text can render as.
+    pub width: f32,
+    /// Visible Lines the Text can Render too.
+    pub lines: usize,
+    /// Max Height each line is rendered as.
+    pub line_height: f32,
 }
 
 /// Text to render to screen.
@@ -472,14 +483,10 @@ impl Text {
     pub fn set_buffer_size(
         &mut self,
         renderer: &mut GpuRenderer,
-        width: i32,
-        height: i32,
+        width: Option<f32>,
+        height: Option<f32>,
     ) -> &mut Self {
-        self.buffer.set_size(
-            &mut renderer.font_sys,
-            width as f32,
-            height as f32,
-        );
+        self.buffer.set_size(&mut renderer.font_sys, width, height);
         self.changed = true;
         self
     }
@@ -495,12 +502,6 @@ impl Text {
         );
         self.changed = true;
         self
-    }
-
-    /// Returns how many lines exist in the buffer.
-    ///
-    pub fn visible_lines(&self) -> i32 {
-        self.buffer.visible_lines()
     }
 
     // Used to check and update the vertex array.
@@ -528,22 +529,35 @@ impl Text {
             && mouse_pos[1] < self.pos.y + self.size.y
     }
 
-    /// measure's the [`Text`]'s Rendering Size.
-    ///
-    pub fn measure(&self) -> Vec2 {
-        let (width, total_lines) = self.buffer.layout_runs().fold(
+    /// Returns Visible Width and Line details of the Rendered [`Text`].
+    pub fn visible_details(&self) -> VisibleDetails {
+        let (width, lines) = self.buffer.layout_runs().fold(
             (0.0, 0usize),
             |(width, total_lines), run| {
                 (run.line_w.max(width), total_lines + 1)
             },
         );
 
+        VisibleDetails {
+            line_height: self.buffer.metrics().line_height,
+            lines,
+            width,
+        }
+    }
+
+    /// measure's the [`Text`]'s Rendering Size.
+    ///
+    pub fn measure(&self) -> Vec2 {
+        let details = self.visible_details();
+
         let (max_width, max_height) = self.buffer.size();
+        let height = details.lines as f32 * details.line_height;
 
         Vec2::new(
-            width.min(max_width),
-            (total_lines as f32 * self.buffer.metrics().line_height)
-                .min(max_height),
+            details
+                .width
+                .min(max_width.unwrap_or(0.0).max(details.width)),
+            height.min(max_height.unwrap_or(0.0).max(height)),
         )
     }
 
@@ -566,8 +580,8 @@ impl Text {
         buffer.set_wrap(font_system, options.wrap);
         buffer.set_size(
             font_system,
-            options.buffer_size.x,
-            options.buffer_size.y,
+            options.buffer_width,
+            options.buffer_height,
         );
         buffer.set_text(font_system, text, attrs, options.shaping);
 
@@ -579,10 +593,11 @@ impl Text {
         );
 
         let (max_width, max_height) = buffer.size();
+        let height = total_lines as f32 * buffer.metrics().line_height;
 
         Vec2::new(
-            width.min(max_width),
-            (total_lines as f32 * buffer.metrics().line_height).min(max_height),
+            width.min(max_width.unwrap_or(0.0).max(width)),
+            height.min(max_height.unwrap_or(0.0).max(height)),
         )
     }
 }

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Changed
+- (Breaking) Removed Visible lines function in Text as Cosmic removed it as well.
+- (Breaking) Updated to cosmic-text 0.12.0
+
+### Added
+- Text::visible_details() which will return the needed details to calculate the render texts size.
+
 ## 0.9.0 (6. June, 2024)
 ### Changed
 - (Breaking) Added Rendering layer to Text, Mesh.

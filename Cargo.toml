@@ -3,20 +3,20 @@ resolver = "2"
 members = ["input", "camera", "graphics"]
 
 [workspace.dependencies]
-async-trait = "0.1.79"
-bytemuck = { version = "1.15.0", features = ["derive"] }
-thiserror = "1.0.58"
-winit = { version = "0.30.0", features = ["serde"] }
+async-trait = "0.1.80"
+bytemuck = { version = "1.16.1", features = ["derive"] }
+thiserror = "1.0.61"
+winit = { version = "0.30.2", features = ["serde"] }
 image = "0.25.1"
 guillotiere = "0.6.2"
-serde = { version = "1.0.197", features = ["derive"] }
+serde = { version = "1.0.203", features = ["derive"] }
 log = "0.4.21"
-cosmic-text = { version = "0.11.2", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
+cosmic-text = { version = "0.12.0", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
 ordered-float = { version = "4.2.0", features = ["serde"] }
 lru = "0.12.3"
-glam = { version = "0.27.0", features = ["bytemuck", "mint"] }
+glam = { version = "0.28.0", features = ["bytemuck", "mint"] }
 lyon = "1.0.1"
-smol_str = "0.2.1"
+smol_str = "0.2.2"
 indexmap = "2.2.6"
 slotmap = "1.0.7"
 ahash = {version = "0.8.11", features = ["serde"]}
