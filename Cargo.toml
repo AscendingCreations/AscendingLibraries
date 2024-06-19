@@ -42,4 +42,4 @@ features = ["wgsl-in"]
 #git = "https://github.com/gfx-rs/wgpu"
 #rev = "061e04b"
 #path = "../wgpu-trunk/wgpu"
-version = "0.20.0"
+version = "0.20.1"
