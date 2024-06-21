@@ -119,7 +119,9 @@ impl<K: BufferLayout> Buffer<K> {
     /// - pos: Position to write to the buffer from.
     ///
     pub fn write(&self, device: &GpuDevice, data: &[u8], pos: u64) {
-        device.queue.write_buffer(&self.buffer, pos, data);
+        if !data.is_empty() {
+            device.queue.write_buffer(&self.buffer, pos, data);
+        }
     }
 
     /// If the buffer len is empty.
