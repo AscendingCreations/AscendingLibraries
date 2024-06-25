@@ -172,7 +172,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             renderer.device().create_texture(&wgpu::TextureDescriptor {
                 label: Some("Texture"),
                 size: extent,
-                mip_level_count: 0,
+                mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
                 format: self.format,
