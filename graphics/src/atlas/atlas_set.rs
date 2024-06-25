@@ -240,17 +240,25 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     /// # Arguments
     /// - format: [`wgpu::TextureFormat`] the texture layers will need to be.
     /// - use_ref_count: Mostly used for Glyph Storage and Auto Removal.
+    /// - size: Used for both Width and Height. Limited to max of limits.max_texture_dimension_2d and min of 256.
     ///
     pub fn new(
         renderer: &mut GpuRenderer,
         format: wgpu::TextureFormat,
         use_ref_count: bool,
+        size: u32,
     ) -> Self {
         let limits = renderer.device().limits();
+        let size = size.clamp(256, limits.max_texture_dimension_2d);
+
         let extent = wgpu::Extent3d {
-            width: limits.max_texture_dimension_2d,
-            height: limits.max_texture_dimension_2d,
-            depth_or_array_layers: 2,
+            width: size,
+            height: size,
+            depth_or_array_layers: if renderer.backend == wgpu::Backend::Gl {
+                2
+            } else {
+                1
+            },
         };
 
         let texture =
@@ -284,10 +292,11 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         Self {
             texture,
             texture_view,
-            layers: vec![
-                Atlas::new(limits.max_texture_dimension_2d),
-                Atlas::new(limits.max_texture_dimension_2d),
-            ],
+            layers: if renderer.backend == wgpu::Backend::Gl {
+                vec![Atlas::new(size), Atlas::new(size)]
+            } else {
+                vec![Atlas::new(size)]
+            },
             store: Slab::with_capacity(512),
             lookup: AHashMap::new(),
             extent,
