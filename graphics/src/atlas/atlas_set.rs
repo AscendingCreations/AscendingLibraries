@@ -459,8 +459,6 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     /// Removed Texture by key.
     /// Removing will leave anything using the texture inable to load the correct texture if
     /// a new texture is loaded in the olds place.
-    /// TODO Redo texture system so texture allocations are not held by the images but instead
-    /// TODO are held by the system so we can reload images later on if they got unloaded.
     ///
     /// returns the layer id if removed otherwise None for everything else.
     ///
@@ -485,8 +483,6 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     /// Removed Texture by index.
     /// Removing will leave anything using the texture inable to load the correct texture if
     /// a new texture is loaded in the olds place.
-    /// TODO Redo texture system so texture allocations are not held by the images but instead
-    /// TODO are held by the system so we can reload images later on if they got unloaded.
     ///
     /// returns the layer id if removed otherwise None for everything else.
     ///
