@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Changed
+- (Breaking) Added size that is clamped to 256 to limits.max_texture_dimension_2d.
+- Added Backend to GpuRenderer 
+
+### Fixed
+- Reduced Textures loaded to 1 if not Opengl being used as an adapter backend.
+
 ## 0.10.1 (25. June, 2024)
 ### Changed
 - Added Feature PassThru to Give direct access to all usable internal crates.
