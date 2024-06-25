@@ -179,7 +179,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 usage: wgpu::TextureUsages::TEXTURE_BINDING
                     | wgpu::TextureUsages::COPY_DST
                     | wgpu::TextureUsages::COPY_SRC,
-                view_formats: &[wgpu::TextureFormat::Bgra8Unorm],
+                view_formats: &[self.format],
             });
 
         let amount_to_copy = self.layers.len() - amount;

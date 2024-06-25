@@ -13,6 +13,7 @@ description = "A graphical rendering library for 2D, using wgpu and winit."
 
 [features]
 default = []
+crate_passthru = []
 
 [dependencies]
 async-trait.workspace = true
