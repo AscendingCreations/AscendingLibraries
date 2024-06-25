@@ -172,14 +172,14 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             renderer.device().create_texture(&wgpu::TextureDescriptor {
                 label: Some("Texture"),
                 size: extent,
-                mip_level_count: 0,
+                mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
                 format: self.format,
                 usage: wgpu::TextureUsages::TEXTURE_BINDING
                     | wgpu::TextureUsages::COPY_DST
                     | wgpu::TextureUsages::COPY_SRC,
-                view_formats: &[wgpu::TextureFormat::Bgra8Unorm],
+                view_formats: &[self.format],
             });
 
         let amount_to_copy = self.layers.len() - amount;

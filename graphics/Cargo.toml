@@ -12,7 +12,8 @@ description = "A graphical rendering library for 2D, using wgpu and winit."
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = []
+default = ["crate_passthru"]
+crate_passthru = []
 
 [dependencies]
 async-trait.workspace = true
