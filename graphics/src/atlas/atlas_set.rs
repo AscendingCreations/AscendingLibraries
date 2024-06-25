@@ -248,8 +248,8 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     ) -> Self {
         let limits = renderer.device().limits();
         let extent = wgpu::Extent3d {
-            width: limits.max_texture_dimension_3d,
-            height: limits.max_texture_dimension_3d,
+            width: limits.max_texture_dimension_2d,
+            height: limits.max_texture_dimension_2d,
             depth_or_array_layers: 2,
         };
 
@@ -285,8 +285,8 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             texture,
             texture_view,
             layers: vec![
-                Atlas::new(limits.max_texture_dimension_3d),
-                Atlas::new(limits.max_texture_dimension_3d),
+                Atlas::new(limits.max_texture_dimension_2d),
+                Atlas::new(limits.max_texture_dimension_2d),
             ],
             store: Slab::with_capacity(512),
             lookup: AHashMap::new(),
