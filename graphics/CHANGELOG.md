@@ -7,10 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 - (Breaking) Added size that is clamped to 256 to limits.max_texture_dimension_2d.
+- (Breaking) Removed TextureView from AtlasSet and placed into TextureGroup.
 - Added Backend to GpuRenderer 
 
 ### Fixed
 - Reduced Textures loaded to 1 if not Opengl being used as an adapter backend.
+- Rebinding TextureGroup upon Grow allows Access to new Texture Layers.
+
 
 ## 0.10.1 (25. June, 2024)
 ### Changed
