@@ -1,5 +1,5 @@
 #![allow(clippy::extra_unused_type_parameters)]
-mod atlas;
+mod atlas_set;
 mod error;
 mod font;
 mod images;
@@ -11,7 +11,7 @@ mod textures;
 mod tilesheet;
 mod ui;
 
-pub use atlas::*;
+pub use atlas_set::*;
 pub use cosmic_text::Color;
 pub use error::*;
 pub use font::*;

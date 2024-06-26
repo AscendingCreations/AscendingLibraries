@@ -1,20 +1,14 @@
-mod allocation;
-mod allocator;
-mod atlas_set;
-
+pub use super::allocator::Allocator;
 use crate::AIndexSet;
-pub use allocation::Allocation;
-pub use allocator::Allocator;
-pub use atlas_set::AtlasSet;
 
 /// Atlas Layer within an [`AtlasSet`].
-///
+/// This Keeps track of the Individual Texture Layer.
 pub struct Atlas {
     /// handles the space allocation of the layer.
     pub allocator: Allocator,
     /// Stores each Index the allocations exist at for this layer.
     pub allocated: AIndexSet<usize>,
-    ///  use to avoid placing newly loaded images into
+    /// use to avoid placing newly loaded images into
     /// if we are migrating images out of it.
     pub migrating: bool,
 }

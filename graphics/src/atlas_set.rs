@@ -1,12 +1,18 @@
 use crate::{
-    AHashMap, AHashSet, Allocation, Atlas, GpuRenderer, TextureGroup,
-    TextureLayout, UVec3,
+    AHashMap, AHashSet, GpuRenderer, TextureGroup, TextureLayout, UVec3,
 };
 use lru::LruCache;
 use slab::Slab;
 use std::hash::Hash;
 use wgpu::BindGroup;
 
+mod allocation;
+mod allocator;
+mod atlas;
+
+pub use allocation::Allocation;
+pub use allocator::Allocator;
+pub use atlas::Atlas;
 /**
  * AtlasSet is used to hold and contain the data of many Atlas layers.
  * Each Atlas keeps track of the allocations allowed. Each allocation is a
