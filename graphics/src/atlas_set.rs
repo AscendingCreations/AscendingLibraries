@@ -3,8 +3,8 @@ use crate::{
 };
 use lru::LruCache;
 use slab::Slab;
-use std::hash::Hash;
-use wgpu::BindGroup;
+use std::{hash::Hash, rc::Rc};
+use wgpu::{BindGroup, BindGroupLayout};
 
 mod allocation;
 mod allocator;
@@ -45,14 +45,12 @@ pub use atlas::Atlas;
  * TODO Also make use_ref_count do auto migrations once a set threashold is reached.
 */
 pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
-    /// Texture in GRAM
+    /// Texture in GRAM, Holds all the atlas layers.
     pub texture: wgpu::Texture,
-    /// Texture View for WGPU
-    pub texture_view: wgpu::TextureView,
     /// Layers of texture.
     pub layers: Vec<Atlas>,
-    /// Holds the Original Texture Size and layer information.
-    pub extent: wgpu::Extent3d,
+    /// Holds the Texture's Size.
+    pub size: u32,
     /// Store the Allocations se we can easily remove and update them.
     /// use a Generation id to avoid conflict if users use older allocation id's.
     /// Also stores the Key associated with the Allocation.
@@ -70,11 +68,10 @@ pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
     /// Format the Texture uses.
     pub format: wgpu::TextureFormat,
     /// When the System will Error if reached. This is the max allowed Layers
-    /// Default is 256 as Most GPU allow a max of 256.
+    /// Default is [`wgpu::Limits::max_texture_array_layers`]. Most GPU allow a max of 256.
     pub max_layers: usize,
     /// Limit of deallocations allowed before we attempt to migrate the textures
     /// allocations to fix fragmentation.
-    /// TODO Think of better way to figure out fragmentations.
     pub deallocations_limit: usize,
     /// amount of layers in memory before we start checking for fragmentations.
     pub layer_check_limit: usize,
@@ -84,7 +81,7 @@ pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
     /// uses the refcount to unload rather than the unused.
     /// must exist for fonts to unload correctly and must be set to false for them.
     pub use_ref_count: bool,
-    /// Texture Bind group for Atlas
+    /// Texture Bind group for Atlas Set
     pub texture_group: TextureGroup,
 }
 
@@ -96,7 +93,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         data: Data,
     ) -> Option<Allocation<Data>> {
         /* Check if the allocation would fit. */
-        if width > self.extent.width || height > self.extent.height {
+        if width > self.size || height > self.size {
             return None;
         }
 
@@ -145,7 +142,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             return None;
         }
 
-        let mut layer = Atlas::new(self.extent.width);
+        let mut layer = Atlas::new(self.size);
 
         if let Some(allocation) = layer.allocator.allocate(width, height) {
             self.layers.push(layer);
@@ -161,23 +158,21 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         None
     }
 
-    //TODO Add shrink that takes layers using a unload boolean and also promote each layers
+    //TODO Add shrink that takes layers using a unload boolean and also promote each layers.
     //TODO allocation layers to the new layer location. while removing the old empty layer.
     fn grow(&mut self, amount: usize, renderer: &GpuRenderer) {
         if amount == 0 {
             return;
         }
 
-        let extent = wgpu::Extent3d {
-            width: self.extent.width,
-            height: self.extent.height,
-            depth_or_array_layers: self.layers.len() as u32,
-        };
-
         let texture =
             renderer.device().create_texture(&wgpu::TextureDescriptor {
                 label: Some("Texture"),
-                size: extent,
+                size: wgpu::Extent3d {
+                    width: self.size,
+                    height: self.size,
+                    depth_or_array_layers: self.layers.len() as u32,
+                },
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
@@ -197,37 +192,35 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         );
 
         for (i, _) in self.layers.iter_mut().take(amount_to_copy).enumerate() {
+            let origin = wgpu::Origin3d {
+                x: 0,
+                y: 0,
+                z: i as u32,
+            };
+
             encoder.copy_texture_to_texture(
                 wgpu::ImageCopyTextureBase {
                     texture: &self.texture,
                     mip_level: 0,
-                    origin: wgpu::Origin3d {
-                        x: 0,
-                        y: 0,
-                        z: i as u32,
-                    },
+                    origin,
                     aspect: wgpu::TextureAspect::All,
                 },
                 wgpu::ImageCopyTextureBase {
                     texture: &texture,
                     mip_level: 0,
-                    origin: wgpu::Origin3d {
-                        x: 0,
-                        y: 0,
-                        z: i as u32,
-                    },
+                    origin,
                     aspect: wgpu::TextureAspect::All,
                 },
                 wgpu::Extent3d {
-                    width: self.extent.width,
-                    height: self.extent.height,
+                    width: self.size,
+                    height: self.size,
                     depth_or_array_layers: 1,
                 },
             );
         }
 
         self.texture = texture;
-        self.texture_view =
+        let texture_view =
             self.texture.create_view(&wgpu::TextureViewDescriptor {
                 label: Some("Texture Atlas"),
                 format: Some(self.format),
@@ -238,6 +231,11 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 base_array_layer: 0,
                 array_layer_count: Some(self.layers.len() as u32),
             });
+        let atlas_layout: Rc<BindGroupLayout> = renderer
+            .get_layout(TextureLayout)
+            .expect("TextureLayout was never created.");
+        self.texture_group =
+            TextureGroup::from_view(renderer, texture_view, &atlas_layout);
         renderer.queue().submit(std::iter::once(encoder.finish()));
     }
 
@@ -292,12 +290,13 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             array_layer_count: Some(1),
         });
 
+        let atlas_layout: Rc<BindGroupLayout> =
+            renderer.create_layout(TextureLayout);
         let texture_group =
-            TextureGroup::from_view(renderer, &texture_view, TextureLayout);
+            TextureGroup::from_view(renderer, texture_view, &atlas_layout);
 
         Self {
             texture,
-            texture_view,
             layers: if renderer.backend == wgpu::Backend::Gl {
                 vec![Atlas::new(size), Atlas::new(size)]
             } else {
@@ -305,7 +304,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             },
             store: Slab::with_capacity(512),
             lookup: AHashMap::new(),
-            extent,
+            size,
             cache: LruCache::unbounded(),
             last_used: AHashSet::default(),
             format,
@@ -589,11 +588,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     /// Returns the Width and Height of the [`AtlasSet`] and how many Layers Exist.
     ///
     pub fn size(&self) -> UVec3 {
-        UVec3::new(
-            self.extent.width,
-            self.extent.height,
-            self.extent.depth_or_array_layers,
-        )
+        UVec3::new(self.size, self.size, self.layers.len() as u32)
     }
 
     /// Returns a [`BindGroup`] Reference to the AtlasSets Texture Binding.

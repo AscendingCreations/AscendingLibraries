@@ -251,6 +251,15 @@ impl GpuRenderer {
         self.layout_storage.create_layout(&mut self.device, layout)
     }
 
+    /// Returns a Reference Counter to the layout Or None if it does not yet Exist.
+    ///
+    pub fn get_layout<K: Layout>(
+        &self,
+        layout: K,
+    ) -> Option<Rc<wgpu::BindGroupLayout>> {
+        self.layout_storage.get_layout(layout)
+    }
+
     /// Creates each supported rendering objects pipeline.
     ///
     pub fn create_pipelines(&mut self, surface_format: wgpu::TextureFormat) {

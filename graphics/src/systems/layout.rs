@@ -58,6 +58,15 @@ impl LayoutStorage {
 
         Rc::clone(layout)
     }
+
+    pub fn get_layout<K: Layout>(
+        &self,
+        layout: K,
+    ) -> Option<Rc<wgpu::BindGroupLayout>> {
+        let key = layout.layout_key();
+
+        self.bind_group_map.get(&key).map(Rc::clone)
+    }
 }
 
 impl Default for LayoutStorage {

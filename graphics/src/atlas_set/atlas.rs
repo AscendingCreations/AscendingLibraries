@@ -4,7 +4,7 @@ use crate::AIndexSet;
 /// Atlas Layer within an [`AtlasSet`].
 /// This Keeps track of the Individual Texture Layer.
 pub struct Atlas {
-    /// handles the space allocation of the layer.
+    /// Handles the space allocation of the layer.
     pub allocator: Allocator,
     /// Stores each Index the allocations exist at for this layer.
     pub allocated: AIndexSet<usize>,
