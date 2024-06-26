@@ -18,13 +18,26 @@ pub struct TextAtlas {
 impl TextAtlas {
     /// Creates a new [`TextAtlas`].
     ///
-    pub fn new(renderer: &mut GpuRenderer) -> Result<Self, GraphicsError> {
+    /// # Arguments
+    /// - size: Used for both Width and Height. Limited to max of limits.max_texture_dimension_2d and min of 256.
+    ///         Used for both the Text Atlas and Emoji Atlas.
+    ///
+    pub fn new(
+        renderer: &mut GpuRenderer,
+        size: u32,
+    ) -> Result<Self, GraphicsError> {
         Ok(Self {
-            text: AtlasSet::new(renderer, wgpu::TextureFormat::R8Unorm, false),
+            text: AtlasSet::new(
+                renderer,
+                wgpu::TextureFormat::R8Unorm,
+                false,
+                size,
+            ),
             emoji: AtlasSet::new(
                 renderer,
                 wgpu::TextureFormat::Rgba8UnormSrgb,
                 false,
+                size,
             ),
         })
     }

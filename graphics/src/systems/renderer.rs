@@ -23,6 +23,7 @@ pub struct GpuRenderer {
     pub(crate) frame: Option<wgpu::SurfaceTexture>,
     pub font_sys: FontSystem,
     pub buffer_object: StaticVertexBuffer,
+    pub backend: wgpu::Backend,
 }
 
 /// Trait to allow [`wgpu::RenderPass`] to Set the Vertex and Index buffers.
@@ -54,6 +55,7 @@ impl GpuRenderer {
     pub fn new(window: GpuWindow, device: GpuDevice) -> Self {
         let buffer_object = StaticVertexBuffer::create_buffer(&device);
         let depth_buffer = window.create_depth_texture(&device);
+        let backend = window.adapter.get_info().backend;
 
         Self {
             window,
@@ -66,6 +68,7 @@ impl GpuRenderer {
             frame: None,
             font_sys: FontSystem::new(),
             buffer_object,
+            backend,
         }
     }
 
@@ -246,6 +249,15 @@ impl GpuRenderer {
         layout: K,
     ) -> Rc<wgpu::BindGroupLayout> {
         self.layout_storage.create_layout(&mut self.device, layout)
+    }
+
+    /// Returns a Reference Counter to the layout Or None if it does not yet Exist.
+    ///
+    pub fn get_layout<K: Layout>(
+        &self,
+        layout: K,
+    ) -> Option<Rc<wgpu::BindGroupLayout>> {
+        self.layout_storage.get_layout(layout)
     }
 
     /// Creates each supported rendering objects pipeline.

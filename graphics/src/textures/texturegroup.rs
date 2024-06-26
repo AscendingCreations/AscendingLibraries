@@ -1,16 +1,21 @@
-use crate::{GpuRenderer, Layout};
+use wgpu::BindGroupLayout;
 
-/// [`crate::AtlasSet`] rendering [`wgpu::BindGroup`]
+use crate::GpuRenderer;
+
+/// [`crate::AtlasSet`] rendering TextureGroup
 ///
 pub struct TextureGroup {
+    /// Texture's [`wgpu::TextureView`] for WGPU.
+    pub texture_view: wgpu::TextureView,
+    /// Textures WGPU [`wgpu::BindGroup`].
     pub bind_group: wgpu::BindGroup,
 }
 
 impl TextureGroup {
-    pub fn from_view<K: Layout>(
-        renderer: &mut GpuRenderer,
-        texture_view: &wgpu::TextureView,
-        layout: K,
+    pub fn from_view(
+        renderer: &GpuRenderer,
+        texture_view: wgpu::TextureView,
+        layout: &BindGroupLayout,
     ) -> Self {
         let diffuse_sampler =
             renderer.device().create_sampler(&wgpu::SamplerDescriptor {
@@ -19,27 +24,28 @@ impl TextureGroup {
                 ..Default::default()
             });
 
-        let entries = vec![
-            wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::TextureView(texture_view),
-            },
-            wgpu::BindGroupEntry {
-                binding: 1,
-                resource: wgpu::BindingResource::Sampler(&diffuse_sampler),
-            },
-        ];
-
-        let layout = renderer.create_layout(layout);
-        let bind_group =
-            renderer
-                .device()
-                .create_bind_group(&wgpu::BindGroupDescriptor {
+        Self {
+            bind_group: renderer.device().create_bind_group(
+                &wgpu::BindGroupDescriptor {
                     label: Some("Texture Bind Group"),
-                    layout: &layout,
-                    entries: &entries,
-                });
-
-        Self { bind_group }
+                    layout,
+                    entries: &[
+                        wgpu::BindGroupEntry {
+                            binding: 0,
+                            resource: wgpu::BindingResource::TextureView(
+                                &texture_view,
+                            ),
+                        },
+                        wgpu::BindGroupEntry {
+                            binding: 1,
+                            resource: wgpu::BindingResource::Sampler(
+                                &diffuse_sampler,
+                            ),
+                        },
+                    ],
+                },
+            ),
+            texture_view,
+        }
     }
 }
