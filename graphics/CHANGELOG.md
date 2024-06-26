@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Reduced Textures loaded to 1 if not Opengl being used as an adapter backend.
 - Rebinding TextureGroup upon Grow allows Access to new Texture Layers.
 
+### Added
+- GpuRenderer::get_layout() to aquire already made layouts without the need for a &mut GpuRenderer. 
 
 ## 0.10.1 (25. June, 2024)
 ### Changed
