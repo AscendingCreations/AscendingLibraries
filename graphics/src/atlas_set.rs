@@ -443,6 +443,8 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 } else {
                     return Err(GraphicsError::DefragFailed);
                 }
+
+                self.layers[allocation.layer].insert_index(id);
             }
 
             if !task.migrating.is_empty() {
