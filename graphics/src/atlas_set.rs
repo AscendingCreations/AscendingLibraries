@@ -396,11 +396,22 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     /// be defragmented. If they are the system will generate a Migration Task and
     /// place each possibly fragmented layer into a list, defragmenting one layer per call,
     /// until all layers marked for migrating are no longer in need of migrating.
+    ///
+    /// # Suggested usage
+    /// Call this function about once every so many frame cycles. It can be a bit slow and could
+    /// Impact FPS during its processing so we only attempt to migrate one
+    /// layer at a time per each call.
+    ///
+    /// # Returns
+    /// bool indicating if any migrations took place during this run cycle so you can rebuild your
+    /// Objects in GPU Memory. Always use this to know when to Rebuild Otherwise Graphical errors can
+    /// Occur.
+    ///
     pub fn defragment(
         &mut self,
         renderer: &GpuRenderer,
-    ) -> Result<(), GraphicsError> {
-        if let Some(mut task) = self.migration.take() {
+    ) -> Result<bool, GraphicsError> {
+        Ok(if let Some(mut task) = self.migration.take() {
             let nlayers = self.layers.len();
             // Gather all the Texture ID's and what their new Allocations will be.
             // Also clears the old Texture to make it reusable for the next call.
@@ -439,6 +450,8 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             if !task.migrating.is_empty() {
                 self.migration = Some(task);
             }
+
+            true
         } else {
             let mut task = MigrationTask::default();
             let mut total = 0;
@@ -450,7 +463,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             });
 
             if total == 0 {
-                return Ok(());
+                return Ok(false);
             }
 
             for (id, layer) in self.layers.iter_mut().enumerate() {
@@ -465,9 +478,9 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             if !task.migrating.is_empty() {
                 self.migration = Some(task);
             }
-        }
 
-        Ok(())
+            false
+        })
     }
 
     /// Clears the last_used cache's.
