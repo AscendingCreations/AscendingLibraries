@@ -40,12 +40,6 @@ use migration::*;
  * empty layer by using the layer_free_limit. This will allow us to control VRam usage.
  *
  * TODO Keep track of Indexs within an Atlas.
- * TODO Create Migration Check function.
- * TODO Add way to tell if any texture needs to migrate.
- * TODO Add limitations to a migrating texture so we only move a bit at a time.
- * TODO Add Ability to Tell user through API that Vertexs and Indicies need to be
- * TODO reloaded upon migration changes.
- * TODO Also make use_ref_count do auto migrations once a set threashold is reached.
 */
 pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
     /// Texture in GRAM, Holds all the atlas layers.
