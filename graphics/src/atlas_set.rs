@@ -151,6 +151,10 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         if let Some(allocation) = layer.allocator.allocate(width, height) {
             self.layers.push(layer);
 
+            if let Some(migrating) = &mut self.migration {
+                migrating.avaliable.push(self.layers.len() - 1);
+            }
+
             return Some(Allocation {
                 allocation,
                 layer: self.layers.len() - 1,
