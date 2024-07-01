@@ -700,4 +700,10 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     pub fn bind_group(&self) -> &BindGroup {
         &self.texture_group.bind_group
     }
+
+    /// Returns a [`BindGroup`] Reference to the AtlasSets Texture Binding.
+    pub fn with_deallocations_limit(mut self, limit: usize) -> Self {
+        self.deallocations_limit = limit;
+        self
+    }
 }
