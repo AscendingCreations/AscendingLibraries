@@ -21,7 +21,7 @@ Ascending Graphics
 - Render Optimized Rectangle with Corner Rounding and image support.
 - Render Text using [`cosmic-text`](https://crates.io/crates/cosmic-text).
 - Optimized Map Renderer. (see examples).
-- Atlas System with Texture Arrays.
+- Atlas System with Texture Arrays and texture defragmentation support.
 - Tilesheet loader to help with 2D tiles to Textures.
 - Supports both Instance Buffers and Vertex Buffers.
 - Extendable
