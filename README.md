@@ -28,10 +28,11 @@ If you need help with this library or have suggestions please go to our [Discord
 
 [![https://crates.io/crates/ascending_graphics](https://img.shields.io/crates/v/ascending_graphics?style=plastic)](https://crates.io/crates/ascending_graphics)
 [![Docs](https://docs.rs/ascending_graphics/badge.svg)](https://docs.rs/ascending_graphics)
-[![ReadMe]](graphics/README.md)
+[![ReadMe](https://badgen.net/badge/ /Readme/blue?icon=github)](graphics/README.md)
 
 ## 🔎 Examples
 
 [`Ascending Client`](https://github.com/AscendingCreations/AscendingClient)
 [`Ascending Map Editor`](https://github.com/AscendingCreations/AscendingMapEditor)
 [Render Demo](https://github.com/AscendingCreations/render_demo)
+https://badgen.net/badge/ /Readme/blue?icon=github
