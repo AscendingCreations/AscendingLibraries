@@ -2,6 +2,16 @@
 Ascending Libraries
 </h1>
 
+## 📑 Overview
+
+<p align="center">
+All the seperated libraries for each project will belong here for easy updating
+</p>
+
+## 🚨 Help
+
+If you need help with this library or have suggestions please go to our [Discord Group](https://discord.gg/gVXNDwpS3Z)
+
 ## 📦 Input
 
 [![https://crates.io/crates/ascending_input](https://img.shields.io/crates/v/ascending_input?style=plastic)](https://crates.io/crates/ascending_input)
@@ -17,15 +27,7 @@ Ascending Libraries
 [![https://crates.io/crates/ascending_graphics](https://img.shields.io/crates/v/ascending_graphics?style=plastic)](https://crates.io/crates/ascending_graphics)
 [![Docs](https://docs.rs/ascending_graphics/badge.svg)](https://docs.rs/ascending_graphics)
 
-## 📑 Overview
-
-<p align="center">
-All the seperated libraries for each project will belong here for easy updating
-</p>
-
-## 🚨 Help
-
-If you need help with this library or have suggestions please go to our [Discord Group](https://discord.gg/gVXNDwpS3Z)
+@@include[README.md](graphics/README.md)
 
 ## 🔎 Examples
 
