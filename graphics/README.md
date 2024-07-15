@@ -33,9 +33,9 @@ If you need help with this library or have suggestions please go to our [Discord
 ## 🔎 Examples
 
 [`Ascending Client`](https://github.com/AscendingCreations/AscendingClient)
-![Client showcase](./images/client.png)
+![Client showcase](../images/client.png)
 
 [`Ascending Map Editor`](https://github.com/AscendingCreations/AscendingMapEditor)
 
 [Render Demo](https://github.com/AscendingCreations/render_demo)
-![Demo showcase](./images/demo.png)
+![Demo showcase](../images/demo.png)
