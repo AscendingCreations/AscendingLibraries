@@ -12,8 +12,8 @@ Ascending Graphics
     A 2D extendable rendering library using WGPU and Winit.
 </p>
 
-- Wgpu Backend.
-- Winit for windows and inputs.
+- [`WGPU`](https://crates.io/crates/wgpu) Backend.
+- [`Winit`](https://crates.io/crates/winit) for windows and inputs.
 - Buffered Sorted Rendering. 
 - Render Images
 - Render Basic Lighting
