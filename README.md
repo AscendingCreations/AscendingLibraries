@@ -16,21 +16,19 @@ If you need help with this library or have suggestions please go to our [Discord
 
 [![https://crates.io/crates/ascending_input](https://img.shields.io/crates/v/ascending_input?style=plastic)](https://crates.io/crates/ascending_input)
 [![Docs](https://docs.rs/ascending_input/badge.svg)](https://docs.rs/ascending_input)
-[Input Read me](input/README.md)
+[![ReadMe]][input/README.md]
 
 ## 📦 Camera
 
 [![https://crates.io/crates/ascending_camera](https://img.shields.io/crates/v/ascending_camera?style=plastic)](https://crates.io/crates/ascending_camera)
 [![Docs](https://docs.rs/ascending_camera/badge.svg)](https://docs.rs/ascending_camera)
-[Camera Read me](camera/README.md)
+[![ReadMe]][camera/README.md]
 
 ## 📦 Graphics
 
 [![https://crates.io/crates/ascending_graphics](https://img.shields.io/crates/v/ascending_graphics?style=plastic)](https://crates.io/crates/ascending_graphics)
 [![Docs](https://docs.rs/ascending_graphics/badge.svg)](https://docs.rs/ascending_graphics)
-<button>
-<a href="graphics/README.md"> ReadMe</a>
-</button>
+[![ReadMe]][graphics/README.md]
 
 ## 🔎 Examples
 
