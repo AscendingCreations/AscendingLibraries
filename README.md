@@ -38,4 +38,4 @@ If you need help with this library or have suggestions please go to our [Discord
 [`Ascending Client`](https://github.com/AscendingCreations/AscendingClient)
 [`Ascending Map Editor`](https://github.com/AscendingCreations/AscendingMapEditor)
 [Render Demo](https://github.com/AscendingCreations/render_demo)
-https://badgen.net/badge/ /Readme/blue?icon=github
+
