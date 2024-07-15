@@ -28,7 +28,7 @@ If you need help with this library or have suggestions please go to our [Discord
 
 [![https://crates.io/crates/ascending_graphics](https://img.shields.io/crates/v/ascending_graphics?style=plastic)](https://crates.io/crates/ascending_graphics)
 [![Docs](https://docs.rs/ascending_graphics/badge.svg)](https://docs.rs/ascending_graphics)
-[![ReadMe]][graphics/README.md]
+[![ReadMe]](graphics/README.md)
 
 ## 🔎 Examples
 
