@@ -9,8 +9,22 @@ Ascending Graphics
 ## 📑 Overview
 
 <p align="center">
-This is a library to help setup and Render objects to a screen. This uses WGPU and Winit.
+    A 2D extendable rendering library using WGPU and Winit.
 </p>
+
+- Wgpu Backend.
+- Winit for windows and inputs.
+- Buffered Sorted Rendering. 
+- Render Images
+- Render Basic Lighting
+- Render Shapes via lyon
+- Render Optimized Rectangle with Corner Rounding and image support.
+- Render Text using [`cosmic-text`](https://crates.io/crates/cosmic-text).
+- Optimized Map Renderer. (see examples).
+- Atlas System with Texture Arrays.
+- Tilesheet loader to help with 2D tiles to Textures.
+- Supports both Instance Buffers and Vertex Buffers.
+- Extendable
 
 ## 🚨 Help
 
@@ -19,5 +33,9 @@ If you need help with this library or have suggestions please go to our [Discord
 ## 🔎 Examples
 
 [`Ascending Client`](https://github.com/AscendingCreations/AscendingClient)
+![Client showcase](./images/client.png)
+
 [`Ascending Map Editor`](https://github.com/AscendingCreations/AscendingMapEditor)
+
 [Render Demo](https://github.com/AscendingCreations/render_demo)
+![Demo showcase](./images/demo.png)
