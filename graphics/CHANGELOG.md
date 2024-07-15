@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Added
+- Defragmentation to Atlas_set. Reduces Texture Fragmented DeadSpace allowing more textures to fit later.
+- with_deallocations_limit to Atlas_set to allow setting a custom defrag ratio.
+
 ### Changed
 - (Breaking) Added size that is clamped to 256 to limits.max_texture_dimension_2d.
 - (Breaking) Removed TextureView from AtlasSet and placed into TextureGroup.

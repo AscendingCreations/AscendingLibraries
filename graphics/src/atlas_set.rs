@@ -1,5 +1,6 @@
 use crate::{
-    AHashMap, AHashSet, GpuRenderer, TextureGroup, TextureLayout, UVec3,
+    AHashMap, AHashSet, GpuRenderer, GraphicsError, TextureGroup,
+    TextureLayout, UVec3,
 };
 use lru::LruCache;
 use slab::Slab;
@@ -9,10 +10,12 @@ use wgpu::{BindGroup, BindGroupLayout};
 mod allocation;
 mod allocator;
 mod atlas;
+mod migration;
 
 pub use allocation::Allocation;
 pub use allocator::Allocator;
 pub use atlas::Atlas;
+use migration::*;
 /**
  * AtlasSet is used to hold and contain the data of many Atlas layers.
  * Each Atlas keeps track of the allocations allowed. Each allocation is a
@@ -37,12 +40,6 @@ pub use atlas::Atlas;
  * empty layer by using the layer_free_limit. This will allow us to control VRam usage.
  *
  * TODO Keep track of Indexs within an Atlas.
- * TODO Create Migration Check function.
- * TODO Add way to tell if any texture needs to migrate.
- * TODO Add limitations to a migrating texture so we only move a bit at a time.
- * TODO Add Ability to Tell user through API that Vertexs and Indicies need to be
- * TODO reloaded upon migration changes.
- * TODO Also make use_ref_count do auto migrations once a set threashold is reached.
 */
 pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
     /// Texture in GRAM, Holds all the atlas layers.
@@ -83,6 +80,8 @@ pub struct AtlasSet<U: Hash + Eq + Clone = String, Data: Copy + Default = i32> {
     pub use_ref_count: bool,
     /// Texture Bind group for Atlas Set
     pub texture_group: TextureGroup,
+    /// Used to Migrate Textures to reduce Fragmentation.
+    pub migration: Option<MigrationTask>,
 }
 
 impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
@@ -99,6 +98,10 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
 
         /* Try allocating from an existing layer. */
         for (i, layer) in self.layers.iter_mut().enumerate() {
+            if layer.migrating {
+                continue;
+            }
+
             if let Some(allocation) = layer.allocator.allocate(width, height) {
                 return Some(Allocation {
                     allocation,
@@ -108,7 +111,8 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             }
         }
 
-        /* Try to see if we can clear out unused allocations first. */
+        /* Try to see if we can clear out unused allocations first.
+        It doesnt matter here if we are migrating  or not here this saves us some time.*/
         if !self.use_ref_count {
             loop {
                 let (&id, _) = self.cache.peek_lru()?;
@@ -146,6 +150,10 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
 
         if let Some(allocation) = layer.allocator.allocate(width, height) {
             self.layers.push(layer);
+
+            if let Some(migrating) = &mut self.migration {
+                migrating.avaliable.push(self.layers.len() - 1);
+            }
 
             return Some(Allocation {
                 allocation,
@@ -315,6 +323,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             layer_free_limit: 3,
             use_ref_count,
             texture_group,
+            migration: None,
         }
     }
 
@@ -377,7 +386,103 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         self.last_used.clear();
     }
 
-    //TODO Make function that checks for unloading and migrating.
+    /// Defragments Textures when they reach a specific threshhold.
+    ///
+    /// # Strategy
+    /// This Function Will check to see if a migration task exists yet.
+    /// If not, it will check to see if any texture layers meet the criteria of needing to
+    /// be defragmented. If they are the system will generate a Migration Task and
+    /// place each possibly fragmented layer into a list, defragmenting one layer per call,
+    /// until all layers marked for migrating are no longer in need of migrating.
+    ///
+    /// # Suggested usage
+    /// Call this function about once every so many frame cycles. It can be a bit slow and could
+    /// Impact FPS during its processing so we only attempt to migrate one
+    /// layer at a time per each call.
+    ///
+    /// # Returns
+    /// bool indicating if any migrations took place during this run cycle so you can rebuild your
+    /// Objects in GPU Memory. Always use this to know when to Rebuild Otherwise Graphical errors can
+    /// Occur.
+    ///
+    pub fn defragment(
+        &mut self,
+        renderer: &GpuRenderer,
+    ) -> Result<bool, GraphicsError> {
+        Ok(if let Some(mut task) = self.migration.take() {
+            let nlayers = self.layers.len();
+            // Gather all the Texture ID's and what their new Allocations will be.
+            // Also clears the old Texture to make it reusable for the next call.
+            let migrate = self.migrate_reallocate(&mut task)?;
+
+            // We need to Regrow to add any new layers that might of gotten Added due to the Defragmentation Gather.
+            self.grow(self.layers.len() - nlayers, renderer);
+
+            let mut encoder = renderer.device().create_command_encoder(
+                &wgpu::CommandEncoderDescriptor {
+                    label: Some("Texture command encoder"),
+                },
+            );
+
+            for (id, allocation) in migrate {
+                let old_allocation =
+                    if let Some((old_allocation, _hash)) = self.store.get(id) {
+                        *old_allocation
+                    } else {
+                        return Err(GraphicsError::DefragFailed);
+                    };
+
+                self.migrate_allocation(
+                    &old_allocation,
+                    &allocation,
+                    &mut encoder,
+                );
+
+                if let Some((old_allocation, _hash)) = self.store.get_mut(id) {
+                    *old_allocation = allocation;
+                } else {
+                    return Err(GraphicsError::DefragFailed);
+                }
+
+                self.layers[allocation.layer].insert_index(id);
+            }
+
+            if !task.migrating.is_empty() {
+                self.migration = Some(task);
+            }
+
+            true
+        } else {
+            let mut task = MigrationTask::default();
+            let mut total = 0;
+
+            let _ = self.layers.iter().inspect(|layer| {
+                if layer.allocator.deallocations() >= self.deallocations_limit {
+                    total += 1;
+                }
+            });
+
+            if total == 0 {
+                return Ok(false);
+            }
+
+            for (id, layer) in self.layers.iter_mut().enumerate() {
+                if layer.allocator.deallocations() >= self.deallocations_limit {
+                    task.migrating.push(id);
+                    layer.start_migration();
+                } else {
+                    task.avaliable.push(id);
+                }
+            }
+
+            if !task.migrating.is_empty() {
+                self.migration = Some(task);
+            }
+
+            false
+        })
+    }
+
     /// Clears the last_used cache's.
     ///
     pub fn trim(&mut self) {
@@ -594,5 +699,11 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     /// Returns a [`BindGroup`] Reference to the AtlasSets Texture Binding.
     pub fn bind_group(&self) -> &BindGroup {
         &self.texture_group.bind_group
+    }
+
+    /// Returns a [`BindGroup`] Reference to the AtlasSets Texture Binding.
+    pub fn with_deallocations_limit(mut self, limit: usize) -> Self {
+        self.deallocations_limit = limit;
+        self
     }
 }

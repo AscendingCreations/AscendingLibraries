@@ -6,7 +6,7 @@ members = ["input", "camera", "graphics"]
 async-trait = "0.1.80"
 bytemuck = { version = "1.16.1", features = ["derive"] }
 thiserror = "1.0.61"
-winit = { version = "0.30.2", features = ["serde"] }
+winit = { version = "0.30.3", features = ["serde"] }
 image = "0.25.1"
 guillotiere = "0.6.2"
 serde = { version = "1.0.203", features = ["derive"] }

@@ -4,6 +4,7 @@ Ascending Camera
 
 [![https://crates.io/crates/ascending_camera](https://img.shields.io/crates/v/ascending_camera?style=plastic)](https://crates.io/crates/ascending_camera)
 [![Docs](https://docs.rs/ascending_camera/badge.svg)](https://docs.rs/ascending_camera)
+[![PRs Welcomed](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 ## 📑 Overview
 
