@@ -38,4 +38,5 @@ If you need help with this library or have suggestions please go to our [Discord
 [`Ascending Map Editor`](https://github.com/AscendingCreations/AscendingMapEditor)
 
 [Render Demo](https://github.com/AscendingCreations/render_demo)
+
 ![Demo showcase](https://github.com/AscendingCreations/AscendingLibraries/blob/main/images/demo.png)
