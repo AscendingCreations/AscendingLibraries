@@ -4,6 +4,7 @@ Ascending Input
 
 [![https://crates.io/crates/ascending_input](https://img.shields.io/crates/v/ascending_input?style=plastic)](https://crates.io/crates/ascending_input)
 [![Docs](https://docs.rs/ascending_input/badge.svg)](https://docs.rs/ascending_input)
+[![PRs Welcomed](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 ## 📑 Overview
 
