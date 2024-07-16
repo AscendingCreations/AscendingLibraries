@@ -10,7 +10,7 @@ All the seperated libraries for each project will belong here for easy updating
 
 ## 🚨 Help
 
-If you need help with this library or have suggestions please go to our [Discord Group](https://discord.gg/gVXNDwpS3Z)
+If you need help with this library or have suggestions please go to our [![Discord Server](https://img.shields.io/discord/81844480201728000?label=&labelColor=6A7EC2&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.gg/gVXNDwpS3Z)
 
 ## 📦 Input
 

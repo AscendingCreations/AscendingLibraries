@@ -5,6 +5,7 @@ Ascending Input
 [![https://crates.io/crates/ascending_input](https://img.shields.io/crates/v/ascending_input?style=plastic)](https://crates.io/crates/ascending_input)
 [![Docs](https://docs.rs/ascending_input/badge.svg)](https://docs.rs/ascending_input)
 [![PRs Welcomed](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![Discord Server](https://img.shields.io/discord/81844480201728000?label=&labelColor=6A7EC2&logo=discord&logoColor=ffffff&color=7389D8)](https://discord.gg/gVXNDwpS3Z)
 
 ## 📑 Overview
 
