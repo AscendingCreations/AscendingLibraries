@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.4.1 (19. June, 2024)
+### Changed
+- ReadMe updates
+
 ## 0.4.0 (19. June, 2024)
 ### Changed
 - (Breaking) updated Glam to 0.28.0.
