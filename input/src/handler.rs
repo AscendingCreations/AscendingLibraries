@@ -13,7 +13,7 @@ use winit::{
     event::{
         DeviceEvent, ElementState, KeyEvent, MouseScrollDelta, WindowEvent,
     },
-    keyboard::{self, ModifiersKeyState},
+    keyboard::{self, ModifiersKeyState, NamedKey},
     window::Window,
 };
 
@@ -354,12 +354,41 @@ where
                         state,
                         logical_key,
                         location,
+                        text,
                         ..
                     },
                 ..
             } => {
                 let key = match logical_key {
-                    keyboard::Key::Named(name) => Key::Named(*name),
+                    keyboard::Key::Named(name) => {
+                        if let Some(txt) = text {
+                            if matches!(
+                                name,
+                                NamedKey::Enter
+                                    | NamedKey::Home
+                                    | NamedKey::ArrowDown
+                                    | NamedKey::ArrowUp
+                                    | NamedKey::ArrowLeft
+                                    | NamedKey::ArrowRight
+                                    | NamedKey::End
+                                    | NamedKey::PageUp
+                                    | NamedKey::PageDown
+                            ) && *location == Location::Numpad
+                            {
+                                let chars: Vec<char> = txt.chars().collect();
+
+                                if let Some(c) = chars.first() {
+                                    Key::Character(*c)
+                                } else {
+                                    return;
+                                }
+                            } else {
+                                Key::Named(*name)
+                            }
+                        } else {
+                            Key::Named(*name)
+                        }
+                    }
                     keyboard::Key::Character(str) => {
                         let chars: Vec<char> = str.chars().collect();
 
