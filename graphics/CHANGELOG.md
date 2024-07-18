@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.12.0 (18. July, 2024)
+### Changed
+- (Breaking) Updated to Wgpu and Naga v22.0.0
+
 ## 0.11.2 (16. July, 2024)
 ### Fixed
 - Readme discord badge added.
