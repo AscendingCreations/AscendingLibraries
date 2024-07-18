@@ -87,6 +87,7 @@ impl PipeLineLayout for RectRenderPipeline {
                     compilation_options: Default::default(),
                 }),
                 multiview: None,
+                cache: None,
             },
         )
     }

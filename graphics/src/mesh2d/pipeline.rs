@@ -77,6 +77,7 @@ impl PipeLineLayout for Mesh2DRenderPipeline {
                     compilation_options: Default::default(),
                 }),
                 multiview: None,
+                cache: None,
             },
         )
     }
