@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.12.1 (7. August, 2024)
+### Fixed
+- Map upper layer is now set to Render Layer 1. They can not be on the same layer as ground tiles due to Z rendering transparency issues.
+
 ## 0.12.0 (18. July, 2024)
 ### Changed
 - (Breaking) Updated to Wgpu and Naga v22.0.0
