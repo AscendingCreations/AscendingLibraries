@@ -38,12 +38,10 @@ pub struct Text {
     pub size: Vec2,
     /// Scale of the Text.
     pub scale: f32,
-    /// rendering offsets from pos.
-    pub offsets: Vec2,
     /// Default Text Font Color.
     pub default_color: Color,
-    /// Optional Clip Bounds of Text.
-    pub bounds: Option<Bounds>,
+    /// Clip Bounds of Text.
+    pub bounds: Bounds,
     /// Instance Buffer Store Index of Text Buffer.
     pub store_id: Index,
     /// Rendering Layer of the Text used in DrawOrder.
@@ -60,6 +58,10 @@ pub struct Text {
     pub wrap: Wrap,
     /// [`CameraType`] used to render with.
     pub camera_type: CameraType,
+    /// Buffer used to Store Premade Glyphs.
+    /// Avoids making new vec every create_quad call at risk of more memory.
+    /// will only resize when resizing is needed
+    pub glyph_vertices: Vec<TextVertex>,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -75,19 +77,44 @@ impl Text {
     ) -> Result<(), GraphicsError> {
         let count: usize =
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
-        let mut text_buf = Vec::with_capacity(count);
+
+        self.glyph_vertices.clear();
+
+        if self.glyph_vertices.capacity() < count {
+            self.glyph_vertices.reserve_exact(count);
+        }
+
         let mut is_alpha = false;
         let mut width = 0.0;
+        let screensize = renderer.size();
+        let bounds_min_x = self.bounds.left.max(0.0);
+        let bounds_min_y = self.bounds.bottom.max(0.0);
+        let bounds_max_x = self.bounds.right.min(screensize.width);
+        let bounds_max_y = self.bounds.top.min(screensize.height);
 
-        for run in self.buffer.layout_runs() {
+        // From Glyphon good optimization.
+        let is_run_visible = |run: &cosmic_text::LayoutRun| {
+            let start_y = self.pos.y + self.size.y - run.line_top;
+            let end_y = self.pos.y + self.size.y
+                - run.line_top
+                - (run.line_height * 0.5);
+
+            start_y <= bounds_max_y + (run.line_height * 0.5)
+                && bounds_min_y <= end_y
+        };
+
+        let layout_runs = self
+            .buffer
+            .layout_runs()
+            .skip_while(|run| !is_run_visible(run))
+            .take_while(is_run_visible);
+
+        for run in layout_runs {
             width = run.line_w.max(width);
 
             for glyph in run.glyphs.iter() {
                 let physical_glyph = glyph.physical(
-                    (
-                        self.pos.x + self.offsets.x,
-                        self.pos.y + self.offsets.y + self.size.y,
-                    ),
+                    (self.pos.x, self.pos.y + self.size.y),
                     self.scale,
                 );
 
@@ -178,54 +205,38 @@ impl Text {
                     is_alpha = true;
                 }
 
-                let screensize = renderer.size();
+                // Starts beyond right edge or ends beyond left edge
+                let max_x = x + width;
+                if x > bounds_max_x || max_x < bounds_min_x {
+                    continue;
+                }
 
-                if let Some(bounds) = self.bounds {
-                    //Bounds used from Glyphon
-                    let bounds_min_x = bounds.left.max(0.0);
-                    let bounds_min_y = bounds.bottom.max(0.0);
-                    let bounds_max_x = bounds.right.min(screensize.width);
-                    let bounds_max_y = bounds.top.min(screensize.height);
+                // Clip left edge
+                if x < bounds_min_x {
+                    let right_shift = bounds_min_x - x;
 
-                    // Starts beyond right edge or ends beyond left edge
-                    let max_x = x + width;
-                    if x > bounds_max_x || max_x < bounds_min_x {
-                        continue;
-                    }
+                    x = bounds_min_x;
+                    width = max_x - bounds_min_x;
+                    u += right_shift;
+                }
 
-                    // Starts beyond bottom edge or ends beyond top edge
-                    let max_y = y + height; //44
-                    if y > bounds_max_y || max_y < bounds_min_y {
-                        continue;
-                    }
+                // Clip right edge
+                if x + width > bounds_max_x {
+                    width = bounds_max_x - x;
+                }
 
-                    // Clip left edge
-                    if x < bounds_min_x {
-                        let right_shift = bounds_min_x - x;
+                // Clip top edge
+                if y < bounds_min_y {
+                    height -= bounds_min_y - y;
+                    y = bounds_min_y;
+                }
 
-                        x = bounds_min_x;
-                        width = max_x - bounds_min_x;
-                        u += right_shift;
-                    }
+                // Clip top edge
+                if y + height > bounds_max_y {
+                    let bottom_shift = (y + height) - bounds_max_y;
 
-                    // Clip right edge
-                    if x + width > bounds_max_x {
-                        width = bounds_max_x - x;
-                    }
-
-                    // Clip top edge
-                    if y < bounds_min_y {
-                        height -= bounds_min_y - y;
-                        y = bounds_min_y;
-                    }
-
-                    // Clip top edge
-                    if y + height > bounds_max_y {
-                        let bottom_shift = (y + height) - bounds_max_y;
-
-                        v += bottom_shift;
-                        height -= bottom_shift;
-                    }
+                    v += bottom_shift;
+                    height -= bottom_shift;
                 }
 
                 let default = TextVertex {
@@ -238,12 +249,12 @@ impl Text {
                     is_color: is_color as u32,
                 };
 
-                text_buf.push(default);
+                self.glyph_vertices.push(default);
             }
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            let bytes: &[u8] = bytemuck::cast_slice(&text_buf);
+            let bytes: &[u8] = bytemuck::cast_slice(&self.glyph_vertices);
             store.store.resize_with(bytes.len(), || 0);
             store.store.copy_from_slice(bytes);
             store.changed = true;
@@ -276,8 +287,7 @@ impl Text {
             ),
             pos,
             size,
-            offsets: Vec2 { x: 0.0, y: 0.0 },
-            bounds: None,
+            bounds: Bounds::default(),
             store_id: renderer.new_buffer(text_starter_size, 0),
             order: DrawOrder::default(),
             changed: true,
@@ -289,6 +299,7 @@ impl Text {
             scroll: cosmic_text::Scroll::default(),
             scale,
             render_layer,
+            glyph_vertices: Vec::new(),
         }
     }
 
@@ -446,9 +457,9 @@ impl Text {
         self
     }
 
-    /// Sets the [`Text`]'s optional clipping bounds.
+    /// Sets the [`Text`]'s clipping bounds.
     ///
-    pub fn set_bounds(&mut self, bounds: Option<Bounds>) -> &mut Self {
+    pub fn set_bounds(&mut self, bounds: Bounds) -> &mut Self {
         self.bounds = bounds;
         self.changed = true;
         self
@@ -466,14 +477,6 @@ impl Text {
     ///
     pub fn set_default_color(&mut self, color: Color) -> &mut Self {
         self.default_color = color;
-        self.changed = true;
-        self
-    }
-
-    /// Sets the [`Text`]'s rendering offset.
-    ///
-    pub fn set_offset(&mut self, offsets: Vec2) -> &mut Self {
-        self.offsets = offsets;
         self.changed = true;
         self
     }

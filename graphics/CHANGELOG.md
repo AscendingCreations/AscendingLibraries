@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Changed
+- Removed Text Offsets use Positions directly for this. Reduces memory a bit.
+- Made Bounds not Optional. Text always looks at its bounds now. 
+- Bounds now can deturmine if Text should even be interated in the first place. (boosts Vertices and Glyph insertions speeds for invisible lines.)
+- Added Glyph Buffer to reduce allocations. This will help improve performance but will increase Ram usage. 
+- Removed Y Glyph discard check since new iterator should discard them.
+
 ## 0.12.1 (7. August, 2024)
 ### Fixed
 - Map upper layer is now set to Render Layer 1. They can not be on the same layer as ground tiles due to Z rendering transparency issues.
