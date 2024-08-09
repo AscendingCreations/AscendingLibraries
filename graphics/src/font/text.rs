@@ -77,13 +77,6 @@ impl Text {
     ) -> Result<(), GraphicsError> {
         let count: usize =
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
-
-        self.glyph_vertices.clear();
-
-        if self.glyph_vertices.capacity() < count {
-            self.glyph_vertices.reserve_exact(count);
-        }
-
         let mut is_alpha = false;
         let mut width = 0.0;
         let screensize = renderer.size();
@@ -91,6 +84,12 @@ impl Text {
         let bounds_min_y = self.bounds.bottom.max(0.0);
         let bounds_max_x = self.bounds.right.min(screensize.width);
         let bounds_max_y = self.bounds.top.min(screensize.height);
+
+        self.glyph_vertices.clear();
+
+        if self.glyph_vertices.capacity() < count {
+            self.glyph_vertices.reserve_exact(count);
+        }
 
         // From Glyphon good optimization.
         let is_run_visible = |run: &cosmic_text::LayoutRun| {
@@ -139,7 +138,6 @@ impl Text {
                         SwashContent::Mask => false,
                         SwashContent::SubpixelMask => false,
                     };
-
                     let width = image.placement.width;
                     let height = image.placement.height;
 
@@ -186,14 +184,12 @@ impl Text {
                 let (u, v, width, height) = allocation.rect();
                 let (mut u, mut v, mut width, mut height) =
                     (u as f32, v as f32, width as f32, height as f32);
-
                 let (mut x, mut y) = (
                     physical_glyph.x as f32 + position.x,
                     physical_glyph.y as f32
                         + ((position.y - height)
                             - (run.line_y * self.scale).round()),
                 );
-
                 let color = is_color
                     .then(|| Color::rgba(255, 255, 255, 255))
                     .unwrap_or(match glyph.color_opt {
@@ -261,9 +257,8 @@ impl Text {
         }
 
         self.order = DrawOrder::new(is_alpha, &self.pos, self.render_layer);
-
         self.changed = false;
-        self.buffer.set_redraw(false);
+
         Ok(())
     }
 
