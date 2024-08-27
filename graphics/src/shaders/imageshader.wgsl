@@ -250,32 +250,16 @@ fn vertex(
 // Fragment shader
 @fragment
 fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
-    var coords = vec2<f32>(0.0, 0.0);
-    let xframes = vertex.frames[0];
-    var yframes = vertex.frames[0];
-
-    if (vertex.animate > 0u) {
-        let id = global.seconds / (f32(vertex.time) / 1000.0);
-        let frame = u32(floor(id % f32(xframes)));
-
-        if (vertex.frames[1] > 0u) {
-            yframes = vertex.frames[1];
-        }
-
-        coords = vec2<f32>(
-            (f32((f32(frame % yframes) * vertex.tex_data[2]) + vertex.tex_data[0]) + vertex.tex_coords.x) / vertex.size.x,
-            (f32((f32(frame / yframes) * vertex.tex_data[3]) + vertex.tex_data[1]) + vertex.tex_coords.y) / vertex.size.y
-        );
-    } else {
-        coords = vec2<f32>(
-            (vertex.tex_data[0] + vertex.tex_coords.x) / vertex.size.x,
-            (vertex.tex_data[1] + vertex.tex_coords.y) / vertex.size.y
-        );
-    }
-
-    var step = vec2<f32>(0.5, 0.5);
-    var tex_pixel = vertex.size * coords - step.xy / 2.0;
-
+    let id = global.seconds / (f32(vertex.time) / 1000.0);
+    let yframes = select(vertex.frames[0], vertex.frames[1], vertex.frames[1] > 0u);
+    let frame = u32(floor(id % f32(vertex.frames[0])));
+    let coords = select(
+        (vertex.tex_data.xy + vertex.tex_coords.xy) / vertex.size, 
+        (((vec2(f32(frame % yframes), f32(frame / yframes))) * vertex.tex_data.zw) + vertex.tex_data.xy + vertex.tex_coords.xy) / vertex.size, 
+        vertex.animate > 0u
+    );
+    let step = vec2<f32>(0.5, 0.5);
+    let tex_pixel = vertex.size * coords - step.xy / 2.0;
     let corner = floor(tex_pixel) + 1.0;
     let frac = min((corner - tex_pixel) * vec2<f32>(2.0, 2.0), vec2<f32>(1.0, 1.0));
 

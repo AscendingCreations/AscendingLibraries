@@ -10,6 +10,7 @@ new_key_type! {
 pub type Index = AscendingKey;
 
 /// Draw Order in which Buffers are sorted by for optimal rendering.
+///
 /// Positions are all calculated as (pos * 10000.0) as u32 to increase speed of sorting.
 /// Sort Order is order_layer -> alpha -> y reversed -> x -> z reversed.
 #[derive(Copy, Clone, PartialEq, Eq, Default)]

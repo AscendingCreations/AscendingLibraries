@@ -132,15 +132,9 @@ fn normalize_360(angle: f32) -> f32 {
 
 fn normalize_180(angle: f32) -> f32 {
     let angle2 = normalize_360(angle);
-    if angle2 > 180.0 {
-        return angle2 - 360.0;
-    } else {
-        if angle2 < -180.0 {
-           return angle2 + 360.0;
-        } else {
-            return angle2;
-        }
-    }
+
+    let angle3 = select(angle2 , angle2 - 360.0, angle2 > 180.0);
+    return select(angle3, angle2 + 360.0, angle2 < -180.0);
 }
 
 fn within_range(testAngle: f32, a: f32, b: f32 ) -> bool {
@@ -150,11 +144,7 @@ fn within_range(testAngle: f32, a: f32, b: f32 ) -> bool {
     let a2 = normalize_180( a1 );
     let b2 = normalize_180( b1 );
 
-    if ( a2 * b2 >= 0.0 ) {
-        return false;
-    } else {
-        return abs( a2 - b2 ) < 180.0;
-    }
+    return select(abs( a2 - b2 ) < 180.0,false,a2 * b2 >= 0.0);
 }
 
 fn within_range_ret(testAngle: f32, a: f32, b: f32 ) -> RangeReturn {
@@ -163,41 +153,22 @@ fn within_range_ret(testAngle: f32, a: f32, b: f32 ) -> RangeReturn {
 
     let a2 = normalize_180( a1 );
     let b2 = normalize_180( b1 );
-
-    if ( a2 * b2 >= 0.0 ) {
-        return RangeReturn(false, 0.0);
-    } else {
-        let angle = abs( a2 - b2 );
-        return RangeReturn(angle < 180.0, angle);
-    }
+    let angle = abs( a2 - b2 );
+    return RangeReturn(select(false, angle < 180.0 ,a2 * b2 >= 0.0), select(0.0, angle, a2 * b2 >= 0.0));
 }
 
 fn flash_light(light_pos: vec2<f32>, pixel_pos: vec2<f32>, dir: f32, w_angle: f32, range: f32, dither: f32, edge_fade_percent: f32, edge_fade_dist: f32) -> f32 {
     let s_angle = dir - (w_angle / 2.0);
     let e_angle = dir + (w_angle / 2.0);
     let deg = normalize_360(atan2(pixel_pos.y - light_pos.y, pixel_pos.x - light_pos.x) * 180.0 / 3.14159265);
+    let d = distance(light_pos, pixel_pos);
 
-    if (within_range(deg, s_angle + edge_fade_dist, e_angle - edge_fade_dist)) {
-        let d = distance(light_pos, pixel_pos);
-
-        if (d > range) {
-            return 0.0;
-        }
-
-        return fade(d, 0.0, 1.0, range - 2.0, dither);
-    } 
-
-    if (within_range(deg, s_angle, e_angle)) {
-        let d = distance(light_pos, pixel_pos);
-
-        if (d > range) {
-            return 0.0;
-        }
-
-        return max((1.0 - min(abs(deg - dir) / (w_angle + 4.0 / 2.0), 1.0)) - edge_fade_percent, 0.0) / (1.0 - edge_fade_percent);
+    if (d > range) {
+        return 0.0;
     }
 
-    return 0.0;
+    let flash = select(0.0, fade(d, 0.0, 1.0, range - 2.0, dither), within_range(deg, s_angle + edge_fade_dist, e_angle - edge_fade_dist));
+    return select(flash, max((1.0 - min(abs(deg - dir) / (w_angle + 4.0 / 2.0), 1.0)) - edge_fade_percent, 0.0) / (1.0 - edge_fade_percent), within_range(deg, s_angle, e_angle));
 }
 
 // Fragment shader

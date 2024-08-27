@@ -180,68 +180,61 @@ fn distance_alg(
 
 @fragment
 fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
-    var container_color = vertex.color;
-
-    if (vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0 ) {
-        let coords = vec2<f32>(
-            (vertex.container_data[0] + vertex.uv.x) / vertex.tex_size.x,
-            (vertex.container_data[1] + vertex.uv.y) / vertex.tex_size.y
-        );
-
-        var step = vec2<f32>(0.5, 0.5);
-        var tex_pixel = vertex.tex_size * coords - step.xy / 2.0;
-
-        let corner = floor(tex_pixel) + 1.0;
-        let frac = min((corner - tex_pixel) * vec2<f32>(2.0, 2.0), vec2<f32>(1.0, 1.0));
-
-        var c1 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, 0.0)) + 0.5) / vertex.tex_size, vertex.layer, 1.0);
-        var c2 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(step.x, 0.0)) + 0.5) / vertex.tex_size, vertex.layer, 1.0);
-        var c3 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, step.y)) + 0.5) / vertex.tex_size, vertex.layer, 1.0);
-        var c4 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + step.xy) + 0.5) / vertex.tex_size, vertex.layer, 1.0);
-
-        c1 = c1 * (frac.x * frac.y);
-        c2 = c2 *((1.0 - frac.x) * frac.y);
-        c3 = c3 * (frac.x * (1.0 - frac.y));
-        c4 = c4 *((1.0 - frac.x) * (1.0 - frac.y));
-
-        container_color = (c1 + c2 + c3 + c4) * container_color;
-    }
-
-    var mixed_color: vec4<f32> = container_color;
+    let coords = (vertex.container_data.xy + vertex.uv.xy) / vertex.tex_size;
+    let step = vec2<f32>(0.5, 0.5);
+    let tex_pixel = vertex.tex_size * coords - step.xy / 2.0;
+    let corner = floor(tex_pixel) + 1.0;
+    let frac = min((corner - tex_pixel) * vec2<f32>(2.0, 2.0), vec2<f32>(1.0, 1.0));
+    let c1 = select(
+        vec4<f32>(0.0), 
+        textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, 0.0)) + 0.5) / vertex.tex_size, vertex.layer, 1.0),
+        vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0
+    ) * (frac.x * frac.y);
+    let c2 = select(
+        vec4<f32>(0.0), 
+        textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(step.x, 0.0)) + 0.5) / vertex.tex_size, vertex.layer, 1.0), 
+        vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0
+    ) * ((1.0 - frac.x) * frac.y);
+    let c3 = select(
+        vec4<f32>(0.0), 
+        textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, step.y)) + 0.5) / vertex.tex_size, vertex.layer, 1.0), 
+        vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0
+    ) * (frac.x * (1.0 - frac.y));
+    let c4 = select(
+        vec4<f32>(0.0), 
+        textureSampleLevel(tex, tex_sample, (floor(tex_pixel + step.xy) + 0.5) / vertex.tex_size, vertex.layer, 1.0), 
+        vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0
+    ) * ((1.0 - frac.x) * (1.0 - frac.y));
+    let container_color = select(vertex.color, (c1 + c2 + c3 + c4) * vertex.color, vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0);
     let radius = vertex.radius;
     let clippy = vec2<f32>(vertex.clip_position.x, global.size.y - vertex.clip_position.y);
-
-    if (vertex.border_width > 0.0) {
-        var border: f32 = max(radius - vertex.border_width, 0.0);
-
-        let distance = distance_alg( 
+    let border: f32 = max(radius - vertex.border_width, 0.0);
+    let distance = distance_alg( 
             clippy, 
             vertex.position.xy + vec2<f32>(vertex.border_width), 
             vertex.size - vec2<f32>(vertex.border_width * 2.0), 
             border 
         );
-
-        let border_mix: f32 = smoothstep(
+    let border_mix: f32 = smoothstep(
             max(border - 0.5, 0.0),
             border + 0.5,
             distance
         );
-
-        mixed_color = mix(container_color, vertex.border_color, vec4<f32>(border_mix));
-    }
-
+    let mixed_color: vec4<f32> = select(
+        container_color,
+        mix(container_color, vertex.border_color, vec4<f32>(border_mix)), 
+        vertex.border_width > 0.0
+    );
     let dist: f32 = distance_alg(
         clippy,
         vertex.position.xy,
         vertex.size,
         radius
     );
-
     let radius_alpha: f32 = 1.0 - smoothstep(
         max(radius - 0.5, 0.0),
         radius + 0.5,
         dist);
-
     let alpha = mixed_color.a * radius_alpha;
 
     if (alpha <= 0.0) {
