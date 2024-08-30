@@ -5,12 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.13.0 (30. August, 2024)
 ### Changed
 - Removed Text Offsets use Positions directly for this. Reduces memory a bit.
-- Made Bounds not Optional. Text always looks at its bounds now. 
-- Bounds now can deturmine if Text should even be interated in the first place. (boosts Vertices and Glyph insertions speeds for invisible lines.)
+- (Breaking) Made Bounds not Optional. Text always looks at its bounds now. 
+- Bounds now can determine if Text should even be iterated in the first place. (boosts Vertices and Glyph insertions speeds for invisible lines.)
 - Added Glyph Buffer to reduce allocations. This will help improve performance but will increase Ram usage. 
 - Removed Y Glyph discard check since new iterator should discard them.
+- Optimized Shader Code.
 
 ## 0.12.1 (7. August, 2024)
 ### Fixed
@@ -43,7 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Rebinding TextureGroup upon Grow allows Access to new Texture Layers.
 
 ### Added
-- GpuRenderer::get_layout() to aquire already made layouts without the need for a &mut GpuRenderer. 
+- GpuRenderer::get_layout() to acquire already made layouts without the need for a &mut GpuRenderer. 
 
 ## 0.10.1 (25. June, 2024)
 ### Changed
@@ -104,7 +106,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## 0.5.0 (24. April, 2024)
 ### Changed
-- (Breaking)  BufferStore::new now expects sizes for vertex and indexs Vec
+- (Breaking)  BufferStore::new now expects sizes for vertex and index's Vec
 
 ### Fixed
-- Updated Rendering types to have persistant data to avoid recreation upon update, which avoids allocations.
+- Updated Rendering types to have persistent data to avoid recreation upon update, which avoids allocations.

@@ -5,7 +5,7 @@ Ascending Libraries
 ## 📑 Overview
 
 <p align="center">
-All the seperated libraries for each project will belong here for easy updating
+All the separated libraries for each project will belong here for easy updating
 </p>
 
 ## 🚨 Help
