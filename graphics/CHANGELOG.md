@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.14.0 (30. September, 2024)
+### Changed
+- (Breaking) update_bounds for Rect returns &mut Self now.
+- Updated Crates.
+
+### Added
+- Order Override to Image, Mesh2D, Text, Rect
+
 ## 0.13.0 (30. August, 2024)
 ### Changed
 - Removed Text Offsets use Positions directly for this. Reduces memory a bit.

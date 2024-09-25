@@ -62,6 +62,8 @@ pub struct Text {
     /// Avoids making new vec every create_quad call at risk of more memory.
     /// will only resize when resizing is needed
     pub glyph_vertices: Vec<TextVertex>,
+    /// Overides the absolute order values based on position.
+    pub order_override: Option<Vec3>,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -256,7 +258,12 @@ impl Text {
             store.changed = true;
         }
 
-        self.order = DrawOrder::new(is_alpha, &self.pos, self.render_layer);
+        let order_pos = match self.order_override {
+            Some(o) => o,
+            None => self.pos,
+        };
+
+        self.order = DrawOrder::new(is_alpha, &order_pos, self.render_layer);
         self.changed = false;
 
         Ok(())
@@ -294,6 +301,7 @@ impl Text {
             scroll: cosmic_text::Scroll::default(),
             scale,
             render_layer,
+            order_override: None,
             glyph_vertices: Vec::new(),
         }
     }
@@ -309,6 +317,17 @@ impl Text {
     ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
+    }
+
+    /// Updates the [`Text`]'s order_override.
+    ///
+    pub fn set_order_override(
+        &mut self,
+        order_override: Option<Vec3>,
+    ) -> &mut Self {
+        self.changed = true;
+        self.order_override = order_override;
+        self
     }
 
     /// Resets the [`Text`] to contain the new text only.

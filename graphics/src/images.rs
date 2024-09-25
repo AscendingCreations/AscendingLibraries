@@ -44,6 +44,8 @@ pub struct Image {
     pub flip_style: FlipStyle,
     /// direct angle of rotation from the center Axis.
     pub rotation_angle: f32,
+    /// Overides the absolute order values based on position.
+    pub order_override: Option<Vec3>,
     /// When true tells system to update the buffers.
     pub changed: bool,
 }
@@ -73,6 +75,7 @@ impl Image {
             order: DrawOrder::default(),
             render_layer,
             bounds: None,
+            order_override: None,
             flip_style: FlipStyle::None,
             rotation_angle: 0.0,
             changed: true,
@@ -83,6 +86,17 @@ impl Image {
     ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
+    }
+
+    /// Updates the [`Image`]'s order_override.
+    ///
+    pub fn set_order_override(
+        &mut self,
+        order_override: Option<Vec3>,
+    ) -> &mut Self {
+        self.changed = true;
+        self.order_override = order_override;
+        self
     }
 
     /// Updates the [`Image`]'s Optional Clipping Bounds.
@@ -235,8 +249,13 @@ impl Image {
             store.changed = true;
         }
 
+        let order_pos = match self.order_override {
+            Some(o) => o,
+            None => self.pos,
+        };
+
         self.order =
-            DrawOrder::new(self.color.a() < 255, &self.pos, self.render_layer);
+            DrawOrder::new(self.color.a() < 255, &order_pos, self.render_layer);
         self.changed = false;
     }
 

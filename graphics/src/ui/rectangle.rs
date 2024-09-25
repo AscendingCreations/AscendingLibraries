@@ -34,6 +34,8 @@ pub struct Rect {
     pub render_layer: u32,
     /// Optional Bounds for Clipping the Rect too.
     pub bounds: Option<Bounds>,
+    /// Overides the absolute order values based on position.
+    pub order_override: Option<Vec3>,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -58,6 +60,7 @@ impl Rect {
             order: DrawOrder::default(),
             render_layer,
             bounds: None,
+            order_override: None,
             changed: true,
         }
     }
@@ -68,10 +71,22 @@ impl Rect {
         renderer.remove_buffer(self.store_id);
     }
 
+    /// Updates the [`Rect`]'s order_override.
+    ///
+    pub fn set_order_override(
+        &mut self,
+        order_override: Option<Vec3>,
+    ) -> &mut Self {
+        self.changed = true;
+        self.order_override = order_override;
+        self
+    }
+
     /// Updates the [`Rect`]'s Clipping Bounds.
     ///
-    pub fn update_bounds(&mut self, bounds: Option<Bounds>) {
+    pub fn update_bounds(&mut self, bounds: Option<Bounds>) -> &mut Self {
         self.bounds = bounds;
+        self
     }
 
     /// Sets the [`Rect`]'s [`CameraType`] for rendering.
@@ -203,11 +218,13 @@ impl Rect {
             store.changed = true;
         }
 
-        self.order = DrawOrder::new(
-            self.radius > 0.0,
-            &self.position,
-            self.render_layer,
-        );
+        let order_pos = match self.order_override {
+            Some(o) => o,
+            None => self.position,
+        };
+
+        self.order =
+            DrawOrder::new(self.radius > 0.0, &order_pos, self.render_layer);
     }
 
     /// Used to check and update the vertex array.
