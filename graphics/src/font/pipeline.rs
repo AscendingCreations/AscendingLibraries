@@ -46,7 +46,7 @@ impl PipeLineLayout for TextRenderPipeline {
                 )),
                 vertex: wgpu::VertexState {
                     module: &shader,
-                    entry_point: "vertex",
+                    entry_point: Some("vertex"),
                     buffers: &[
                         wgpu::VertexBufferLayout {
                             array_stride: StaticVertexBuffer::stride(),
@@ -82,7 +82,7 @@ impl PipeLineLayout for TextRenderPipeline {
                 multisample: wgpu::MultisampleState::default(),
                 fragment: Some(wgpu::FragmentState {
                     module: &shader,
-                    entry_point: "fragment",
+                    entry_point: Some("fragment"),
                     targets: &[Some(wgpu::ColorTargetState {
                         format: surface_format,
                         blend: Some(

@@ -4,20 +4,20 @@ members = ["input", "camera", "graphics"]
 
 [workspace.dependencies]
 async-trait = "0.1.83"
-bytemuck = { version = "1.18.0", features = ["derive"] }
-thiserror = "1.0.64"
+bytemuck = { version = "1.19.0", features = ["derive"] }
+thiserror = "1.0.65"
 winit = { version = "0.30.5", features = ["serde"] }
-image = "0.25.2"
+image = "0.25.4"
 guillotiere = "0.6.2"
-serde = { version = "1.0.210", features = ["derive"] }
+serde = { version = "1.0.214", features = ["derive"] }
 log = "0.4.22"
 cosmic-text = { version = "0.12.1", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
-ordered-float = { version = "4.3.0", features = ["serde"] }
-lru = "0.12.4"
-glam = { version = "0.29.0", features = ["bytemuck", "mint"] }
+ordered-float = { version = "4.4.0", features = ["serde"] }
+lru = "0.12.5"
+glam = { version = "0.29.1", features = ["bytemuck", "mint"] }
 lyon = "1.0.1"
-smol_str = "0.3.1"
-indexmap = "2.5.0"
+smol_str = "0.3.2"
+indexmap = "2.6.0"
 slotmap = "1.0.7"
 ahash = {version = "0.8.11", features = ["serde"]}
 slab = "0.4.9"
@@ -35,11 +35,11 @@ version = "0.3.0"
 [workspace.dependencies.naga]
 #git = "https://github.com/gfx-rs/naga"
 #rev = "76003dc0035d53a474d366dcdf49d2e4d12e921f"
-version = "22.1.0"
+version = "23.0.0"
 features = ["wgsl-in"]
 
 [workspace.dependencies.wgpu]
 #git = "https://github.com/gfx-rs/wgpu"
 #rev = "061e04b"
 #path = "../wgpu-trunk/wgpu"
-version = "22.1.0"
+version = "23.0.0"

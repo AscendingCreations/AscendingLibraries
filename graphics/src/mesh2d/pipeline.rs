@@ -41,7 +41,7 @@ impl PipeLineLayout for Mesh2DRenderPipeline {
                 )),
                 vertex: wgpu::VertexState {
                     module: &shader,
-                    entry_point: "vertex",
+                    entry_point: Some("vertex"),
                     buffers: &[wgpu::VertexBufferLayout {
                         array_stride: Mesh2DVertex::stride() as u64,
                         step_mode: wgpu::VertexStepMode::Vertex,
@@ -68,7 +68,7 @@ impl PipeLineLayout for Mesh2DRenderPipeline {
                 multisample: wgpu::MultisampleState::default(),
                 fragment: Some(wgpu::FragmentState {
                     module: &shader,
-                    entry_point: "fragment",
+                    entry_point: Some("fragment"),
                     targets: &[Some(wgpu::ColorTargetState {
                         format: surface_format,
                         blend: Some(wgpu::BlendState::ALPHA_BLENDING),
