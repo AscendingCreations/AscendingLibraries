@@ -5,7 +5,7 @@ members = ["input", "camera", "graphics"]
 [workspace.dependencies]
 async-trait = "0.1.83"
 bytemuck = { version = "1.19.0", features = ["derive"] }
-thiserror = "1.0.65"
+thiserror = "2.0.3"
 winit = { version = "0.30.5", features = ["serde"] }
 image = "0.25.4"
 guillotiere = "0.6.2"
