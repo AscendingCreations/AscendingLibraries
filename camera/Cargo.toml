@@ -9,6 +9,7 @@ documentation = "https://docs.rs/ascending_camera"
 keywords = ["wgpu", "camera", "rendering"]
 repository = "https://github.com/AscendingCreations/AscendingLibraries"
 description = "A basic camera solution for Rendering"
+categories = ["game-development"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]

@@ -9,6 +9,7 @@ documentation = "https://docs.rs/ascending_graphics"
 keywords = ["wgpu", "rendering", "2d", "3d", ]
 repository = "https://github.com/AscendingCreations/AscendingLibraries"
 description = "A graphical rendering library for 2D, using wgpu and winit."
+categories = ["game-development", "graphics"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
