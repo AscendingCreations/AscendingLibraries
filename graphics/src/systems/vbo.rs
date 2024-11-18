@@ -175,6 +175,10 @@ impl<K: BufferLayout> VertexBuffer<K> {
                 let old_index_pos = index_pos as u64;
 
                 if let Some(store) = renderer.get_buffer_mut(buf.index) {
+                    if store.indexs.is_empty() {
+                        continue;
+                    }
+
                     let vertex_range =
                         vertex_pos..vertex_pos + store.store.len();
                     let index_range = index_pos..index_pos + store.indexs.len();
