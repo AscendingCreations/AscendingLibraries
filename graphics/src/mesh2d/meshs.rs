@@ -95,15 +95,25 @@ impl Mesh2D {
     /// Appends Mesh's from the [`Mesh2DBuilder`] into the [`Mesh2D`].
     ///
     pub fn from_builder(&mut self, builder: Mesh2DBuilder) {
+        self.vertices.clear();
+        self.indices.clear();
+
         self.position =
             Vec3::new(builder.bounds.x, builder.bounds.y, builder.z);
         self.size = Vec2::new(
             builder.bounds.z - builder.bounds.x,
             builder.bounds.w - builder.bounds.y,
         );
+
         self.vertices.extend_from_slice(&builder.buffer.vertices);
         self.indices.extend_from_slice(&builder.buffer.indices);
         self.high_index = builder.high_index;
+    }
+
+    pub fn clear_mesh(&mut self) {
+        self.vertices.clear();
+        self.indices.clear();
+        self.high_index = 0;
     }
 
     /// Sets the [`Mesh2D`]'s [`Color`].
@@ -134,6 +144,12 @@ impl Mesh2D {
     ///
     pub fn create_quad(&mut self, renderer: &mut GpuRenderer) {
         if let Some(store) = renderer.get_buffer_mut(self.vbo_store_id) {
+            for vertex in &mut self.vertices {
+                vertex.position[0] += self.position.x;
+                vertex.position[1] += self.position.y;
+                vertex.position[2] = self.position.z;
+            }
+
             let vertex_bytes: &[u8] = bytemuck::cast_slice(&self.vertices);
             let index_bytes: &[u8] = bytemuck::cast_slice(&self.indices);
             store.store.resize_with(vertex_bytes.len(), || 0);
