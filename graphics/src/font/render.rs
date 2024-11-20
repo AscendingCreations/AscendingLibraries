@@ -1,7 +1,7 @@
 use crate::{
     AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer,
-    OrderedIndex, SetBuffers, StaticVertexBuffer, Text, TextRenderPipeline,
-    TextVertex, Vec2,
+    Mesh2DVertex, OrderedIndex, SetBuffers, StaticVertexBuffer, Text,
+    TextRenderPipeline, TextVertex, Vec2, VertexBuffer,
 };
 use cosmic_text::{CacheKey, SwashCache};
 use log::{error, warn};
@@ -50,10 +50,19 @@ impl TextAtlas {
     }
 }
 
+/// TextOrderedIndex Contains the information needed to Order the Text and Outline buffers and
+/// to set the buffers up for rendering.
+#[derive(Copy, Clone)]
+pub struct TextOrderedIndex {
+    pub(crate) text_index: OrderedIndex,
+    pub(crate) outline_index: Option<OrderedIndex>,
+}
+
 /// Instance Buffer Setup for [`Text`].
 ///
 pub struct TextRenderer {
     pub(crate) buffer: InstanceBuffer<TextVertex>,
+    pub(crate) vbos: VertexBuffer<Mesh2DVertex>,
     pub(crate) swash_cache: SwashCache,
 }
 
@@ -63,6 +72,7 @@ impl TextRenderer {
     pub fn new(renderer: &GpuRenderer) -> Result<Self, GraphicsError> {
         Ok(Self {
             buffer: InstanceBuffer::new(renderer.gpu_device(), 1024),
+            vbos: VertexBuffer::new(renderer.gpu_device(), 512),
             swash_cache: SwashCache::new(),
         })
     }
@@ -77,20 +87,26 @@ impl TextRenderer {
     pub fn add_buffer_store(
         &mut self,
         renderer: &GpuRenderer,
-        index: OrderedIndex,
+        index: TextOrderedIndex,
         buffer_layer: usize,
     ) {
-        self.buffer.add_buffer_store(renderer, index, buffer_layer);
+        self.buffer
+            .add_buffer_store(renderer, index.text_index, buffer_layer);
+
+        if let Some(outline) = index.outline_index {
+            self.vbos.add_buffer_store(renderer, outline, buffer_layer);
+        }
     }
 
     /// Finalizes the Buffer by processing staged [`OrderedIndex`]'s and uploading it to the GPU.
     /// Must be called after all the [`TextRenderer::add_buffer_store`]'s.
     ///
     pub fn finalize(&mut self, renderer: &mut GpuRenderer) {
-        self.buffer.finalize(renderer)
+        self.buffer.finalize(renderer);
+        self.vbos.finalize(renderer);
     }
 
-    /// Updates a [`Text`] and adds its [`OrderedIndex`] to staging using [`TextRenderer::add_buffer_store`].
+    /// Updates a [`Text`] and adds its [`TextOrderedIndex`] to staging using [`TextRenderer::add_buffer_store`].
     /// This must be done before [`TextRenderer::finalize`] in order for it to Render.
     ///
     /// # Arguments

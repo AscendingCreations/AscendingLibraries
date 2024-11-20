@@ -1,3 +1,5 @@
+use log::info;
+
 use crate::{
     AsBufferPass, GpuRenderer, GraphicsError, Mesh2D, Mesh2DRenderPipeline,
     Mesh2DVertex, OrderedIndex, SetBuffers, System, VertexBuffer,
@@ -138,6 +140,7 @@ where
                     }
                 } else {
                     for (details, _bounds, _camer_type) in vbos {
+                        info!("{:?}", details);
                         // Indexs can always start at 0 per mesh data.
                         // Base vertex is the Addition to the Index
                         self.draw_indexed(

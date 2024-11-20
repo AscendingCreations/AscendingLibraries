@@ -1,10 +1,12 @@
 use crate::{
     Bounds, CameraType, Color, DrawOrder, GpuRenderer, GraphicsError, Index,
-    OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
+    Mesh2D, OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
     Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap,
 };
+
+use super::TextOrderedIndex;
 
 /// [`Text`] Option Handler for [`Text::measure_string`].
 ///
@@ -32,6 +34,8 @@ pub struct VisibleDetails {
 pub struct Text {
     /// Cosmic Text [`Buffer`].
     pub buffer: Buffer,
+    // Text Outline Mesh.
+    pub outline: Option<Mesh2D>,
     /// Position on the Screen.
     pub pos: Vec3,
     /// Width and Height of the Text Area.
@@ -287,6 +291,51 @@ impl Text {
                 &mut renderer.font_sys,
                 metrics.unwrap_or(Metrics::new(16.0, 16.0).scale(scale)),
             ),
+            outline: None,
+            pos,
+            size,
+            bounds: Bounds::default(),
+            store_id: renderer.new_buffer(text_starter_size, 0),
+            order: DrawOrder::default(),
+            changed: true,
+            default_color: Color::rgba(0, 0, 0, 255),
+            camera_type: CameraType::None,
+            cursor: Cursor::default(),
+            wrap: Wrap::Word,
+            line: 0,
+            scroll: cosmic_text::Scroll::default(),
+            scale,
+            render_layer,
+            order_override: None,
+            glyph_vertices: Vec::new(),
+        }
+    }
+
+    /// Creates a new [`Text`].
+    ///
+    pub fn new_with_outline(
+        renderer: &mut GpuRenderer,
+        metrics: Option<Metrics>,
+        pos: Vec3,
+        size: Vec2,
+        scale: f32,
+        render_layer: u32,
+        outline_color: Color,
+    ) -> Self {
+        let text_starter_size =
+            bytemuck::bytes_of(&TextVertex::default()).len() * 64;
+        let mut mesh = Mesh2D::new(renderer, render_layer);
+
+        mesh.position = pos;
+        mesh.size = size;
+        mesh.render_layer = render_layer;
+
+        Self {
+            buffer: Buffer::new(
+                &mut renderer.font_sys,
+                metrics.unwrap_or(Metrics::new(16.0, 16.0).scale(scale)),
+            ),
+            outline: Some(mesh),
             pos,
             size,
             bounds: Bounds::default(),
@@ -310,13 +359,18 @@ impl Text {
     ///
     pub fn set_camera_type(&mut self, camera_type: CameraType) {
         self.camera_type = camera_type;
+
         self.changed = true;
     }
 
-    /// Unloads the [`Text`] from the Instance Buffers Store.
+    /// Unloads the [`Text`] from the Instance Buffers Store and its outline from the VBO Store.
     ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
+
+        if let Some(mesh) = &self.outline {
+            mesh.unload(renderer);
+        }
     }
 
     /// Updates the [`Text`]'s order_override.
@@ -327,6 +381,11 @@ impl Text {
     ) -> &mut Self {
         self.changed = true;
         self.order_override = order_override;
+
+        if let Some(mesh) = &mut self.outline {
+            mesh.set_order_override(order_override);
+        }
+
         self
     }
 
@@ -529,12 +588,23 @@ impl Text {
         cache: &mut SwashCache,
         atlas: &mut TextAtlas,
         renderer: &mut GpuRenderer,
-    ) -> Result<OrderedIndex, GraphicsError> {
+    ) -> Result<TextOrderedIndex, GraphicsError> {
         if self.changed {
             self.create_quad(cache, atlas, renderer)?;
         }
 
-        Ok(OrderedIndex::new(self.order, self.store_id, 0))
+        Ok(TextOrderedIndex {
+            text_index: OrderedIndex::new(self.order, self.store_id, 0),
+            outline_index: if let Some(mesh) = &self.outline {
+                Some(OrderedIndex::new(
+                    self.order,
+                    mesh.vbo_store_id,
+                    mesh.high_index,
+                ))
+            } else {
+                None
+            },
+        })
     }
 
     /// Checks if mouse_pos is within the [`Text`]'s location.

@@ -2,7 +2,7 @@ use crate::{
     CameraType, DrawOrder, GpuRenderer, GraphicsError, Index, Mesh2DVertex,
     OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
 };
-use cosmic_text::Color;
+use cosmic_text::{Color, Command};
 use lyon::{
     lyon_tessellation::{FillOptions, StrokeOptions},
     math::Point as LPoint,
@@ -36,8 +36,6 @@ pub struct Mesh2D {
     pub position: Vec3,
     /// Width and Height of the mesh.
     pub size: Vec2,
-    /// Color of the Mesh.
-    pub color: Color,
     /// Saved Verticies of the Mesh.
     pub vertices: Vec<Mesh2DVertex>,
     /// Saved indices of the mesh.
@@ -63,7 +61,6 @@ impl Mesh2D {
         Self {
             position: Vec3::default(),
             size: Vec2::default(),
-            color: Color::rgba(255, 255, 255, 255),
             vbo_store_id: renderer.default_buffer(),
             order: DrawOrder::default(),
             changed: true,
@@ -92,14 +89,12 @@ impl Mesh2D {
         self
     }
 
-    /// Appends Mesh's from the [`Mesh2DBuilder`] into the [`Mesh2D`].
+    /// Clears and Builds Mesh's from the [`Mesh2DBuilder`] into the [`Mesh2D`].
     ///
     pub fn from_builder(&mut self, builder: Mesh2DBuilder) {
         self.vertices.clear();
         self.indices.clear();
 
-        self.position =
-            Vec3::new(builder.bounds.x, builder.bounds.y, builder.z);
         self.size = Vec2::new(
             builder.bounds.z - builder.bounds.x,
             builder.bounds.w - builder.bounds.y,
@@ -107,21 +102,43 @@ impl Mesh2D {
 
         self.vertices.extend_from_slice(&builder.buffer.vertices);
         self.indices.extend_from_slice(&builder.buffer.indices);
+
         self.high_index = builder.high_index;
+        self.changed = true;
+    }
+
+    /// Appends Mesh's from the [`Mesh2DBuilder`] into the [`Mesh2D`].
+    ///
+    pub fn append_from_builder(&mut self, builder: Mesh2DBuilder) {
+        let mut new_high_index = self.high_index;
+        let size = Vec2::new(
+            builder.bounds.z - builder.bounds.x,
+            builder.bounds.w - builder.bounds.y,
+        );
+        self.size = self.size.max(size);
+
+        self.vertices.extend_from_slice(&builder.buffer.vertices);
+
+        for index in &builder.buffer.indices {
+            let i = index
+                + if self.high_index == 0 {
+                    0
+                } else {
+                    self.high_index + 1
+                };
+
+            new_high_index = new_high_index.max(i);
+            self.indices.push(i);
+        }
+
+        self.high_index = new_high_index;
+        self.changed = true;
     }
 
     pub fn clear_mesh(&mut self) {
         self.vertices.clear();
         self.indices.clear();
         self.high_index = 0;
-    }
-
-    /// Sets the [`Mesh2D`]'s [`Color`].
-    ///
-    pub fn set_color(&mut self, color: Color) -> &mut Self {
-        self.color = color;
-        self.changed = true;
-        self
     }
 
     /// Sets the [`Mesh2D`]'s Position.
@@ -143,14 +160,24 @@ impl Mesh2D {
     /// Updates the [`Mesh2D`]'s Buffers to prepare them for rendering.
     ///
     pub fn create_quad(&mut self, renderer: &mut GpuRenderer) {
+        let mut alpha = false;
+
         if let Some(store) = renderer.get_buffer_mut(self.vbo_store_id) {
-            for vertex in &mut self.vertices {
-                vertex.position[0] += self.position.x;
-                vertex.position[1] += self.position.y;
-                vertex.position[2] = self.position.z;
+            let mut verticies = Vec::with_capacity(self.vertices.len());
+
+            for vertex in &self.vertices {
+                let mut v = *vertex;
+
+                if Color(v.color).a() < 255 {
+                    alpha = true
+                }
+
+                v.position[0] += self.position.x;
+                v.position[1] += self.position.y;
+                verticies.push(v);
             }
 
-            let vertex_bytes: &[u8] = bytemuck::cast_slice(&self.vertices);
+            let vertex_bytes: &[u8] = bytemuck::cast_slice(&verticies);
             let index_bytes: &[u8] = bytemuck::cast_slice(&self.indices);
             store.store.resize_with(vertex_bytes.len(), || 0);
             store.indexs.resize_with(index_bytes.len(), || 0);
@@ -164,8 +191,7 @@ impl Mesh2D {
             None => self.position,
         };
 
-        self.order =
-            DrawOrder::new(self.color.a() < 255, &order_pos, self.render_layer);
+        self.order = DrawOrder::new(alpha, &order_pos, self.render_layer);
     }
 
     /// Used to check and update the vertex array.
@@ -578,6 +604,75 @@ impl Mesh2DBuilder {
                 self.buffer.indices.push(first_index + 1);
                 self.buffer.indices.push(first_index + 2);
             }
+        }
+        Ok(self)
+    }
+
+    pub fn process_commands(
+        &mut self,
+        mode: DrawMode,
+        z: f32,
+        color: Color,
+        commands: &[Command],
+    ) -> Result<&mut Self, GraphicsError> {
+        {
+            let buffers = &mut self.buffer;
+            let vb = VertexBuilder {
+                z,
+                color,
+                camera: self.camera_type as u32,
+            };
+
+            let mut path_builder = tess::path::Path::builder();
+
+            for command in commands {
+                match command {
+                    Command::MoveTo(vector) => {
+                        path_builder
+                            .begin(tess::math::point(vector.x, vector.y));
+                    }
+                    Command::LineTo(vector) => {
+                        path_builder
+                            .line_to(tess::math::point(vector.x, vector.y));
+                    }
+                    Command::CurveTo(vector, vector1, vector2) => {
+                        path_builder.cubic_bezier_to(
+                            tess::math::point(vector.x, vector.y),
+                            tess::math::point(vector1.x, vector1.y),
+                            tess::math::point(vector2.x, vector2.y),
+                        );
+                    }
+                    Command::QuadTo(vector, vector1) => {
+                        path_builder.quadratic_bezier_to(
+                            tess::math::point(vector.x, vector.y),
+                            tess::math::point(vector1.x, vector1.y),
+                        );
+                    }
+                    Command::Close => {
+                        path_builder.close();
+                        break;
+                    }
+                }
+            }
+
+            let path = path_builder.build();
+
+            match mode {
+                DrawMode::Fill(fill_options) => {
+                    let builder = &mut tess::BuffersBuilder::new(buffers, vb);
+                    let mut tessellator = tess::FillTessellator::new();
+                    tessellator.tessellate_path(
+                        &path,
+                        &fill_options,
+                        builder,
+                    )?;
+                }
+                DrawMode::Stroke(options) => {
+                    let builder = &mut tess::BuffersBuilder::new(buffers, vb);
+                    let mut tessellator = tess::StrokeTessellator::new();
+                    tessellator.tessellate_path(&path, &options, builder)?;
+                }
+            };
         }
         Ok(self)
     }
