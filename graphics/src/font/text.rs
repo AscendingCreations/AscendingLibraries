@@ -6,8 +6,6 @@ use cosmic_text::{
     Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap,
 };
 
-use super::TextOrderedIndex;
-
 /// [`Text`] Option Handler for [`Text::measure_string`].
 ///
 pub struct TextOptions {
@@ -34,8 +32,6 @@ pub struct VisibleDetails {
 pub struct Text {
     /// Cosmic Text [`Buffer`].
     pub buffer: Buffer,
-    // Text Outline Mesh.
-    pub outline: Option<Mesh2D>,
     /// Position on the Screen.
     pub pos: Vec3,
     /// Width and Height of the Text Area.
@@ -68,6 +64,10 @@ pub struct Text {
     pub glyph_vertices: Vec<TextVertex>,
     /// Overides the absolute order values based on position.
     pub order_override: Option<Vec3>,
+    /// Color of the optional outline.
+    pub outline_color: Color,
+    /// Width of the optional outline.
+    pub outline_width: f32,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -291,7 +291,6 @@ impl Text {
                 &mut renderer.font_sys,
                 metrics.unwrap_or(Metrics::new(16.0, 16.0).scale(scale)),
             ),
-            outline: None,
             pos,
             size,
             bounds: Bounds::default(),
@@ -308,9 +307,12 @@ impl Text {
             render_layer,
             order_override: None,
             glyph_vertices: Vec::new(),
+            outline_color: Color::rgba(0, 0, 0, 255),
+            outline_width: 0.0,
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     /// Creates a new [`Text`].
     ///
     pub fn new_with_outline(
@@ -321,38 +323,19 @@ impl Text {
         scale: f32,
         render_layer: u32,
         outline_color: Color,
+        outline_width: f32,
     ) -> Self {
-        let text_starter_size =
-            bytemuck::bytes_of(&TextVertex::default()).len() * 64;
         let mut mesh = Mesh2D::new(renderer, render_layer);
-
         mesh.position = pos;
         mesh.size = size;
         mesh.render_layer = render_layer;
 
-        Self {
-            buffer: Buffer::new(
-                &mut renderer.font_sys,
-                metrics.unwrap_or(Metrics::new(16.0, 16.0).scale(scale)),
-            ),
-            outline: Some(mesh),
-            pos,
-            size,
-            bounds: Bounds::default(),
-            store_id: renderer.new_buffer(text_starter_size, 0),
-            order: DrawOrder::default(),
-            changed: true,
-            default_color: Color::rgba(0, 0, 0, 255),
-            camera_type: CameraType::None,
-            cursor: Cursor::default(),
-            wrap: Wrap::Word,
-            line: 0,
-            scroll: cosmic_text::Scroll::default(),
-            scale,
-            render_layer,
-            order_override: None,
-            glyph_vertices: Vec::new(),
-        }
+        let mut text =
+            Self::new(renderer, metrics, pos, size, scale, render_layer);
+
+        text.outline_color = outline_color;
+        text.outline_width = outline_width;
+        text
     }
 
     /// Sets the [`Text`]'s [`CameraType`] for rendering.
@@ -367,10 +350,6 @@ impl Text {
     ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
-
-        if let Some(mesh) = &self.outline {
-            mesh.unload(renderer);
-        }
     }
 
     /// Updates the [`Text`]'s order_override.
@@ -381,11 +360,6 @@ impl Text {
     ) -> &mut Self {
         self.changed = true;
         self.order_override = order_override;
-
-        if let Some(mesh) = &mut self.outline {
-            mesh.set_order_override(order_override);
-        }
-
         self
     }
 
@@ -588,23 +562,12 @@ impl Text {
         cache: &mut SwashCache,
         atlas: &mut TextAtlas,
         renderer: &mut GpuRenderer,
-    ) -> Result<TextOrderedIndex, GraphicsError> {
+    ) -> Result<OrderedIndex, GraphicsError> {
         if self.changed {
             self.create_quad(cache, atlas, renderer)?;
         }
 
-        Ok(TextOrderedIndex {
-            text_index: OrderedIndex::new(self.order, self.store_id, 0),
-            outline_index: if let Some(mesh) = &self.outline {
-                Some(OrderedIndex::new(
-                    self.order,
-                    mesh.vbo_store_id,
-                    mesh.high_index,
-                ))
-            } else {
-                None
-            },
-        })
+        Ok(OrderedIndex::new(self.order, self.store_id, 0))
     }
 
     /// Checks if mouse_pos is within the [`Text`]'s location.

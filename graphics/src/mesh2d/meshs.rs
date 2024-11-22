@@ -2,7 +2,7 @@ use crate::{
     CameraType, DrawOrder, GpuRenderer, GraphicsError, Index, Mesh2DVertex,
     OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
 };
-use cosmic_text::{Color, Command};
+use cosmic_text::Color;
 use lyon::{
     lyon_tessellation::{FillOptions, StrokeOptions},
     math::Point as LPoint,
@@ -91,7 +91,7 @@ impl Mesh2D {
 
     /// Clears and Builds Mesh's from the [`Mesh2DBuilder`] into the [`Mesh2D`].
     ///
-    pub fn from_builder(&mut self, builder: Mesh2DBuilder) {
+    pub fn from_builder(&mut self, builder: &Mesh2DBuilder) {
         self.vertices.clear();
         self.indices.clear();
 
@@ -100,7 +100,16 @@ impl Mesh2D {
             builder.bounds.w - builder.bounds.y,
         );
 
-        self.vertices.extend_from_slice(&builder.buffer.vertices);
+        self.vertices.reserve(builder.buffer.vertices.len());
+
+        for vertex in &builder.buffer.vertices {
+            let mut vertex = *vertex;
+
+            vertex.position[0] += builder.offset.x;
+            vertex.position[1] += builder.offset.y;
+            self.vertices.push(vertex);
+        }
+
         self.indices.extend_from_slice(&builder.buffer.indices);
 
         self.high_index = builder.high_index;
@@ -109,7 +118,7 @@ impl Mesh2D {
 
     /// Appends Mesh's from the [`Mesh2DBuilder`] into the [`Mesh2D`].
     ///
-    pub fn append_from_builder(&mut self, builder: Mesh2DBuilder) {
+    pub fn append_from_builder(&mut self, builder: &Mesh2DBuilder) {
         let mut new_high_index = self.high_index;
         let size = Vec2::new(
             builder.bounds.z - builder.bounds.x,
@@ -117,7 +126,15 @@ impl Mesh2D {
         );
         self.size = self.size.max(size);
 
-        self.vertices.extend_from_slice(&builder.buffer.vertices);
+        self.vertices.reserve(builder.buffer.vertices.len());
+
+        for vertex in &builder.buffer.vertices {
+            let mut vertex = *vertex;
+
+            vertex.position[0] += builder.offset.x;
+            vertex.position[1] += builder.offset.y;
+            self.vertices.push(vertex);
+        }
 
         for index in &builder.buffer.indices {
             let i = index
@@ -135,7 +152,7 @@ impl Mesh2D {
         self.changed = true;
     }
 
-    pub fn clear_mesh(&mut self) {
+    pub fn clear(&mut self) {
         self.vertices.clear();
         self.indices.clear();
         self.high_index = 0;
@@ -219,18 +236,22 @@ impl Mesh2D {
 ///
 #[derive(Debug, Clone)]
 pub struct Mesh2DBuilder {
-    buffer: tess::geometry_builder::VertexBuffers<Mesh2DVertex, u32>,
-    bounds: Vec4,
-    z: f32,
-    high_index: u32,
-    camera_type: CameraType,
+    pub buffer: tess::geometry_builder::VertexBuffers<Mesh2DVertex, u32>,
+    pub offset: Vec2,
+    pub bounds: Vec4,
+    pub size: Vec2,
+    pub z: f32,
+    pub high_index: u32,
+    pub camera_type: CameraType,
 }
 
 impl Default for Mesh2DBuilder {
     fn default() -> Self {
         Self {
             buffer: tess::VertexBuffers::new(),
+            offset: Vec2::default(),
             bounds: Vec4::new(0.0, 0.0, 0.0, 0.0),
+            size: Vec2::new(0.0, 0.0),
             z: 1.0,
             high_index: 0,
             camera_type: CameraType::None,
@@ -239,6 +260,17 @@ impl Default for Mesh2DBuilder {
 }
 
 impl Mesh2DBuilder {
+    /// Resets [`Mesh2DBuilder`] back to Defaults so the Builder can be reused.
+    ///
+    pub fn clear(&mut self) {
+        self.buffer.clear();
+        self.bounds = Vec4::new(0.0, 0.0, 0.0, 0.0);
+        self.size = Vec2::new(0.0, 0.0);
+        self.z = 1.0;
+        self.high_index = 0;
+        self.camera_type = CameraType::None;
+    }
+
     /// Creates a new [`Mesh2DBuilder`] with [`CameraType`].
     ///
     pub fn with_camera(camera_type: CameraType) -> Self {
@@ -248,9 +280,17 @@ impl Mesh2DBuilder {
         }
     }
 
+    /// Sets the [`Mesh2DBuilder`]'s offset positions which is used during appending or building to Mesh2D.
+    /// This does not affect the finalization Phase.
+    ///
+    pub fn set_offset(&mut self, offset: Vec2) -> &mut Self {
+        self.offset = offset;
+        self
+    }
+
     /// Finalizes the [`Mesh2DBuilder`] so it can be appended to a [`Mesh2D`].
     ///
-    pub fn finalize(mut self) -> Self {
+    pub fn finalize(&mut self) -> &mut Self {
         let [minx, miny, maxx, maxy, minz] = self.buffer.vertices.iter().fold(
             [f32::MAX, f32::MAX, f32::MIN, f32::MIN, 1.0],
             |[minx, miny, maxx, maxy, minz], vert| {
@@ -271,6 +311,7 @@ impl Mesh2DBuilder {
             .iter()
             .fold(0, |max, index| max.max(*index));
         self.bounds = Vec4::new(minx, miny, maxx, maxy);
+        self.size = Vec2::new(maxx - minx, maxy - miny);
         self.z = minz;
         self.high_index = high_index;
         self
@@ -604,75 +645,6 @@ impl Mesh2DBuilder {
                 self.buffer.indices.push(first_index + 1);
                 self.buffer.indices.push(first_index + 2);
             }
-        }
-        Ok(self)
-    }
-
-    pub fn process_commands(
-        &mut self,
-        mode: DrawMode,
-        z: f32,
-        color: Color,
-        commands: &[Command],
-    ) -> Result<&mut Self, GraphicsError> {
-        {
-            let buffers = &mut self.buffer;
-            let vb = VertexBuilder {
-                z,
-                color,
-                camera: self.camera_type as u32,
-            };
-
-            let mut path_builder = tess::path::Path::builder();
-
-            for command in commands {
-                match command {
-                    Command::MoveTo(vector) => {
-                        path_builder
-                            .begin(tess::math::point(vector.x, vector.y));
-                    }
-                    Command::LineTo(vector) => {
-                        path_builder
-                            .line_to(tess::math::point(vector.x, vector.y));
-                    }
-                    Command::CurveTo(vector, vector1, vector2) => {
-                        path_builder.cubic_bezier_to(
-                            tess::math::point(vector.x, vector.y),
-                            tess::math::point(vector1.x, vector1.y),
-                            tess::math::point(vector2.x, vector2.y),
-                        );
-                    }
-                    Command::QuadTo(vector, vector1) => {
-                        path_builder.quadratic_bezier_to(
-                            tess::math::point(vector.x, vector.y),
-                            tess::math::point(vector1.x, vector1.y),
-                        );
-                    }
-                    Command::Close => {
-                        path_builder.close();
-                        break;
-                    }
-                }
-            }
-
-            let path = path_builder.build();
-
-            match mode {
-                DrawMode::Fill(fill_options) => {
-                    let builder = &mut tess::BuffersBuilder::new(buffers, vb);
-                    let mut tessellator = tess::FillTessellator::new();
-                    tessellator.tessellate_path(
-                        &path,
-                        &fill_options,
-                        builder,
-                    )?;
-                }
-                DrawMode::Stroke(options) => {
-                    let builder = &mut tess::BuffersBuilder::new(buffers, vb);
-                    let mut tessellator = tess::StrokeTessellator::new();
-                    tessellator.tessellate_path(&path, &options, builder)?;
-                }
-            };
         }
         Ok(self)
     }
