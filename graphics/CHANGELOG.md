@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 - (Breaking) Mesh2D Position now Offsets the Meshes locations and The Z is Set exactly as the Mesh2D Z.
-- (Breaking) Mesh2DBuilder Now has a Offset that is applyed when being built into Mesh2D. 
+- (Breaking) Mesh2DBuilder Now has a Offset that is applied when being built into Mesh2D. 
 - (Breaking) Mesh2D now takes &Mesh2DBuilder References instead of Passing the Mesh2DBuilder.
 - (Breaking) Mesh2D from_builder now clears the Mesh2D before Adding in the new mesh from Mesh2DBuilder.
 
