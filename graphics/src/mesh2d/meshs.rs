@@ -36,8 +36,6 @@ pub struct Mesh2D {
     pub position: Vec3,
     /// Width and Height of the mesh.
     pub size: Vec2,
-    /// Color of the Mesh.
-    pub color: Color,
     /// Saved Verticies of the Mesh.
     pub vertices: Vec<Mesh2DVertex>,
     /// Saved indices of the mesh.
@@ -63,7 +61,6 @@ impl Mesh2D {
         Self {
             position: Vec3::default(),
             size: Vec2::default(),
-            color: Color::rgba(255, 255, 255, 255),
             vbo_store_id: renderer.default_buffer(),
             order: DrawOrder::default(),
             changed: true,
@@ -92,36 +89,73 @@ impl Mesh2D {
         self
     }
 
-    /// Appends Mesh's from the [`Mesh2DBuilder`] into the [`Mesh2D`].
+    /// Clears and Builds Mesh's from the [`Mesh2DBuilder`] into the [`Mesh2D`].
     ///
-    pub fn from_builder(&mut self, builder: Mesh2DBuilder) {
+    pub fn from_builder(&mut self, builder: &Mesh2DBuilder) {
         self.vertices.clear();
         self.indices.clear();
 
-        self.position =
-            Vec3::new(builder.bounds.x, builder.bounds.y, builder.z);
         self.size = Vec2::new(
             builder.bounds.z - builder.bounds.x,
             builder.bounds.w - builder.bounds.y,
         );
 
-        self.vertices.extend_from_slice(&builder.buffer.vertices);
+        self.vertices.reserve(builder.buffer.vertices.len());
+
+        for vertex in &builder.buffer.vertices {
+            let mut vertex = *vertex;
+
+            vertex.position[0] += builder.offset.x;
+            vertex.position[1] += builder.offset.y;
+            self.vertices.push(vertex);
+        }
+
         self.indices.extend_from_slice(&builder.buffer.indices);
+
         self.high_index = builder.high_index;
+        self.changed = true;
     }
 
-    pub fn clear_mesh(&mut self) {
+    /// Appends Mesh's from the [`Mesh2DBuilder`] into the [`Mesh2D`].
+    ///
+    pub fn append_from_builder(&mut self, builder: &Mesh2DBuilder) {
+        let mut new_high_index = self.high_index;
+        let size = Vec2::new(
+            builder.bounds.z - builder.bounds.x,
+            builder.bounds.w - builder.bounds.y,
+        );
+        self.size = self.size.max(size);
+
+        self.vertices.reserve(builder.buffer.vertices.len());
+
+        for vertex in &builder.buffer.vertices {
+            let mut vertex = *vertex;
+
+            vertex.position[0] += builder.offset.x;
+            vertex.position[1] += builder.offset.y;
+            self.vertices.push(vertex);
+        }
+
+        for index in &builder.buffer.indices {
+            let i = index
+                + if self.high_index == 0 {
+                    0
+                } else {
+                    self.high_index + 1
+                };
+
+            new_high_index = new_high_index.max(i);
+            self.indices.push(i);
+        }
+
+        self.high_index = new_high_index;
+        self.changed = true;
+    }
+
+    pub fn clear(&mut self) {
         self.vertices.clear();
         self.indices.clear();
         self.high_index = 0;
-    }
-
-    /// Sets the [`Mesh2D`]'s [`Color`].
-    ///
-    pub fn set_color(&mut self, color: Color) -> &mut Self {
-        self.color = color;
-        self.changed = true;
-        self
     }
 
     /// Sets the [`Mesh2D`]'s Position.
@@ -143,14 +177,24 @@ impl Mesh2D {
     /// Updates the [`Mesh2D`]'s Buffers to prepare them for rendering.
     ///
     pub fn create_quad(&mut self, renderer: &mut GpuRenderer) {
+        let mut alpha = false;
+
         if let Some(store) = renderer.get_buffer_mut(self.vbo_store_id) {
-            for vertex in &mut self.vertices {
-                vertex.position[0] += self.position.x;
-                vertex.position[1] += self.position.y;
-                vertex.position[2] = self.position.z;
+            let mut verticies = Vec::with_capacity(self.vertices.len());
+
+            for vertex in &self.vertices {
+                let mut v = *vertex;
+
+                if Color(v.color).a() < 255 {
+                    alpha = true
+                }
+
+                v.position[0] += self.position.x;
+                v.position[1] += self.position.y;
+                verticies.push(v);
             }
 
-            let vertex_bytes: &[u8] = bytemuck::cast_slice(&self.vertices);
+            let vertex_bytes: &[u8] = bytemuck::cast_slice(&verticies);
             let index_bytes: &[u8] = bytemuck::cast_slice(&self.indices);
             store.store.resize_with(vertex_bytes.len(), || 0);
             store.indexs.resize_with(index_bytes.len(), || 0);
@@ -164,8 +208,7 @@ impl Mesh2D {
             None => self.position,
         };
 
-        self.order =
-            DrawOrder::new(self.color.a() < 255, &order_pos, self.render_layer);
+        self.order = DrawOrder::new(alpha, &order_pos, self.render_layer);
     }
 
     /// Used to check and update the vertex array.
@@ -193,18 +236,22 @@ impl Mesh2D {
 ///
 #[derive(Debug, Clone)]
 pub struct Mesh2DBuilder {
-    buffer: tess::geometry_builder::VertexBuffers<Mesh2DVertex, u32>,
-    bounds: Vec4,
-    z: f32,
-    high_index: u32,
-    camera_type: CameraType,
+    pub buffer: tess::geometry_builder::VertexBuffers<Mesh2DVertex, u32>,
+    pub offset: Vec2,
+    pub bounds: Vec4,
+    pub size: Vec2,
+    pub z: f32,
+    pub high_index: u32,
+    pub camera_type: CameraType,
 }
 
 impl Default for Mesh2DBuilder {
     fn default() -> Self {
         Self {
             buffer: tess::VertexBuffers::new(),
+            offset: Vec2::default(),
             bounds: Vec4::new(0.0, 0.0, 0.0, 0.0),
+            size: Vec2::new(0.0, 0.0),
             z: 1.0,
             high_index: 0,
             camera_type: CameraType::None,
@@ -213,6 +260,17 @@ impl Default for Mesh2DBuilder {
 }
 
 impl Mesh2DBuilder {
+    /// Resets [`Mesh2DBuilder`] back to Defaults so the Builder can be reused.
+    ///
+    pub fn clear(&mut self) {
+        self.buffer.clear();
+        self.bounds = Vec4::new(0.0, 0.0, 0.0, 0.0);
+        self.size = Vec2::new(0.0, 0.0);
+        self.z = 1.0;
+        self.high_index = 0;
+        self.camera_type = CameraType::None;
+    }
+
     /// Creates a new [`Mesh2DBuilder`] with [`CameraType`].
     ///
     pub fn with_camera(camera_type: CameraType) -> Self {
@@ -222,9 +280,17 @@ impl Mesh2DBuilder {
         }
     }
 
+    /// Sets the [`Mesh2DBuilder`]'s offset positions which is used during appending or building to Mesh2D.
+    /// This does not affect the finalization Phase.
+    ///
+    pub fn set_offset(&mut self, offset: Vec2) -> &mut Self {
+        self.offset = offset;
+        self
+    }
+
     /// Finalizes the [`Mesh2DBuilder`] so it can be appended to a [`Mesh2D`].
     ///
-    pub fn finalize(mut self) -> Self {
+    pub fn finalize(&mut self) -> &mut Self {
         let [minx, miny, maxx, maxy, minz] = self.buffer.vertices.iter().fold(
             [f32::MAX, f32::MAX, f32::MIN, f32::MIN, 1.0],
             |[minx, miny, maxx, maxy, minz], vert| {
@@ -245,6 +311,7 @@ impl Mesh2DBuilder {
             .iter()
             .fold(0, |max, index| max.max(*index));
         self.bounds = Vec4::new(minx, miny, maxx, maxy);
+        self.size = Vec2::new(maxx - minx, maxy - miny);
         self.z = minz;
         self.high_index = high_index;
         self

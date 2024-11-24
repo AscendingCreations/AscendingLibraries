@@ -87,10 +87,10 @@ impl TextRenderer {
     /// Must be called after all the [`TextRenderer::add_buffer_store`]'s.
     ///
     pub fn finalize(&mut self, renderer: &mut GpuRenderer) {
-        self.buffer.finalize(renderer)
+        self.buffer.finalize(renderer);
     }
 
-    /// Updates a [`Text`] and adds its [`OrderedIndex`] to staging using [`TextRenderer::add_buffer_store`].
+    /// Updates a [`Text`] and adds its [`TextOrderedIndex`] to staging using [`TextRenderer::add_buffer_store`].
     /// This must be done before [`TextRenderer::finalize`] in order for it to Render.
     ///
     /// # Arguments

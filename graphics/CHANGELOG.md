@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+### Changed
+- (Breaking) Mesh2D Position now Offsets the Meshes locations and The Z is Set exactly as the Mesh2D Z.
 
 ## 0.15.0 (30. October, 2024)
 ### Changed

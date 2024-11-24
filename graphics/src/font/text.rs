@@ -310,10 +310,11 @@ impl Text {
     ///
     pub fn set_camera_type(&mut self, camera_type: CameraType) {
         self.camera_type = camera_type;
+
         self.changed = true;
     }
 
-    /// Unloads the [`Text`] from the Instance Buffers Store.
+    /// Unloads the [`Text`] from the Instance Buffers Store and its outline from the VBO Store.
     ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
