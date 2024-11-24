@@ -1,6 +1,6 @@
 use crate::{
     Bounds, CameraType, Color, DrawOrder, GpuRenderer, GraphicsError, Index,
-    Mesh2D, OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
+    OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
     Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap,
@@ -64,10 +64,6 @@ pub struct Text {
     pub glyph_vertices: Vec<TextVertex>,
     /// Overides the absolute order values based on position.
     pub order_override: Option<Vec3>,
-    /// Color of the optional outline.
-    pub outline_color: Color,
-    /// Width of the optional outline.
-    pub outline_width: f32,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -307,35 +303,7 @@ impl Text {
             render_layer,
             order_override: None,
             glyph_vertices: Vec::new(),
-            outline_color: Color::rgba(0, 0, 0, 255),
-            outline_width: 0.0,
         }
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    /// Creates a new [`Text`].
-    ///
-    pub fn new_with_outline(
-        renderer: &mut GpuRenderer,
-        metrics: Option<Metrics>,
-        pos: Vec3,
-        size: Vec2,
-        scale: f32,
-        render_layer: u32,
-        outline_color: Color,
-        outline_width: f32,
-    ) -> Self {
-        let mut mesh = Mesh2D::new(renderer, render_layer);
-        mesh.position = pos;
-        mesh.size = size;
-        mesh.render_layer = render_layer;
-
-        let mut text =
-            Self::new(renderer, metrics, pos, size, scale, render_layer);
-
-        text.outline_color = outline_color;
-        text.outline_width = outline_width;
-        text
     }
 
     /// Sets the [`Text`]'s [`CameraType`] for rendering.
