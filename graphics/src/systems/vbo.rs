@@ -7,7 +7,7 @@ use std::ops::Range;
 /// Details for the Objects Memory location within the Vertex Buffer and Index Buffers.
 /// This is used to deturmine if the buffers location has changed or not for
 /// reuploading the buffer.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct IndexDetails {
     /// Start location of the Index Buffer.
     pub indices_start: u32,
