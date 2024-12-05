@@ -156,8 +156,8 @@ fn flip_rotation_mat4(flip_style: u32, angle: f32, pos: vec2<f32>, hw: vec2<f32>
     let flip = flip_mat4(flip_style);
     let rotation = quat_to_rotation_mat4(quat_from_rotation_z(angle));
     let scale_mat = mat4x4<f32> (
-                vec4<f32>(global.scale, 0.0, 0.0, 0.0),
-                vec4<f32>(0.0, global.scale, 0.0, 0.0),
+                vec4<f32>(scale, 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, scale, 0.0, 0.0),
                 vec4<f32>(0.0, 0.0, 1.0, 0.0),
                 vec4<f32>(0.0, 0.0, 0.0, 1.0),
             );
