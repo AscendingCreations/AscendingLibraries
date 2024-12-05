@@ -247,6 +247,23 @@ fn vertex(
     return result;
 }
 
+//sets the color to transparent if the position exceeds the textures location.
+fn fragment_position_clip(color: vec4<f32>, coords: vec2<f32>, tex_data: vec4<f32>, size: vec2<f32>) -> vec4<f32>
+{
+    let frag_xy_limit = tex_data.xy / size;
+    let frag_wh_limit = tex_data.zw / size;
+    let default_color = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+
+    return select(
+        default_color,
+        color, 
+        coords.x < frag_xy_limit.x || 
+        coords.x > frag_wh_limit.x || 
+        coords.y < frag_xy_limit.y || 
+        coords.y > frag_wh_limit.y
+    );
+}
+
 // Fragment shader
 @fragment
 fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
@@ -263,15 +280,20 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
     let corner = floor(tex_pixel) + 1.0;
     let frac = min((corner - tex_pixel) * vec2<f32>(2.0, 2.0), vec2<f32>(1.0, 1.0));
 
-    var c1 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, 0.0)) + 0.5) / vertex.size, vertex.layer, 1.0);
-    var c2 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(step.x, 0.0)) + 0.5) / vertex.size, vertex.layer, 1.0);
-    var c3 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, step.y)) + 0.5) / vertex.size, vertex.layer, 1.0);
-    var c4 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + step.xy) + 0.5) / vertex.size, vertex.layer, 1.0);
+    let c1_pos = (floor(tex_pixel + vec2<f32>(0.0, 0.0)) + 0.5) / vertex.size;
+    let c2_pos = (floor(tex_pixel + vec2<f32>(step.x, 0.0)) + 0.5) / vertex.size;
+    let c3_pos = (floor(tex_pixel + vec2<f32>(0.0, step.y)) + 0.5) / vertex.size;
+    let c4_pos = (floor(tex_pixel + step.xy) + 0.5) / vertex.size;
 
-    c1 = c1 * (frac.x * frac.y);
-    c2 = c2 *((1.0 - frac.x) * frac.y);
-    c3 = c3 * (frac.x * (1.0 - frac.y));
-    c4 = c4 *((1.0 - frac.x) * (1.0 - frac.y));
+    var c1 = textureSampleLevel(tex, tex_sample ,c1_pos, vertex.layer, 1.0);
+    var c2 = textureSampleLevel(tex, tex_sample, c2_pos, vertex.layer, 1.0);
+    var c3 = textureSampleLevel(tex, tex_sample, c3_pos, vertex.layer, 1.0);
+    var c4 = textureSampleLevel(tex, tex_sample, c4_pos, vertex.layer, 1.0);
+
+    c1 = fragment_position_clip(c1 * (frac.x * frac.y), c1_pos, vertex.tex_data, vertex.size);
+    c2 = fragment_position_clip(c2 *((1.0 - frac.x) * frac.y), c2_pos, vertex.tex_data, vertex.size);
+    c3 = fragment_position_clip(c3 * (frac.x * (1.0 - frac.y)), c3_pos, vertex.tex_data, vertex.size);
+    c4 = fragment_position_clip(c4 *((1.0 - frac.x) * (1.0 - frac.y)), c4_pos, vertex.tex_data, vertex.size);
 
     let object_color = (c1 + c2 + c3 + c4) * vertex.col;
 
