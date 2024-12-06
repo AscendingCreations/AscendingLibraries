@@ -251,23 +251,43 @@ fn vertex(
 fn fragment_position_clip(color: vec4<f32>, sample_coords: vec2<f32>, tex_data: vec4<f32>, size: vec2<f32>, animate: u32, frames: vec2<u32>) -> vec4<f32>
 {
     let frag_xy_limit = tex_data.xy / size;
-    let width = select((tex_data.x + tex_data.z) / size.x, ((tex_data.z * f32(frames[0])) + tex_data.x) / size.x, frames[0] > 0u && animate > 0u);
-    let height = select((tex_data.y + tex_data.w) / size.y, ((tex_data.w * f32(frames[1])) + tex_data.y) / size.y, frames[1] > 0u && animate > 0u);
+    let width = select((tex_data.x + tex_data.z), ((tex_data.z * f32(frames[0])) + tex_data.x), frames[0] > 0u && animate > 0u);
+    let height = select((tex_data.y + tex_data.w), ((tex_data.w * f32(frames[1])) + tex_data.y), frames[1] > 0u && animate > 0u);
+    let wh = vec2<f32>(width, height) / size;
     let default_color = vec4<f32>(0.0, 0.0, 0.0, 0.0);
 
     return select(
         color,
         default_color,
         sample_coords.x < frag_xy_limit.x ||
-        sample_coords.x > width ||
+        sample_coords.x > wh.x ||
         sample_coords.y < frag_xy_limit.y ||
-        sample_coords.y > height
+        sample_coords.y > wh.y
     );
 }
 
 // Fragment shader
 @fragment
 fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
+    let id = global.seconds / (f32(vertex.time) / 1000.0);
+    let yframes = select(vertex.frames[0], vertex.frames[1], vertex.frames[1] > 0u);
+    let frame = u32(floor(id % f32(vertex.frames[0])));
+    let coords = select(
+        (vertex.tex_data.xy + vertex.tex_coords.xy), 
+        (((vec2(f32(frame % yframes), f32(frame / yframes))) * vertex.tex_data.zw) + vertex.tex_data.xy + vertex.tex_coords.xy), 
+        vertex.animate > 0u
+    );
+
+    let object_color = textureSampleLevel(tex, tex_sample ,coords / vertex.size, vertex.layer, 1.0) * vertex.col;
+
+    if (object_color.a <= 0.0) {
+        discard;
+    }
+
+    return object_color;
+}
+
+/*fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
     let id = global.seconds / (f32(vertex.time) / 1000.0);
     let yframes = select(vertex.frames[0], vertex.frames[1], vertex.frames[1] > 0u);
     let frame = u32(floor(id % f32(vertex.frames[0])));
@@ -303,4 +323,4 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
     }
 
     return object_color;
-}
+}*/
