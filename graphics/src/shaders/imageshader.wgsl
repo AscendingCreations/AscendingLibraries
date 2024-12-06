@@ -201,8 +201,7 @@ fn vertex(
         }
         case 2u: {
             result.tex_coords = vec2<f32>(tex_data[2], 0.0);
-            pos.x += vertex.hw.x;
-            pos.y += vertex.hw.y;
+            pos += vertex.hw;
         }
         case 3u: {
             result.tex_coords = vec2<f32>(0.0, 0.0);
@@ -245,25 +244,6 @@ fn vertex(
     result.animate = vertex.animate;
     result.time = vertex.time;
     return result;
-}
-
-//sets the color to transparent if the position exceeds the textures location.
-fn fragment_position_clip(color: vec4<f32>, sample_coords: vec2<f32>, tex_data: vec4<f32>, size: vec2<f32>, animate: u32, frames: vec2<u32>) -> vec4<f32>
-{
-    let frag_xy_limit = tex_data.xy / size;
-    let width = select((tex_data.x + tex_data.z), ((tex_data.z * f32(frames[0])) + tex_data.x), frames[0] > 0u && animate > 0u);
-    let height = select((tex_data.y + tex_data.w), ((tex_data.w * f32(frames[1])) + tex_data.y), frames[1] > 0u && animate > 0u);
-    let wh = vec2<f32>(width, height) / size;
-    let default_color = vec4<f32>(0.0, 0.0, 0.0, 0.0);
-
-    return select(
-        color,
-        default_color,
-        sample_coords.x < frag_xy_limit.x ||
-        sample_coords.x > wh.x ||
-        sample_coords.y < frag_xy_limit.y ||
-        sample_coords.y > wh.y
-    );
 }
 
 // Fragment shader
