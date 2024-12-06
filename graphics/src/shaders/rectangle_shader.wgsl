@@ -181,31 +181,13 @@ fn distance_alg(
 @fragment
 fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
     let coords = (vertex.container_data.xy + vertex.uv.xy) / vertex.tex_size;
-    let step = vec2<f32>(0.5, 0.5);
-    let tex_pixel = vertex.tex_size * coords - step.xy / 2.0;
-    let corner = floor(tex_pixel) + 1.0;
-    let frac = min((corner - tex_pixel) * vec2<f32>(2.0, 2.0), vec2<f32>(1.0, 1.0));
+
     let c1 = select(
         vec4<f32>(0.0), 
-        textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, 0.0)) + 0.5) / vertex.tex_size, vertex.layer, 1.0),
-        vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0
-    ) * (frac.x * frac.y);
-    let c2 = select(
-        vec4<f32>(0.0), 
-        textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(step.x, 0.0)) + 0.5) / vertex.tex_size, vertex.layer, 1.0), 
-        vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0
-    ) * ((1.0 - frac.x) * frac.y);
-    let c3 = select(
-        vec4<f32>(0.0), 
-        textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, step.y)) + 0.5) / vertex.tex_size, vertex.layer, 1.0), 
-        vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0
-    ) * (frac.x * (1.0 - frac.y));
-    let c4 = select(
-        vec4<f32>(0.0), 
-        textureSampleLevel(tex, tex_sample, (floor(tex_pixel + step.xy) + 0.5) / vertex.tex_size, vertex.layer, 1.0), 
-        vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0
-    ) * ((1.0 - frac.x) * (1.0 - frac.y));
-    let container_color = select(vertex.color, (c1 + c2 + c3 + c4) * vertex.color, vertex.container_data[2] > 0.0 || vertex.container_data[3] > 0.0);
+        textureSampleLevel(tex, tex_sample, coords, vertex.layer, 1.0),
+        vertex.container_data[2] > 0.0 && vertex.container_data[3] > 0.0
+    );
+    let container_color = select(vertex.color, c1  * vertex.color, vertex.container_data[2] > 0.0 && vertex.container_data[3] > 0.0);
     let radius = vertex.radius;
     let clippy = vec2<f32>(vertex.clip_position.x, global.size.y - vertex.clip_position.y);
     let border: f32 = max(radius - vertex.border_width, 0.0);
