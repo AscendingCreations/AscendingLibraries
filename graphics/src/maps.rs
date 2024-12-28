@@ -259,12 +259,15 @@ impl Map {
         let tilepos = (pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize;
         let current_tile = self.tiles[tilepos];
 
-        if (current_tile.id > 0 || current_tile.color.a() > 0)
+        if (current_tile.id > 0 && current_tile.color.a() > 0)
             && (tile.color.a() == 0 || tile.id == 0)
         {
             self.filled_tiles[pos.2 as usize] =
                 self.filled_tiles[pos.2 as usize].saturating_sub(1);
-        } else if tile.color.a() > 0 || tile.id > 0 {
+        } else if tile.color.a() > 0
+            && tile.id > 0
+            && (current_tile.id == 0 || current_tile.color.a() == 0)
+        {
             self.filled_tiles[pos.2 as usize] =
                 self.filled_tiles[pos.2 as usize].saturating_add(1);
         }
