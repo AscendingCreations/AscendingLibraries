@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.17.0 (6. December, 2024)
+### Fixed
+- (Breaking) Image and UI shader removes Anti Aliasing from shader. since this does cause rendering output we are making this a breaking change.
+  we will now limit Zoom ranges for Camera within 0.5 number changes. if you try 1.3 for example it will render incorrectly hence the breaking change.
+
 ## 0.16.1 (5. December, 2024)
 ### Fixed
 - Image Shader now uses the scale instead of global scale within flip_rotation_mat4 fixing a improper scaling issue where every image would scale to the control zoom even if not set to use it.

@@ -201,8 +201,7 @@ fn vertex(
         }
         case 2u: {
             result.tex_coords = vec2<f32>(tex_data[2], 0.0);
-            pos.x += vertex.hw.x;
-            pos.y += vertex.hw.y;
+            pos += vertex.hw;
         }
         case 3u: {
             result.tex_coords = vec2<f32>(0.0, 0.0);
@@ -254,26 +253,12 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
     let yframes = select(vertex.frames[0], vertex.frames[1], vertex.frames[1] > 0u);
     let frame = u32(floor(id % f32(vertex.frames[0])));
     let coords = select(
-        (vertex.tex_data.xy + vertex.tex_coords.xy) / vertex.size, 
-        (((vec2(f32(frame % yframes), f32(frame / yframes))) * vertex.tex_data.zw) + vertex.tex_data.xy + vertex.tex_coords.xy) / vertex.size, 
+        (vertex.tex_data.xy + vertex.tex_coords.xy), 
+        (((vec2(f32(frame % yframes), f32(frame / yframes))) * vertex.tex_data.zw) + vertex.tex_data.xy + vertex.tex_coords.xy), 
         vertex.animate > 0u
     );
-    let step = vec2<f32>(0.5, 0.5);
-    let tex_pixel = vertex.size * coords - step.xy / 2.0;
-    let corner = floor(tex_pixel) + 1.0;
-    let frac = min((corner - tex_pixel) * vec2<f32>(2.0, 2.0), vec2<f32>(1.0, 1.0));
 
-    var c1 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, 0.0)) + 0.5) / vertex.size, vertex.layer, 1.0);
-    var c2 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(step.x, 0.0)) + 0.5) / vertex.size, vertex.layer, 1.0);
-    var c3 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + vec2<f32>(0.0, step.y)) + 0.5) / vertex.size, vertex.layer, 1.0);
-    var c4 = textureSampleLevel(tex, tex_sample, (floor(tex_pixel + step.xy) + 0.5) / vertex.size, vertex.layer, 1.0);
-
-    c1 = c1 * (frac.x * frac.y);
-    c2 = c2 *((1.0 - frac.x) * frac.y);
-    c3 = c3 * (frac.x * (1.0 - frac.y));
-    c4 = c4 *((1.0 - frac.x) * (1.0 - frac.y));
-
-    let object_color = (c1 + c2 + c3 + c4) * vertex.col;
+    let object_color = textureSampleLevel(tex, tex_sample ,coords / vertex.size, vertex.layer, 1.0) * vertex.col;
 
     if (object_color.a <= 0.0) {
         discard;
