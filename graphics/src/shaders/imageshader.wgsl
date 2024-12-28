@@ -201,7 +201,8 @@ fn vertex(
         }
         case 2u: {
             result.tex_coords = vec2<f32>(tex_data[2], 0.0);
-            pos += vertex.hw;
+            pos.x += vertex.hw.x;
+            pos.y += vertex.hw.y;
         }
         case 3u: {
             result.tex_coords = vec2<f32>(0.0, 0.0);
