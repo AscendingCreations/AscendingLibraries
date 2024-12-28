@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.17.1 (28. December, 2024)
+### Fixed
+- Map tile set fill counter being incorrect when inserting or clearing.
+
 ## 0.17.0 (6. December, 2024)
 ### Fixed
 - (Breaking) Image and UI shader removes Anti Aliasing from shader. since this does cause rendering output we are making this a breaking change.
