@@ -314,6 +314,14 @@ where
         }
     }
 
+    pub fn set_click_duration(&mut self, click_duration: Duration) {
+        self.click_duration = click_duration;
+    }
+
+    pub fn get_click_duration(&mut self) -> Duration {
+        self.click_duration
+    }
+
     ///Update the Input Handler based upon the windows events.
     pub fn window_updates(
         &mut self,
