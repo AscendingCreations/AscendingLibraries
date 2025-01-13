@@ -27,6 +27,4 @@ pub enum Axis {
         limit: bool,
         radius: ordered_float::NotNan<f32>,
     },
-    /// The mouse wheel as an axis.
-    MouseWheel { axis: MouseAxis },
 }

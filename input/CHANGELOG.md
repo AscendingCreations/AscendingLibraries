@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.4.20 (13. Janurary, 2025)
+### Changed
+- (Breaking) Removed Mouse Position that was Calulated using hidpi. If you need this you can get it yourself by Position.x * HiDPI.
+- (Breaking) Pysical Mouse Position is now Mouse Position.
+- (Breaking) MouseWheel now returns Data.
+- (Breaking) MousePosition now returns Position.
+- (Breaking) Device Inputs are now Directly inserted into input_events.
+- (Breaking) input_events is now a VecDeque
+- (Breaking) events() now  returns a VecDeque<InputEvent> and Clears old Inputs.
+
+### Added
+- pop_event() to allow getting the next event in a timely fashion. Prefer this over events().
+
 ## 0.3.2 (9. Janurary, 2025)
 ### Added
 - Get and Set for Click Duration.

@@ -6,6 +6,7 @@ use super::{
 };
 use ahash::{AHashMap, AHashSet};
 use std::{
+    collections::VecDeque,
     hash::Hash,
     time::{Duration, Instant},
 };
@@ -27,6 +28,24 @@ pub enum MouseButtonAction {
 }
 
 impl MouseButtonAction {
+    pub fn contains(&self, button: MouseButton) -> bool {
+        match self {
+            MouseButtonAction::None => false,
+            MouseButtonAction::Single(btn) => button == *btn,
+            MouseButtonAction::Double(btn) => button == *btn,
+            MouseButtonAction::Triple(btn) => button == *btn,
+        }
+    }
+
+    pub fn is_some(&self) -> bool {
+        match self {
+            MouseButtonAction::None => false,
+            MouseButtonAction::Single(_)
+            | MouseButtonAction::Double(_)
+            | MouseButtonAction::Triple(_) => true,
+        }
+    }
+
     pub fn get_button(&self) -> Option<MouseButton> {
         match self {
             MouseButtonAction::None => None,
@@ -34,6 +53,23 @@ impl MouseButtonAction {
             MouseButtonAction::Double(button) => Some(*button),
             MouseButtonAction::Triple(button) => Some(*button),
         }
+    }
+
+    pub fn next(&mut self, button: MouseButton) {
+        *self = match self {
+            MouseButtonAction::None => MouseButtonAction::Single(button),
+            MouseButtonAction::Single(_) => MouseButtonAction::Double(button),
+            MouseButtonAction::Double(_) => MouseButtonAction::Triple(button),
+            MouseButtonAction::Triple(_) => MouseButtonAction::None,
+        };
+    }
+
+    pub fn set_single(&mut self, button: MouseButton) {
+        *self = MouseButtonAction::Single(button);
+    }
+
+    pub fn clear(&mut self) {
+        *self = MouseButtonAction::None;
     }
 }
 
@@ -51,13 +87,54 @@ pub enum InputEvent {
         location: Location,
         pressed: bool,
     },
-    MousePosition,
-    MouseWheel,
+    /// Returns Pysical Mouse Position.
+    MousePosition {
+        x: f64,
+        y: f64,
+    },
+    MouseWheel {
+        amount: f32,
+        axis: MouseAxis,
+    },
     WindowFocused(bool),
     Modifier {
         modifier: Modifier,
         pressed: bool,
     },
+}
+
+impl InputEvent {
+    pub fn mouse_button_action(action: MouseButtonAction) -> Self {
+        Self::MouseButtonAction(action)
+    }
+
+    pub fn mouse_button(button: MouseButton, pressed: bool) -> Self {
+        Self::MouseButton { button, pressed }
+    }
+
+    pub fn key_input(key: Key, location: Location, pressed: bool) -> Self {
+        Self::KeyInput {
+            key,
+            location,
+            pressed,
+        }
+    }
+
+    pub fn mouse_position(x: f64, y: f64) -> Self {
+        Self::MousePosition { x, y }
+    }
+
+    pub fn mouse_wheel(amount: f32, axis: MouseAxis) -> Self {
+        Self::MouseWheel { amount, axis }
+    }
+
+    pub fn window_focused(focused: bool) -> Self {
+        Self::WindowFocused(focused)
+    }
+
+    pub fn modifier(modifier: Modifier, pressed: bool) -> Self {
+        Self::Modifier { modifier, pressed }
+    }
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
@@ -84,16 +161,12 @@ where
     pub keys: AHashMap<Key, Location>,
     /// The set of mouse buttons that are currently pressed down.
     pub mouse_buttons: AHashSet<winit::event::MouseButton>,
-    /// The current mouse position.
-    pub physical_mouse_position: Option<PhysicalPosition<f64>>,
-    /// The current mouse position.
-    pub mouse_position: Option<(f32, f32)>,
-    /// The last recorded mouse position.
-    pub last_mouse_position: Option<(f32, f32)>,
+    /// The current pysical mouse position.
+    pub mouse_position: Option<(f64, f64)>,
+    /// The last recorded pysical mouse position.
+    pub last_mouse_position: Option<(f64, f64)>,
     /// The mouse delta, i.e. the relative mouse motion.
     pub mouse_delta: (f64, f64),
-    /// The current state of the mouse wheel.
-    pub mouse_wheel: (f32, f32),
     ///key modifiers can tell if left or right keys.
     pub modifiers: AHashSet<Modifier>,
     ///key modifiers state can not tell if left or right keys.
@@ -105,9 +178,7 @@ where
     /// If the window is focused or not.
     pub window_focused: bool,
     ///Input events gathered per the last Click. Will contain multiple events.
-    pub input_events: Vec<InputEvent>,
-    ///Input events gathered per the last device protocal. Gets added to input events near the end.
-    device_events: Vec<InputEvent>,
+    pub input_events: VecDeque<InputEvent>,
     ///Duration allowed between clicks.
     click_duration: Duration,
 }
@@ -117,7 +188,7 @@ where
     ActionId: Clone + Eq + Hash + Send + Sync,
     AxisId: Clone + Eq + Hash + Send + Sync,
 {
-    pub fn axis_value<A>(&self, id: &A) -> f32
+    pub fn axis_value<A>(&self, id: &A) -> f64
     where
         AxisId: std::borrow::Borrow<A>,
         A: Hash + Eq + ?Sized,
@@ -197,7 +268,7 @@ where
     }
 
     ///returns a specific Axis Value based on buttons and Axis.
-    fn map_axis_value(&self, axis: &Axis) -> f32 {
+    fn map_axis_value(&self, axis: &Axis) -> f64 {
         match axis {
             Axis::Emulated { pos, neg, .. } => {
                 match (
@@ -225,10 +296,10 @@ where
                     MouseAxis::Vertical => last_position.1 - current_position.1,
                 };
 
-                let delta = delta / radius.into_inner();
+                let delta = delta / radius.into_inner() as f64;
 
                 if *limit {
-                    delta.clamp(-1.0, 1.0)
+                    delta.clamp(-1.0f64, 1.0f64)
                 } else {
                     delta
                 }
@@ -239,25 +310,19 @@ where
                 radius,
             } => {
                 let delta = match axis {
-                    MouseAxis::Horizontal => self.mouse_delta.0 as f32,
-                    MouseAxis::Vertical => self.mouse_delta.1 as f32,
+                    MouseAxis::Horizontal => self.mouse_delta.0,
+                    MouseAxis::Vertical => self.mouse_delta.1,
                 };
 
-                let delta = delta / radius.into_inner();
+                let delta = delta / radius.into_inner() as f64;
 
                 if *limit {
-                    delta.clamp(-1.0, 1.0)
+                    delta.clamp(-1.0f64, 1.0f64)
                 } else {
                     delta
                 }
             }
-            Axis::MouseWheel { axis } => self.mouse_wheel_value(*axis),
         }
-    }
-
-    ///Get the mouses current position.
-    pub fn mouse_position(&self) -> Option<(f32, f32)> {
-        self.mouse_position
     }
 
     ///Get the modifier state.
@@ -267,23 +332,22 @@ where
         self.modifiers_state
     }
 
-    ///Get the current events that where last processed during update.
-    pub fn events(&self) -> &[InputEvent] {
-        &self.input_events
+    ///Get the current events that where last processed during update. Clears the internal event array.
+    pub fn events(&mut self) -> VecDeque<InputEvent> {
+        let events = self.input_events.clone();
+        self.input_events.clear();
+        events
+    }
+
+    ///Get the next pending event. Returns None when empty.
+    pub fn pop_event(&mut self) -> Option<InputEvent> {
+        self.input_events.pop_front()
     }
 
     ///Get Physical mouse position.
     /// This value is a f64 and is not calculated against the DPI.
-    pub fn physical_mouse_position(&self) -> Option<PhysicalPosition<f64>> {
-        self.physical_mouse_position
-    }
-
-    ///Get mouse wheel position based on MouseAxis.
-    pub fn mouse_wheel_value(&self, axis: MouseAxis) -> f32 {
-        match axis {
-            MouseAxis::Horizontal => self.mouse_wheel.0,
-            MouseAxis::Vertical => self.mouse_wheel.1,
-        }
+    pub fn physical_mouse_position(&self) -> Option<(f64, f64)> {
+        self.mouse_position
     }
 
     ///Initialize the Input Handler.
@@ -298,18 +362,15 @@ where
             bindings,
             keys: AHashMap::new(),
             mouse_buttons: AHashSet::new(),
-            physical_mouse_position: None,
             mouse_position: None,
             last_mouse_position: None,
             mouse_delta: (0.0, 0.0),
-            mouse_wheel: (0.0, 0.0),
             modifiers: AHashSet::new(),
             modifiers_state: ModifiersState::default(),
             mouse_button_action: MouseButtonAction::None,
             mouse_action_timer: Instant::now(),
             window_focused: true,
-            input_events: Vec::with_capacity(4),
-            device_events: Vec::with_capacity(4),
+            input_events: VecDeque::with_capacity(12),
             click_duration,
         }
     }
@@ -323,31 +384,21 @@ where
     }
 
     ///Update the Input Handler based upon the windows events.
-    pub fn window_updates(
-        &mut self,
-        window: &Window,
-        event: &WindowEvent,
-        hidpi: f32,
-    ) {
+    pub fn window_updates(&mut self, window: &Window, event: &WindowEvent) {
         let mut button_action = None;
 
         //We clear and reset everything here.
         self.last_mouse_position = self.mouse_position;
-        self.input_events.clear();
-
-        if !self.device_events.is_empty() {
-            self.input_events.append(&mut self.device_events);
-        }
-
         let timer = Instant::now();
 
         if self.mouse_action_timer <= timer
-            && self.mouse_button_action != MouseButtonAction::None
+            && self.mouse_button_action.is_some()
         {
-            self.input_events
-                .push(InputEvent::MouseButtonAction(self.mouse_button_action));
+            self.input_events.push_back(InputEvent::mouse_button_action(
+                self.mouse_button_action,
+            ));
             button_action = self.mouse_button_action.get_button();
-            self.mouse_button_action = MouseButtonAction::None;
+            self.mouse_button_action.clear();
         }
 
         //we enforce it to loop more often to allow for better latency on input returns.
@@ -410,100 +461,64 @@ where
                 };
 
                 if *state == ElementState::Pressed {
-                    self.input_events.push(InputEvent::KeyInput {
-                        key,
-                        location: *location,
-                        pressed: true,
-                    });
+                    self.input_events
+                        .push_back(InputEvent::key_input(key, *location, true));
                     self.keys.insert(key, *location);
-                } else {
-                    if self.keys.contains_key(&key) {
-                        self.input_events.push(InputEvent::KeyInput {
-                            key,
-                            location: *location,
-                            pressed: false,
-                        })
-                    }
-                    self.keys.remove(&key);
+                } else if self.keys.remove(&key).is_some() {
+                    self.input_events.push_back(InputEvent::key_input(
+                        key, *location, false,
+                    ));
                 }
             }
             WindowEvent::MouseInput { state, button, .. } => {
                 if *state == ElementState::Pressed {
                     self.mouse_buttons.insert(*button);
-                    self.input_events.push(InputEvent::MouseButton {
-                        button: *button,
-                        pressed: true,
-                    });
+                    self.input_events.push_back(InputEvent::mouse_button(*button,true));
 
                     if button_action != Some(*button) {
-                        match self.mouse_button_action {
-                            MouseButtonAction::None => {
-                                self.mouse_button_action =
-                                    MouseButtonAction::Single(*button);
-                                self.mouse_action_timer =
-                                    timer + self.click_duration;
+                        if !self.mouse_button_action.contains(*button) {
+                            if self.mouse_button_action.is_some() {
+                                self.input_events.push_back(
+                                    InputEvent::mouse_button_action(
+                                        self.mouse_button_action,
+                                    ),
+                                );
                             }
-                            MouseButtonAction::Single(btn) => {
-                                if btn == *button {
-                                    self.mouse_button_action =
-                                        MouseButtonAction::Double(btn);
-                                    self.mouse_action_timer =
-                                        timer + self.click_duration;
-                                } else {
-                                    self.input_events.push(
-                                        InputEvent::MouseButtonAction(
+
+                            self.mouse_button_action.set_single(*button);
+                        } else {
+                            match self.mouse_button_action {
+                                MouseButtonAction::None
+                                | MouseButtonAction::Triple(_)
+                                | MouseButtonAction::Single(_) => {
+                                    self.mouse_button_action.next(*button)
+                                }
+                                MouseButtonAction::Double(_) => {
+                                    self.mouse_button_action.next(*button);
+                                    self.input_events.push_back(
+                                        InputEvent::mouse_button_action(
                                             self.mouse_button_action,
                                         ),
                                     );
-                                    self.mouse_button_action =
-                                        MouseButtonAction::Single(*button);
-                                    self.mouse_action_timer =
-                                        timer + self.click_duration;
+                                    self.mouse_button_action.clear();
                                 }
                             }
-                            MouseButtonAction::Double(btn) => {
-                                if btn == *button {
-                                    self.mouse_button_action =
-                                        MouseButtonAction::None;
-                                    self.input_events.push(
-                                        InputEvent::MouseButtonAction(
-                                            MouseButtonAction::Triple(btn),
-                                        ),
-                                    );
-                                } else {
-                                    self.input_events.push(
-                                        InputEvent::MouseButtonAction(
-                                            self.mouse_button_action,
-                                        ),
-                                    );
-                                    self.mouse_button_action =
-                                        MouseButtonAction::Single(*button);
-                                    self.mouse_action_timer =
-                                        timer + self.click_duration;
-                                }
-                            }
-                            MouseButtonAction::Triple(_) => {}
                         }
+
+                        self.mouse_action_timer = timer + self.click_duration;
                     }
-                } else {
-                    if self.mouse_buttons.contains(button) {
-                        self.input_events.push(InputEvent::MouseButton {
-                            button: *button,
-                            pressed: false,
-                        });
-                    }
-                    self.mouse_buttons.remove(button);
+                } else if self.mouse_buttons.remove(button) {
+                    self.input_events
+                        .push_back(InputEvent::mouse_button(*button, false));
                 }
             }
             WindowEvent::CursorMoved {
                 position: PhysicalPosition { x, y },
                 ..
             } => {
-                self.input_events.push(InputEvent::MousePosition);
-                self.physical_mouse_position =
-                    Some(PhysicalPosition { x: *x, y: *y });
-                self.mouse_position =
-                    Some(((*x as f32) * hidpi, (*y as f32) * hidpi));
+                self.input_events
+                    .push_back(InputEvent::mouse_position(*x, *y));
+                self.mouse_position = Some((*x, *y));
             }
             WindowEvent::Focused(b) => {
                 if !b {
@@ -511,7 +526,7 @@ where
                     self.mouse_buttons.clear();
                 }
 
-                self.input_events.push(InputEvent::WindowFocused(*b));
+                self.input_events.push_back(InputEvent::window_focused(*b));
                 self.window_focused = *b;
             }
             WindowEvent::ModifiersChanged(new_modifiers) => {
@@ -528,21 +543,39 @@ where
                     (new_modifiers.rsuper_state(), Modifier::RSuper),
                 ] {
                     if state == ModifiersKeyState::Pressed {
-                        self.input_events.push(InputEvent::Modifier {
-                            modifier,
-                            pressed: true,
-                        });
+                        self.input_events
+                            .push_back(InputEvent::modifier(modifier, true));
                         self.modifiers.insert(modifier);
-                    } else {
-                        if self.modifiers.contains(&modifier) {
-                            self.input_events.push(InputEvent::Modifier {
-                                modifier,
-                                pressed: false,
-                            });
-                        }
-
-                        self.modifiers.remove(&modifier);
+                    } else if self.modifiers.remove(&modifier) {
+                        self.input_events
+                            .push_back(InputEvent::modifier(modifier, false));
                     }
+                }
+            }
+            WindowEvent::MouseWheel {
+                device_id: _,
+                delta,
+                phase: _,
+            } => {
+                let (x, y) = match delta {
+                    MouseScrollDelta::LineDelta(dx, dy) => {
+                        (dx.signum(), dy.signum())
+                    }
+                    MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }) => {
+                        (x.signum() as f32, y.signum() as f32)
+                    }
+                };
+
+                if x != 0.0 {
+                    self.input_events.push_back(InputEvent::mouse_wheel(
+                        x,
+                        MouseAxis::Horizontal,
+                    ));
+                } else if y != 0.0 {
+                    self.input_events.push_back(InputEvent::mouse_wheel(
+                        y,
+                        MouseAxis::Vertical,
+                    ));
                 }
             }
             _ => (),
@@ -550,15 +583,12 @@ where
     }
 
     pub fn device_updates(&mut self, window: &Window, event: &DeviceEvent) {
-        let mut event_redraw = false;
         //We clear and reset everything here.
         self.mouse_delta = (0.0, 0.0);
-        self.mouse_wheel = (0.0, 0.0);
-        self.device_events.clear();
 
         //we enforce it to loop more often to allow for better latency on input returns.
         if self.mouse_button_action != MouseButtonAction::None {
-            event_redraw = true;
+            window.request_redraw();
         }
 
         match event {
@@ -566,39 +596,31 @@ where
                 self.mouse_delta.0 -= delta.0;
                 self.mouse_delta.1 -= delta.1;
             }
-            DeviceEvent::MouseWheel {
-                delta: MouseScrollDelta::LineDelta(dx, dy),
-            } => {
-                if *dx != 0.0 {
-                    self.mouse_wheel.0 = dx.signum();
+            DeviceEvent::MouseWheel { delta } => {
+                let (x, y) = match delta {
+                    MouseScrollDelta::LineDelta(dx, dy) => {
+                        (dx.signum(), dy.signum())
+                    }
+                    MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }) => {
+                        (x.signum() as f32, y.signum() as f32)
+                    }
+                };
+
+                if x != 0.0 {
+                    self.input_events.push_back(InputEvent::mouse_wheel(
+                        x,
+                        MouseAxis::Horizontal,
+                    ));
+                } else if y != 0.0 {
+                    self.input_events.push_back(InputEvent::mouse_wheel(
+                        y,
+                        MouseAxis::Vertical,
+                    ));
                 }
 
-                if *dy != 0.0 {
-                    self.mouse_wheel.1 = dy.signum();
-                }
-
-                self.device_events.push(InputEvent::MouseWheel);
-                event_redraw = true;
-            }
-            DeviceEvent::MouseWheel {
-                delta: MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }),
-            } => {
-                if *x != 0.0 {
-                    self.mouse_wheel.0 = x.signum() as f32;
-                }
-
-                if *y != 0.0 {
-                    self.mouse_wheel.1 = y.signum() as f32;
-                }
-
-                self.device_events.push(InputEvent::MouseWheel);
-                event_redraw = true;
+                window.request_redraw();
             }
             _ => (),
-        }
-
-        if event_redraw {
-            window.request_redraw();
         }
     }
 }
