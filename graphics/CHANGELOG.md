@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+## 0.18.0 (13. Janurary, 2025)
+### Changed
+- (Breaking) Updated Ascending_input to v0.4.0
 
 ## 0.17.2 (28. December, 2024)
 ### Fixed
