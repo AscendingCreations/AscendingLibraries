@@ -30,7 +30,7 @@ version = "0.5.0"
 [workspace.dependencies.input]
 package = "ascending_input" 
 path = "./input"
-version = "0.3.0"
+version = "0.4.0"
 
 [workspace.dependencies.naga]
 #git = "https://github.com/gfx-rs/naga"
