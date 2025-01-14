@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
-## 0.4.20 (13. Janurary, 2025)
+## 0.4.1 (14. Janurary, 2025)
+### Fixed
+- Mouse Scroll Returning only 1 no matter what.
+
+### Changed
+- Device Events now only Trigger a Rerender other than MouseMotion which handles mouse delta and a trigger for render.
+
+## 0.4.0 (13. Janurary, 2025)
 ### Changed
 - (Breaking) Removed Mouse Position that was Calulated using hidpi. If you need this you can get it yourself by Position.x * HiDPI.
 - (Breaking) Pysical Mouse Position is now Mouse Position.

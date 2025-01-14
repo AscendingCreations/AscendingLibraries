@@ -473,7 +473,8 @@ where
             WindowEvent::MouseInput { state, button, .. } => {
                 if *state == ElementState::Pressed {
                     self.mouse_buttons.insert(*button);
-                    self.input_events.push_back(InputEvent::mouse_button(*button,true));
+                    self.input_events
+                        .push_back(InputEvent::mouse_button(*button, true));
 
                     if button_action != Some(*button) {
                         if !self.mouse_button_action.contains(*button) {
@@ -558,22 +559,22 @@ where
                 phase: _,
             } => {
                 let (x, y) = match delta {
-                    MouseScrollDelta::LineDelta(dx, dy) => {
-                        (dx.signum(), dy.signum())
-                    }
+                    MouseScrollDelta::LineDelta(dx, dy) => (*dx, *dy),
                     MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }) => {
-                        (x.signum() as f32, y.signum() as f32)
+                        (*x as f32, *y as f32)
                     }
                 };
 
                 if x != 0.0 {
                     self.input_events.push_back(InputEvent::mouse_wheel(
-                        x,
+                        x.signum(),
                         MouseAxis::Horizontal,
                     ));
-                } else if y != 0.0 {
+                }
+
+                if y != 0.0 {
                     self.input_events.push_back(InputEvent::mouse_wheel(
-                        y,
+                        y.signum(),
                         MouseAxis::Vertical,
                     ));
                 }
@@ -595,31 +596,15 @@ where
             DeviceEvent::MouseMotion { delta } => {
                 self.mouse_delta.0 -= delta.0;
                 self.mouse_delta.1 -= delta.1;
-            }
-            DeviceEvent::MouseWheel { delta } => {
-                let (x, y) = match delta {
-                    MouseScrollDelta::LineDelta(dx, dy) => {
-                        (dx.signum(), dy.signum())
-                    }
-                    MouseScrollDelta::PixelDelta(PhysicalPosition { x, y }) => {
-                        (x.signum() as f32, y.signum() as f32)
-                    }
-                };
-
-                if x != 0.0 {
-                    self.input_events.push_back(InputEvent::mouse_wheel(
-                        x,
-                        MouseAxis::Horizontal,
-                    ));
-                } else if y != 0.0 {
-                    self.input_events.push_back(InputEvent::mouse_wheel(
-                        y,
-                        MouseAxis::Vertical,
-                    ));
-                }
-
                 window.request_redraw();
             }
+            DeviceEvent::Motion { axis: _, value: _ }
+            | DeviceEvent::MouseWheel { delta: _ }
+            | DeviceEvent::Button {
+                button: _,
+                state: _,
+            }
+            | DeviceEvent::Key(_) => window.request_redraw(),
             _ => (),
         }
     }
