@@ -124,7 +124,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         let o_layer = old_allocation.layer;
 
         encoder.copy_texture_to_texture(
-            wgpu::ImageCopyTextureBase {
+            wgpu::TexelCopyTextureInfo {
                 texture: &self.texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d {
@@ -134,7 +134,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 },
                 aspect: wgpu::TextureAspect::All,
             },
-            wgpu::ImageCopyTextureBase {
+            wgpu::TexelCopyTextureInfo {
                 texture: &self.texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d {

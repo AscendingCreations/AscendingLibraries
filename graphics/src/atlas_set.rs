@@ -5,7 +5,7 @@ use crate::{
 use lru::LruCache;
 use slab::Slab;
 use std::{hash::Hash, rc::Rc};
-use wgpu::{BindGroup, BindGroupLayout};
+use wgpu::{BindGroup, BindGroupLayout, TextureUsages};
 
 mod allocation;
 mod allocator;
@@ -207,13 +207,13 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             };
 
             encoder.copy_texture_to_texture(
-                wgpu::ImageCopyTextureBase {
+                wgpu::TexelCopyTextureInfo {
                     texture: &self.texture,
                     mip_level: 0,
                     origin,
                     aspect: wgpu::TextureAspect::All,
                 },
-                wgpu::ImageCopyTextureBase {
+                wgpu::TexelCopyTextureInfo {
                     texture: &texture,
                     mip_level: 0,
                     origin,
@@ -238,6 +238,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 mip_level_count: Some(1),
                 base_array_layer: 0,
                 array_layer_count: Some(self.layers.len() as u32),
+                usage: Some(TextureUsages::all()),
             });
         let atlas_layout: Rc<BindGroupLayout> = renderer
             .get_layout(TextureLayout)
@@ -296,6 +297,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             mip_level_count: Some(1),
             base_array_layer: 0,
             array_layer_count: Some(1),
+            usage: Some(TextureUsages::all()),
         });
 
         let atlas_layout: Rc<BindGroupLayout> =
@@ -340,7 +342,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         let layer = allocation.layer;
 
         renderer.queue().write_texture(
-            wgpu::ImageCopyTexture {
+            wgpu::TexelCopyTextureInfo {
                 texture: &self.texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d {
@@ -351,7 +353,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 aspect: wgpu::TextureAspect::All,
             },
             buffer,
-            wgpu::ImageDataLayout {
+            wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(
                     if self.format == wgpu::TextureFormat::Rgba8UnormSrgb {
