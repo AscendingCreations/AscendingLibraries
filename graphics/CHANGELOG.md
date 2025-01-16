@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
+
+## 0.19.0 (16. Janurary, 2025)
+### Changed
+- (Breaking) Updated WGPU v24.0.0
+
 ## 0.18.0 (13. Janurary, 2025)
 ### Changed
 - (Breaking) Updated Ascending_input to v0.4.0
