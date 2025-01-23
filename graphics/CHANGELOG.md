@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.19.1 (23. Janurary, 2025)
+### Fixed
+- Other Adapter was Ignored which is used by OpenGL contexts. It now will work correctly.
+
 ## 0.19.0 (16. Janurary, 2025)
 ### Changed
 - (Breaking) Updated WGPU v24.0.0
