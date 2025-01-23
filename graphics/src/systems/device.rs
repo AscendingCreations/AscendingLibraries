@@ -1,6 +1,6 @@
 use crate::{GpuRenderer, GraphicsError};
 use async_trait::async_trait;
-use log::{debug, info};
+use log::debug;
 use std::{path::Path, sync::Arc};
 use wgpu::{
     core::instance::RequestAdapterError, Adapter, Backend, Backends,
@@ -349,23 +349,15 @@ impl InstanceExt for wgpu::Instance {
                 continue;
             }
 
+            let is_low = options.power == AdapterPowerSettings::LowPower;
             let device_type = match information.device_type {
-                DeviceType::IntegratedGpu => {
-                    if options.power == AdapterPowerSettings::LowPower {
-                        1
-                    } else {
-                        2
-                    }
-                }
-                DeviceType::DiscreteGpu => {
-                    if options.power == AdapterPowerSettings::LowPower {
-                        2
-                    } else {
-                        1
-                    }
-                }
-                DeviceType::VirtualGpu | DeviceType::Cpu => 3,
-                _ => continue,
+                DeviceType::IntegratedGpu if is_low => 1,
+                DeviceType::IntegratedGpu => 2,
+                DeviceType::DiscreteGpu if is_low => 2,
+                DeviceType::DiscreteGpu => 1,
+                DeviceType::Other => 3,
+                DeviceType::VirtualGpu => 4,
+                DeviceType::Cpu => 5,
             };
 
             if let Some(ref surface) = options.compatible_surface {
@@ -375,6 +367,10 @@ impl InstanceExt for wgpu::Instance {
             }
 
             compatible_adapters.push((adapter, device_type));
+        }
+
+        if compatible_adapters.is_empty() {
+            debug!("Unable to find compatible adapters.\nEnsure the backends are set and not Empty.")
         }
 
         compatible_adapters.sort_by(|a, b| b.1.cmp(&a.1));
@@ -404,11 +400,13 @@ impl InstanceExt for wgpu::Instance {
                 .await;
 
             if ret.is_ok() {
-                if adapter.1 == 3 {
-                    info!(
-                        "A virtual or software rendering Driver was choosen."
-                    );
+                match adapter.1 {
+                    3 => debug!("A Opengl Or Other Adapter was chosen"),
+                    4 => debug!("A Virtual Adapter was chosen."),
+                    5 => debug!("A Software rendering Adapter was chosen."),
+                    _ => {}
                 }
+
                 return ret;
             }
         }
