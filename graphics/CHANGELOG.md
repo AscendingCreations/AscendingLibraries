@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.19.2 (10. February, 2025)
+
+### Added
+- Added create_buffer_with functions for IBO and VBO to precreate with a Set size for faster first runs.
+
+### Changed
+- VBO and IBO both use BinaryHeap instead of Sorted Vec.
+
 ## 0.19.1 (23. Janurary, 2025)
 ### Fixed
 - Other Adapter was Ignored which is used by OpenGL contexts. It now will work correctly.
