@@ -13,7 +13,7 @@ serde = { version = "1.0.215", features = ["derive"] }
 log = "0.4.22"
 cosmic-text = { version = "0.12.1", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
 ordered-float = { version = "4.6.0", features = ["serde"] }
-lru = "0.12.5"
+lru = "0.13.0"
 glam = { version = "0.29.2", features = ["bytemuck", "mint"] }
 lyon = "1.0.1"
 smol_str = "0.3.2"

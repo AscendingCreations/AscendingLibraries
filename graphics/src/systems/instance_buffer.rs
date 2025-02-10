@@ -3,6 +3,7 @@ use crate::{
     OrderedIndex,
 };
 use std::ops::Range;
+use std::collections::BinaryHeap;
 
 /// Details for the Objects Memory location within the instance Buffer.
 /// This is used to deturmine if the buffers location has changed or not for
@@ -22,7 +23,7 @@ pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>, CameraType);
 /// of GPU uploads we make.
 pub struct InstanceBuffer<K: BufferLayout> {
     /// Unprocessed Buffer Data.
-    pub unprocessed: Vec<Vec<OrderedIndex>>,
+    pub unprocessed: Vec<BinaryHeap<OrderedIndex>>,
     /// Buffers ready to Render
     pub buffers: Vec<Option<InstanceDetails>>,
     /// Clipped Buffers ready to Render.
@@ -83,15 +84,13 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             let offset = buffer_layer.saturating_add(1);
 
             if self.unprocessed.len() < offset {
-                for i in self.unprocessed.len()..offset {
+                for _ in self.unprocessed.len()..offset {
                     //Push the buffer_layer. if this is a layer we are adding data too lets
                     //give it a starting size. this can be adjusted later for better performance
                     //versus ram usage.
-                    self.unprocessed.push(if i == buffer_layer {
-                        Vec::with_capacity(self.layer_size)
-                    } else {
-                        Vec::new()
-                    });
+                    self.unprocessed.push(
+                        BinaryHeap::with_capacity(self.layer_size)
+                    );
                 }
             }
 
@@ -147,9 +146,9 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         self.buffer.count = self.needed_size / K::stride();
         self.buffer.len = self.needed_size;
 
-        for processing in &mut self.unprocessed {
+        /*for processing in &mut self.unprocessed {
             processing.sort();
-        }
+        }*/
 
         if self.is_clipped {
             for buffer in &mut self.clipped_buffers {
