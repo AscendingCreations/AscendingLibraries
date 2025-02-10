@@ -67,6 +67,51 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         }
     }
 
+    /// Used to create a [`InstanceBuffer`] with predeturmined sizes.
+    /// Only use this for creating a reusable buffer.
+    ///
+    /// # Arguments
+    /// - data: The contents to Create the Buffer with.
+    /// - layer_size: The capacity allocated for any future elements per new Buffer Layer.
+    /// - capacity: the capacity of Layers to precreate.
+    /// - layer_capacity: the capacity to which each layer will precreate.
+    /// 
+    pub fn create_buffer_with(
+        gpu_device: &GpuDevice,
+        data: &[u8],
+        layer_size: usize,
+        capacity: usize,
+        layer_capacity: usize,
+    ) -> Self {
+        let layer = layer_capacity.max(32);
+        let size = capacity.max(1);
+        let mut unprocessed = Vec::with_capacity(size);
+        let mut clipped_buffers = Vec::with_capacity(size);
+
+        for _ in 0..size {
+            unprocessed.push(
+                BinaryHeap::with_capacity(layer)
+            );
+
+            clipped_buffers.push(Vec::with_capacity(layer));
+        }
+
+        InstanceBuffer {
+            unprocessed,
+            buffers: Vec::with_capacity(size),
+            clipped_buffers,
+            buffer: Buffer::new(
+                gpu_device,
+                data,
+                wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                Some("Instance Buffer"),
+            ),
+            layer_size: layer_size.max(32),
+            needed_size: 0,
+            is_clipped: false,
+        }
+    }
+
     /// Adds the Buffer to the unprocessed list so it can be processed in [`InstanceBuffer::finalize`]
     /// This must be called in order to Render the Object.
     ///
@@ -152,8 +197,9 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             }
 
             if self.clipped_buffers.len() < self.unprocessed.len() {
-                for _ in self.clipped_buffers.len()..self.unprocessed.len() {
-                    self.clipped_buffers.push(Vec::new());
+                for i in self.clipped_buffers.len()..self.unprocessed.len() {
+                    let count = self.unprocessed.get(i).unwrap().len();
+                    self.clipped_buffers.push(Vec::with_capacity(count));
                 }
             }
         } else {

@@ -340,7 +340,7 @@ pub trait InstanceExt {
 impl InstanceExt for wgpu::Instance {
     fn get_adapters(&self, options: AdapterOptions) -> Vec<(Adapter, u32)> {
         let mut adapters = self.enumerate_adapters(options.allowed_backends);
-        let mut compatible_adapters: Vec<(Adapter, u32)> = Vec::new();
+        let mut compatible_adapters: Vec<(Adapter, u32)> = Vec::with_capacity(12);
 
         while let Some(adapter) = adapters.pop() {
             let information = adapter.get_info();

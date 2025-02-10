@@ -87,6 +87,54 @@ impl<K: BufferLayout> VertexBuffer<K> {
         }
     }
 
+    /// Used to create a [`VertexBuffer`].
+    /// Only use this for creating a reusable buffer.
+    ///
+    /// # Arguments
+    /// - buffers: The (Vertex:Vec<u8>, Indices:Vec<u8>) to Create the Buffer with.
+    /// - layer_size: The capacity allocated for any future elements per new Buffer Layer.
+    /// - capacity: the capacity of Layers to precreate.
+    /// - layer_capacity: the capacity to which each layer will precreate.
+    /// 
+    pub fn create_buffer_with(
+        gpu_device: &GpuDevice,
+        buffers: &BufferData,
+        layer_size: usize,
+        capacity: usize,
+        layer_capacity: usize,
+    ) -> Self {
+        let layer = layer_capacity.max(32);
+        let size = capacity.max(1);
+        let mut unprocessed = Vec::with_capacity(size);
+
+        for _ in 0..size {
+            unprocessed.push(
+                BinaryHeap::with_capacity(layer)
+            );
+        }
+
+        VertexBuffer {
+            unprocessed,
+            buffers: Vec::with_capacity(size),
+            vertex_buffer: Buffer::new(
+                gpu_device,
+                &buffers.vertexs,
+                wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                Some("Vertex Buffer"),
+            ),
+            vertex_needed: 0,
+            index_buffer: Buffer::new(
+                gpu_device,
+                &buffers.indexs,
+                wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                Some("Index Buffer"),
+            ),
+            index_needed: 0,
+            layer_size: layer_size.max(32),
+            is_clipped: false,
+        }
+    }
+
     /// Adds the Buffer to the unprocessed list so it can be processed in [`VertexBuffer::finalize`]
     /// This must be called in order to Render the Object.
     ///
@@ -110,7 +158,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                     //give it a starting size. this cna be adjusted later for better performance
                     //versus ram usage.
                     self.unprocessed.push(
-                        BinaryHeap::with_capacity(self.layer_size + 1)
+                        BinaryHeap::with_capacity(self.layer_size)
                    );
                 }
             }
@@ -152,8 +200,9 @@ impl<K: BufferLayout> VertexBuffer<K> {
         self.vertex_buffer.len = self.vertex_needed;
 
         if self.buffers.len() < self.unprocessed.len() {
-            for _ in self.buffers.len()..self.unprocessed.len() {
-                self.buffers.push(Vec::new());
+            for i in self.buffers.len()..self.unprocessed.len() {
+                let count = self.unprocessed.get(i).unwrap().len();
+                self.buffers.push(Vec::with_capacity(count));
             }
         }
 

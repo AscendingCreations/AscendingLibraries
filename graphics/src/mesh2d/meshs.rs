@@ -72,6 +72,23 @@ impl Mesh2D {
         }
     }
 
+    /// Creates a new [`Mesh2D`] with rendering layer and a indices and vbo se to capacity.
+    ///
+    pub fn with_capacity(renderer: &mut GpuRenderer, render_layer: u32, capacity: usize) -> Self {
+        Self {
+            position: Vec3::default(),
+            size: Vec2::default(),
+            vbo_store_id: renderer.default_buffer(),
+            order: DrawOrder::default(),
+            changed: true,
+            vertices: Vec::with_capacity(capacity),
+            indices: Vec::with_capacity(capacity),
+            high_index: 0,
+            render_layer,
+            order_override: None,
+        }
+    }
+
     /// Unloads the [`Mesh2D`] from the Instance Buffers Store.
     ///
     pub fn unload(&self, renderer: &mut GpuRenderer) {

@@ -302,7 +302,7 @@ impl Text {
             scale,
             render_layer,
             order_override: None,
-            glyph_vertices: Vec::new(),
+            glyph_vertices: Vec::with_capacity(64),
         }
     }
 
