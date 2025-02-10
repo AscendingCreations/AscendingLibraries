@@ -146,10 +146,6 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         self.buffer.count = self.needed_size / K::stride();
         self.buffer.len = self.needed_size;
 
-        /*for processing in &mut self.unprocessed {
-            processing.sort();
-        }*/
-
         if self.is_clipped {
             for buffer in &mut self.clipped_buffers {
                 buffer.clear();

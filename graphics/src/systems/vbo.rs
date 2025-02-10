@@ -3,6 +3,7 @@ use crate::{
     CameraType, GpuDevice, GpuRenderer, OrderedIndex,
 };
 use std::ops::Range;
+use std::collections::BinaryHeap;
 
 /// Details for the Objects Memory location within the Vertex Buffer and Index Buffers.
 /// This is used to deturmine if the buffers location has changed or not for
@@ -25,7 +26,7 @@ pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>, CameraType);
 /// of GPU uploads we make.
 pub struct VertexBuffer<K: BufferLayout> {
     /// Unprocessed Buffer Data.
-    pub unprocessed: Vec<Vec<OrderedIndex>>,
+    pub unprocessed: Vec<BinaryHeap<OrderedIndex>>,
     /// Buffers ready to Render
     pub buffers: Vec<Vec<ClippedIndexDetails>>,
     /// The main Vertex Buffer within GPU memory.
@@ -104,15 +105,13 @@ impl<K: BufferLayout> VertexBuffer<K> {
             // add in the missing layers this is better than keeping a hash since
             // if at anytime a process adds new data to a older layer it will already Exist.
             if self.unprocessed.len() < offset {
-                for i in self.unprocessed.len()..offset {
+                for _ in self.unprocessed.len()..offset {
                     //Push the layer buffer. if this is a layer we are adding data too lets
                     //give it a starting size. this cna be adjusted later for better performance
                     //versus ram usage.
-                    self.unprocessed.push(if i == buffer_layer {
-                        Vec::with_capacity(32)
-                    } else {
-                        Vec::new()
-                    });
+                    self.unprocessed.push(
+                        BinaryHeap::with_capacity(self.layer_size + 1)
+                   );
                 }
             }
 
@@ -151,11 +150,6 @@ impl<K: BufferLayout> VertexBuffer<K> {
 
         self.vertex_buffer.count = self.vertex_needed / K::stride();
         self.vertex_buffer.len = self.vertex_needed;
-
-        //shouldnt need if renderer does all the sorting and layering first.
-        for processing in &mut self.unprocessed {
-            processing.sort();
-        }
 
         if self.buffers.len() < self.unprocessed.len() {
             for _ in self.buffers.len()..self.unprocessed.len() {
