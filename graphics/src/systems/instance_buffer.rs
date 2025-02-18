@@ -4,6 +4,7 @@ use crate::{
 };
 use std::ops::Range;
 use std::collections::BinaryHeap;
+use std::cmp::Reverse;
 
 /// Details for the Objects Memory location within the instance Buffer.
 /// This is used to deturmine if the buffers location has changed or not for
@@ -23,7 +24,7 @@ pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>, CameraType);
 /// of GPU uploads we make.
 pub struct InstanceBuffer<K: BufferLayout> {
     /// Unprocessed Buffer Data.
-    pub unprocessed: Vec<BinaryHeap<OrderedIndex>>,
+    pub unprocessed: Vec<BinaryHeap<Reverse<OrderedIndex>>>,
     /// Buffers ready to Render
     pub buffers: Vec<Option<InstanceDetails>>,
     /// Clipped Buffers ready to Render.
@@ -142,7 +143,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             self.needed_size += store.store.len();
 
             if let Some(unprocessed) = self.unprocessed.get_mut(buffer_layer) {
-                unprocessed.push(index);
+                unprocessed.push(Reverse(index));
             }
         }
     }
@@ -219,7 +220,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             if !self.is_clipped {
                 for buf in processing {
                     self.buffer_write(
-                        renderer, buf, &mut pos, &mut count, changed,
+                        renderer, &buf.0, &mut pos, &mut count, changed,
                     );
                 }
 
@@ -230,7 +231,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             } else {
                 for buf in processing {
                     self.buffer_write(
-                        renderer, buf, &mut pos, &mut count, changed,
+                        renderer, &buf.0, &mut pos, &mut count, changed,
                     );
 
                     if let Some(buffer) = self.clipped_buffers.get_mut(layer) {
@@ -239,8 +240,8 @@ impl<K: BufferLayout> InstanceBuffer<K> {
                                 start: start_pos,
                                 end: count,
                             },
-                            buf.bounds,
-                            buf.camera_type,
+                            buf.0.bounds,
+                            buf.0.camera_type,
                         ));
                     }
 
