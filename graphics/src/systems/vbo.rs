@@ -3,8 +3,7 @@ use crate::{
     CameraType, GpuDevice, GpuRenderer, OrderedIndex,
 };
 use std::ops::Range;
-use std::collections::BinaryHeap;
-use std::cmp::Reverse;
+
 /// Details for the Objects Memory location within the Vertex Buffer and Index Buffers.
 /// This is used to deturmine if the buffers location has changed or not for
 /// reuploading the buffer.
@@ -26,7 +25,7 @@ pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>, CameraType);
 /// of GPU uploads we make.
 pub struct VertexBuffer<K: BufferLayout> {
     /// Unprocessed Buffer Data.
-    pub unprocessed: Vec<BinaryHeap<Reverse<OrderedIndex>>>,
+    pub unprocessed: Vec<Vec<OrderedIndex>>,
     /// Buffers ready to Render
     pub buffers: Vec<Vec<ClippedIndexDetails>>,
     /// The main Vertex Buffer within GPU memory.
@@ -109,7 +108,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
 
         for _ in 0..size {
             unprocessed.push(
-                BinaryHeap::with_capacity(layer)
+                Vec::with_capacity(layer)
             );
         }
 
@@ -158,7 +157,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                     //give it a starting size. this cna be adjusted later for better performance
                     //versus ram usage.
                     self.unprocessed.push(
-                        BinaryHeap::with_capacity(self.layer_size)
+                        Vec::with_capacity(self.layer_size)
                    );
                 }
             }
@@ -169,7 +168,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
             index.index_count = store.indexs.len() as u32 / 4;
 
             if let Some(unprocessed) = self.unprocessed.get_mut(buffer_layer) {
-                unprocessed.push(Reverse(index));
+                unprocessed.push(index);
             }
         }
     }
@@ -199,6 +198,10 @@ impl<K: BufferLayout> VertexBuffer<K> {
         self.vertex_buffer.count = self.vertex_needed / K::stride();
         self.vertex_buffer.len = self.vertex_needed;
 
+        for processing in &mut self.unprocessed {
+            processing.sort();
+        }
+    
         if self.buffers.len() < self.unprocessed.len() {
             for i in self.buffers.len()..self.unprocessed.len() {
                 let count = self.unprocessed.get(i).unwrap().len();
@@ -217,7 +220,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                 let old_vertex_pos = vertex_pos as u64;
                 let old_index_pos = index_pos as u64;
 
-                if let Some(store) = renderer.get_buffer_mut(buf.0.index) {
+                if let Some(store) = renderer.get_buffer_mut(buf.index) {
                     if store.indexs.is_empty() {
                         continue;
                     }
@@ -251,7 +254,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                 }
 
                 if write_vertex {
-                    if let Some(store) = renderer.get_buffer(buf.0.index) {
+                    if let Some(store) = renderer.get_buffer(buf.index) {
                         self.vertex_buffer.write(
                             &renderer.device,
                             &store.store,
@@ -261,7 +264,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                 }
 
                 if write_index {
-                    if let Some(store) = renderer.get_buffer(buf.0.index) {
+                    if let Some(store) = renderer.get_buffer(buf.index) {
                         self.index_buffer.write(
                             &renderer.device,
                             &store.indexs,
@@ -271,11 +274,11 @@ impl<K: BufferLayout> VertexBuffer<K> {
                 }
 
                 let indices_start = pos;
-                let indices_end = pos + buf.0.index_count;
+                let indices_end = pos + buf.index_count;
                 let vertex_base = base_vertex;
 
-                base_vertex += buf.0.index_max as i32 + 1;
-                pos += buf.0.index_count;
+                base_vertex += buf.index_max as i32 + 1;
+                pos += buf.index_count;
 
                 if let Some(buffer) = self.buffers.get_mut(layer) {
                     buffer.push((
@@ -284,8 +287,8 @@ impl<K: BufferLayout> VertexBuffer<K> {
                             indices_end,
                             vertex_base,
                         },
-                        buf.0.bounds,
-                        buf.0.camera_type,
+                        buf.bounds,
+                        buf.camera_type,
                     ));
                 }
             }

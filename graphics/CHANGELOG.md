@@ -5,10 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.19.4 (19. February, 2025)
+
+### Fixed
+- Removed BinaryHeap due to Ordering Being not as Clear with how it Orders data upon insert. (this yanks 0.19.3)
+
 ## 0.19.3 (18. February, 2025)
 
 ### Fixed
-- Binary Tree order needed to be Reversed for it to Sort correctly. (this yanks 0.19.3)
+- BinaryHeap order needed to be Reversed for it to Sort correctly. (this yanks 0.19.2)
 
 ## 0.19.2 (10. February, 2025)
 

@@ -3,8 +3,6 @@ use crate::{
     OrderedIndex,
 };
 use std::ops::Range;
-use std::collections::BinaryHeap;
-use std::cmp::Reverse;
 
 /// Details for the Objects Memory location within the instance Buffer.
 /// This is used to deturmine if the buffers location has changed or not for
@@ -24,7 +22,7 @@ pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>, CameraType);
 /// of GPU uploads we make.
 pub struct InstanceBuffer<K: BufferLayout> {
     /// Unprocessed Buffer Data.
-    pub unprocessed: Vec<BinaryHeap<Reverse<OrderedIndex>>>,
+    pub unprocessed: Vec<Vec<OrderedIndex>>,
     /// Buffers ready to Render
     pub buffers: Vec<Option<InstanceDetails>>,
     /// Clipped Buffers ready to Render.
@@ -91,7 +89,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
 
         for _ in 0..size {
             unprocessed.push(
-                BinaryHeap::with_capacity(layer)
+                Vec::with_capacity(layer)
             );
 
             clipped_buffers.push(Vec::with_capacity(layer));
@@ -135,7 +133,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
                     //give it a starting size. this can be adjusted later for better performance
                     //versus ram usage.
                     self.unprocessed.push(
-                        BinaryHeap::with_capacity(self.layer_size)
+                        Vec::with_capacity(self.layer_size)
                     );
                 }
             }
@@ -143,7 +141,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             self.needed_size += store.store.len();
 
             if let Some(unprocessed) = self.unprocessed.get_mut(buffer_layer) {
-                unprocessed.push(Reverse(index));
+                unprocessed.push(index);
             }
         }
     }
@@ -192,6 +190,10 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         self.buffer.count = self.needed_size / K::stride();
         self.buffer.len = self.needed_size;
 
+        for processing in &mut self.unprocessed {
+            processing.sort();
+        }
+
         if self.is_clipped {
             for buffer in &mut self.clipped_buffers {
                 buffer.clear();
@@ -220,7 +222,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             if !self.is_clipped {
                 for buf in processing {
                     self.buffer_write(
-                        renderer, &buf.0, &mut pos, &mut count, changed,
+                        renderer, buf, &mut pos, &mut count, changed,
                     );
                 }
 
@@ -231,7 +233,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             } else {
                 for buf in processing {
                     self.buffer_write(
-                        renderer, &buf.0, &mut pos, &mut count, changed,
+                        renderer, buf, &mut pos, &mut count, changed,
                     );
 
                     if let Some(buffer) = self.clipped_buffers.get_mut(layer) {
@@ -240,8 +242,8 @@ impl<K: BufferLayout> InstanceBuffer<K> {
                                 start: start_pos,
                                 end: count,
                             },
-                            buf.0.bounds,
-                            buf.0.camera_type,
+                            buf.bounds,
+                            buf.camera_type,
                         ));
                     }
 
