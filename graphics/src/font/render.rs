@@ -20,7 +20,7 @@ impl TextAtlas {
     ///
     /// # Arguments
     /// - size: Used for both Width and Height. Limited to max of limits.max_texture_dimension_2d and min of 256.
-    ///         Used for both the Text Atlas and Emoji Atlas.
+    /// - size: Used for both the Text Atlas and Emoji Atlas.
     ///
     pub fn new(
         renderer: &mut GpuRenderer,

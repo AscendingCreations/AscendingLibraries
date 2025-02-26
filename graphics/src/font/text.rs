@@ -192,12 +192,14 @@ impl Text {
                         + ((position.y - height)
                             - (run.line_y * self.scale).round()),
                 );
-                let color = is_color
-                    .then(|| Color::rgba(255, 255, 255, 255))
-                    .unwrap_or(match glyph.color_opt {
+                let color = if is_color {
+                    Color::rgba(255, 255, 255, 255)
+                } else {
+                    match glyph.color_opt {
                         Some(color) => color,
                         None => self.default_color,
-                    });
+                    }
+                };
 
                 if color.a() < 255 {
                     is_alpha = true;

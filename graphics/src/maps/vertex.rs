@@ -41,9 +41,8 @@ impl BufferLayout for MapVertex {
         vertex_capacity: usize,
         _index_capacity: usize,
     ) -> BufferData {
-        let instance_arr: Vec<MapVertex> = iter::repeat(MapVertex::default())
-            .take(vertex_capacity)
-            .collect();
+        let instance_arr: Vec<MapVertex> =
+            iter::repeat_n(MapVertex::default(), vertex_capacity).collect();
 
         BufferData {
             vertexs: bytemuck::cast_slice(&instance_arr).to_vec(),

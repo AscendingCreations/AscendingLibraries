@@ -74,7 +74,11 @@ impl Mesh2D {
 
     /// Creates a new [`Mesh2D`] with rendering layer and a indices and vbo se to capacity.
     ///
-    pub fn with_capacity(renderer: &mut GpuRenderer, render_layer: u32, capacity: usize) -> Self {
+    pub fn with_capacity(
+        renderer: &mut GpuRenderer,
+        render_layer: u32,
+        capacity: usize,
+    ) -> Self {
         Self {
             position: Vec3::default(),
             size: Vec2::default(),

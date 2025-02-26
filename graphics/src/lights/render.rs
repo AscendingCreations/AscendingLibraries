@@ -36,9 +36,8 @@ impl LightRenderer {
         let dir_alignment: usize =
             align_to(mem::size_of::<DirectionalLightRaw>(), 48) as usize;
 
-        let area: Vec<u8> = iter::repeat(0u8)
-            .take(MAX_AREA_LIGHTS * area_alignment)
-            .collect();
+        let area: Vec<u8> =
+            iter::repeat_n(0u8, MAX_AREA_LIGHTS * area_alignment).collect();
 
         let area_buffer = renderer.device().create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
@@ -49,9 +48,8 @@ impl LightRenderer {
             },
         );
 
-        let dirs: Vec<u8> = iter::repeat(0u8)
-            .take(MAX_DIR_LIGHTS * dir_alignment)
-            .collect();
+        let dirs: Vec<u8> =
+            iter::repeat_n(0u8, MAX_DIR_LIGHTS * dir_alignment).collect();
 
         let dir_buffer = renderer.device().create_buffer_init(
             &wgpu::util::BufferInitDescriptor {

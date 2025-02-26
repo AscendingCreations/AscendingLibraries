@@ -207,7 +207,7 @@ impl Map {
         let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
 
         Self {
-            tiles: iter::repeat(TileData::default()).take(9216).collect(),
+            tiles: iter::repeat_n(TileData::default(), 9216).collect(),
             pos: Vec2::default(),
             stores: [lower_index, upper_index],
             filled_tiles: [0; MapLayers::Count as usize],

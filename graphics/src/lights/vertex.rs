@@ -39,9 +39,7 @@ impl BufferLayout for LightsVertex {
         _index_capacity: usize,
     ) -> BufferData {
         let instance_arr: Vec<LightsVertex> =
-            iter::repeat(LightsVertex::default())
-                .take(vertex_capacity)
-                .collect();
+            iter::repeat_n(LightsVertex::default(), vertex_capacity).collect();
 
         BufferData {
             vertexs: bytemuck::cast_slice(&instance_arr).to_vec(),

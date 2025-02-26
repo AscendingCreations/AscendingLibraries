@@ -94,7 +94,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
     /// - layer_size: The capacity allocated for any future elements per new Buffer Layer.
     /// - capacity: the capacity of Layers to precreate.
     /// - layer_capacity: the capacity to which each layer will precreate.
-    /// 
+    ///
     pub fn create_buffer_with(
         gpu_device: &GpuDevice,
         buffers: &BufferData,
@@ -107,9 +107,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
         let mut unprocessed = Vec::with_capacity(size);
 
         for _ in 0..size {
-            unprocessed.push(
-                Vec::with_capacity(layer)
-            );
+            unprocessed.push(Vec::with_capacity(layer));
         }
 
         VertexBuffer {
@@ -156,9 +154,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                     //Push the layer buffer. if this is a layer we are adding data too lets
                     //give it a starting size. this cna be adjusted later for better performance
                     //versus ram usage.
-                    self.unprocessed.push(
-                        Vec::with_capacity(self.layer_size)
-                   );
+                    self.unprocessed.push(Vec::with_capacity(self.layer_size));
                 }
             }
 
@@ -201,7 +197,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
         for processing in &mut self.unprocessed {
             processing.sort();
         }
-    
+
         if self.buffers.len() < self.unprocessed.len() {
             for i in self.buffers.len()..self.unprocessed.len() {
                 let count = self.unprocessed.get(i).unwrap().len();

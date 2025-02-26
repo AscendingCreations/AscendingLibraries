@@ -37,9 +37,8 @@ impl BufferLayout for Mesh2DVertex {
         vertex_capacity: usize,
         index_capacity: usize,
     ) -> BufferData {
-        let vbo_arr: Vec<Mesh2DVertex> = iter::repeat(Mesh2DVertex::default())
-            .take(vertex_capacity)
-            .collect();
+        let vbo_arr: Vec<Mesh2DVertex> =
+            iter::repeat_n(Mesh2DVertex::default(), vertex_capacity).collect();
 
         let mut indices: Vec<u32> = Vec::with_capacity(index_capacity * 6);
         (0..index_capacity as u32).for_each(|_| {

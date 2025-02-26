@@ -57,9 +57,8 @@ impl BufferLayout for RectVertex {
         vertex_capacity: usize,
         _index_capacity: usize,
     ) -> BufferData {
-        let instance_arr: Vec<RectVertex> = iter::repeat(RectVertex::default())
-            .take(vertex_capacity)
-            .collect();
+        let instance_arr: Vec<RectVertex> =
+            iter::repeat_n(RectVertex::default(), vertex_capacity).collect();
 
         BufferData {
             vertexs: bytemuck::cast_slice(&instance_arr).to_vec(),

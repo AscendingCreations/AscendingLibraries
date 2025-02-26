@@ -238,7 +238,11 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                 mip_level_count: Some(1),
                 base_array_layer: 0,
                 array_layer_count: Some(self.layers.len() as u32),
-                usage: Some(TextureUsages::COPY_DST | TextureUsages::COPY_SRC | TextureUsages::TEXTURE_BINDING),
+                usage: Some(
+                    TextureUsages::COPY_DST
+                        | TextureUsages::COPY_SRC
+                        | TextureUsages::TEXTURE_BINDING,
+                ),
             });
         let atlas_layout: Rc<BindGroupLayout> = renderer
             .get_layout(TextureLayout)
@@ -297,7 +301,11 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             mip_level_count: Some(1),
             base_array_layer: 0,
             array_layer_count: Some(1),
-            usage: Some(TextureUsages::COPY_DST | TextureUsages::COPY_SRC | TextureUsages::TEXTURE_BINDING),
+            usage: Some(
+                TextureUsages::COPY_DST
+                    | TextureUsages::COPY_SRC
+                    | TextureUsages::TEXTURE_BINDING,
+            ),
         });
 
         let atlas_layout: Rc<BindGroupLayout> =
