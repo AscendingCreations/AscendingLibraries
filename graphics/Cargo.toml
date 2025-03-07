@@ -1,9 +1,9 @@
 [package]
 name = "ascending_graphics"
-version = "0.19.4"
+version = "0.20.0"
 authors = ["S.J.R. van Schaik", "Andrew Wheeler <genusistimelord@gmail.com>"]
 license = "MIT OR Apache-2.0"
-edition = "2021"
+edition = "2024"
 readme = "README.md"
 documentation = "https://docs.rs/ascending_graphics"
 keywords = ["wgpu", "rendering", "2d", ]
