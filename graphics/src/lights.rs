@@ -91,8 +91,6 @@ pub struct Lights {
     pub store_id: Index,
     /// DrawOrder of the world Lights.
     pub order: DrawOrder,
-    /// Rendering Layer of the world lights used in DrawOrder.
-    pub render_layer: u32,
     /// SlotMap storage of [`AreaLight`]'s.
     pub area_lights: SlotMap<Index, AreaLight>,
     /// SlotMap storage of [`DirectionalLight`]'s.
@@ -112,7 +110,8 @@ pub struct Lights {
 impl Lights {
     /// Creates a new [`Lights`].
     ///
-    pub fn new(renderer: &mut GpuRenderer, render_layer: u32, z: f32) -> Self {
+    /// order_layer: Rendering Layer of the world lights used in DrawOrder.
+    pub fn new(renderer: &mut GpuRenderer, order_layer: u32, z: f32) -> Self {
         Self {
             z,
             world_color: Vec4::new(1.0, 1.0, 1.0, 0.0),
@@ -121,8 +120,11 @@ impl Lights {
                 bytemuck::bytes_of(&LightsVertex::default()).len(),
                 0,
             ),
-            order: DrawOrder::default(),
-            render_layer,
+            order: DrawOrder::new(
+                true,
+                Vec3::new(0.0, 0.0, z),
+                order_layer,
+            ),
             area_lights: SlotMap::with_capacity_and_key(MAX_AREA_LIGHTS),
             directional_lights: SlotMap::with_capacity_and_key(MAX_DIR_LIGHTS),
             area_count: 0,
@@ -135,6 +137,28 @@ impl Lights {
 
     pub fn unload(&self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
+    }
+
+    pub fn set_world_color(&mut self, color: Vec4) -> &mut Self {
+        self.world_color = color;
+        self.order.alpha = color.w < 1.0;
+        self.changed = true;
+        self
+    }
+
+    /// Updates the [`Lights`]'s [`DrawOrder`]'s is Alpha.
+    /// Use this after set_color to overide the alpha sorting.
+    ///
+    pub fn set_order_alpha(&mut self, alpha: bool) -> &mut Self {
+        self.order.alpha = alpha;
+        self
+    }
+
+    pub fn set_z_pos(&mut self, z: f32) -> &mut Self {
+        self.z = z;
+        self.order.set_position(Vec3::new(0.0, 0.0, z));
+        self.changed = true;
+        self
     }
 
     /// Updates the [`Lights`]'s Buffers to prepare them for rendering.
@@ -150,16 +174,15 @@ impl Lights {
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
             let bytes = bytemuck::bytes_of(&instance);
-            store.store.resize_with(bytes.len(), || 0);
+
+            if bytes.len() != store.store.len() {
+                store.store.resize_with(bytes.len(), || 0);
+            }
+
             store.store.copy_from_slice(bytes);
             store.changed = true;
         }
 
-        self.order = DrawOrder::new(
-            self.world_color.w < 1.0,
-            &Vec3::default(),
-            self.render_layer,
-        );
         self.changed = false;
     }
 

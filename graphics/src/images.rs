@@ -36,16 +36,12 @@ pub struct Image {
     pub store_id: Index,
     /// Ordering Type, used to order the Stores in the buffers.
     pub order: DrawOrder,
-    /// Layer this type is rendering on.
-    pub render_layer: u32,
     /// Clip bounds if enabled in the renderer.
     pub bounds: Option<Bounds>,
     /// Directional Flip.
     pub flip_style: FlipStyle,
     /// direct angle of rotation from the center Axis.
     pub rotation_angle: f32,
-    /// Overides the absolute order values based on position.
-    pub order_override: Option<Vec3>,
     /// When true tells system to update the buffers.
     pub changed: bool,
 }
@@ -53,10 +49,11 @@ pub struct Image {
 impl Image {
     /// Creates a new [`Image`] with rendering layer.
     ///
+    /// order_layer: Rendering Layer used in DrawOrder.
     pub fn new(
         texture: Option<usize>,
         renderer: &mut GpuRenderer,
-        render_layer: u32,
+        order_layer: u32,
     ) -> Self {
         Self {
             pos: Vec3::default(),
@@ -72,10 +69,8 @@ impl Image {
                 bytemuck::bytes_of(&ImageVertex::default()).len(),
                 0,
             ),
-            order: DrawOrder::default(),
-            render_layer,
+            order: DrawOrder::new(false, Vec3::default(), order_layer),
             bounds: None,
-            order_override: None,
             flip_style: FlipStyle::None,
             rotation_angle: 0.0,
             changed: true,
@@ -89,13 +84,13 @@ impl Image {
     }
 
     /// Updates the [`Image`]'s order_override.
+    /// Use this after calls to set_position to set it to a specific rendering order.
     ///
     pub fn set_order_override(
         &mut self,
-        order_override: Option<Vec3>,
+        order_override: Vec3,
     ) -> &mut Self {
-        self.changed = true;
-        self.order_override = order_override;
+        self.order.set_position(order_override);
         self
     }
 
@@ -127,6 +122,7 @@ impl Image {
     pub fn set_pos(&mut self, pos: Vec3) -> &mut Self {
         self.changed = true;
         self.pos = pos;
+        self.order.set_position(pos);
         self
     }
 
@@ -164,9 +160,8 @@ impl Image {
 
     /// Updates the [`Image`]'s rendering layer.
     ///
-    pub fn set_render_layer(&mut self, render_layer: u32) -> &mut Self {
-        self.changed = true;
-        self.render_layer = render_layer;
+    pub fn set_order_layer(&mut self, order_layer: u32) -> &mut Self {
+        self.order.order_layer = order_layer;
         self
     }
 
@@ -182,7 +177,16 @@ impl Image {
     ///
     pub fn set_color(&mut self, color: Color) -> &mut Self {
         self.changed = true;
+        self.order.alpha = color.a() < 255;
         self.color = color;
+        self
+    }
+
+    /// Updates the [`Image`]'s [`DrawOrder`]'s is Alpha.
+    /// Use this after set_color to overide the alpha sorting.
+    ///
+    pub fn set_order_alpha(&mut self, alpha: bool) -> &mut Self {
+        self.order.alpha = alpha;
         self
     }
 
@@ -244,19 +248,14 @@ impl Image {
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
             let bytes = bytemuck::bytes_of(&instance);
-            store.store.resize_with(bytes.len(), || 0);
+
+            if bytes.len() != store.store.len() {
+                store.store.resize_with(bytes.len(), || 0);
+            }
+
             store.store.copy_from_slice(bytes);
             store.changed = true;
         }
-
-        let order_pos = match self.order_override {
-            Some(o) => o,
-            None => self.pos,
-        };
-
-        self.order =
-            DrawOrder::new(self.color.a() < 255, &order_pos, self.render_layer);
-        self.changed = false;
     }
 
     /// Used to check and update the vertex array.
@@ -269,6 +268,7 @@ impl Image {
     ) -> OrderedIndex {
         if self.changed {
             self.create_quad(renderer, atlas);
+            self.changed = false;
         }
 
         OrderedIndex::new_with_bounds(

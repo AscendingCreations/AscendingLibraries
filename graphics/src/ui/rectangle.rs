@@ -30,12 +30,8 @@ pub struct Rect {
     pub store_id: Index,
     /// the draw order of the rect. created/updated when update is called.
     pub order: DrawOrder,
-    /// Rendering Layer of the rect used in DrawOrder.
-    pub render_layer: u32,
     /// Optional Bounds for Clipping the Rect too.
     pub bounds: Option<Bounds>,
-    /// Overides the absolute order values based on position.
-    pub order_override: Option<Vec3>,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -43,7 +39,8 @@ pub struct Rect {
 impl Rect {
     /// Creates a new [`Rect`] with rendering layer.
     ///
-    pub fn new(renderer: &mut GpuRenderer, render_layer: u32) -> Self {
+    /// order_layer: Rendering Layer of the rect used in DrawOrder.
+    pub fn new(renderer: &mut GpuRenderer, order_layer: u32) -> Self {
         let rect_size = bytemuck::bytes_of(&RectVertex::default()).len();
 
         Self {
@@ -57,10 +54,8 @@ impl Rect {
             radius: 0.0,
             camera_type: CameraType::None,
             store_id: renderer.new_buffer(rect_size, 0),
-            order: DrawOrder::default(),
-            render_layer,
+            order: DrawOrder::new(false, Vec3::default(), order_layer),
             bounds: None,
-            order_override: None,
             changed: true,
         }
     }
@@ -71,14 +66,32 @@ impl Rect {
         renderer.remove_buffer(self.store_id);
     }
 
-    /// Updates the [`Rect`]'s order_override.
+    /// Updates the [`Rect`]'s order to overide the last set position.
+    /// Use this after calls to set_position to set it to a specific rendering order.
     ///
-    pub fn set_order_override(
+    pub fn set_order_pos(
         &mut self,
-        order_override: Option<Vec3>,
+        order_override: Vec3,
     ) -> &mut Self {
-        self.changed = true;
-        self.order_override = order_override;
+        self.order.set_position(order_override);
+        self
+    }
+
+    /// Updates the [`Rect`]'s orders Render Layer.
+    ///
+    pub fn set_order_layer(
+        &mut self,
+        order_layer: u32,
+    ) -> &mut Self {
+        self.order.order_layer = order_layer;
+        self
+    }
+
+    /// Updates the [`Rect`]'s [`DrawOrder`]'s is Alpha.
+    /// Use this after set_color, set_border_color or set_radius to overide the alpha sorting.
+    ///
+    pub fn set_order_alpha(&mut self, alpha: bool) -> &mut Self {
+        self.order.alpha = alpha;
         self
     }
 
@@ -101,6 +114,7 @@ impl Rect {
     ///
     pub fn set_color(&mut self, color: Color) -> &mut Self {
         self.color = color;
+        self.order.alpha = self.border_color.a() < 255 || self.radius > 0.0 || self.color.a() < 255;
         self.changed = true;
         self
     }
@@ -109,6 +123,7 @@ impl Rect {
     ///
     pub fn set_border_color(&mut self, color: Color) -> &mut Self {
         self.border_color = color;
+        self.order.alpha = self.border_color.a() < 255 || self.radius > 0.0 || self.color.a() < 255;
         self.changed = true;
         self
     }
@@ -145,6 +160,7 @@ impl Rect {
     ///
     pub fn set_position(&mut self, position: Vec3) -> &mut Self {
         self.position = position;
+        self.order.set_position(position);
         self.changed = true;
         self
     }
@@ -169,6 +185,7 @@ impl Rect {
     ///
     pub fn set_radius(&mut self, radius: f32) -> &mut Self {
         self.radius = radius;
+        self.order.alpha = self.border_color.a() < 255 || radius > 0.0 || self.color.a() < 255;
         self.changed = true;
         self
     }
@@ -213,18 +230,14 @@ impl Rect {
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
             let bytes = bytemuck::bytes_of(&instance);
-            store.store.resize_with(bytes.len(), || 0);
+
+            if bytes.len() != store.store.len() {
+                store.store.resize_with(bytes.len(), || 0);
+            }
+
             store.store.copy_from_slice(bytes);
             store.changed = true;
         }
-
-        let order_pos = match self.order_override {
-            Some(o) => o,
-            None => self.position,
-        };
-
-        self.order =
-            DrawOrder::new(self.radius > 0.0, &order_pos, self.render_layer);
     }
 
     /// Used to check and update the vertex array.

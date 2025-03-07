@@ -178,24 +178,25 @@ impl Map {
 
         if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
             let bytes = bytemuck::cast_slice(&self.lower_buffer);
-            store.store.resize_with(bytes.len(), || 0);
+
+            if bytes.len() != store.store.len() {
+                store.store.resize_with(bytes.len(), || 0);
+            }
+
             store.store.copy_from_slice(bytes);
             store.changed = true;
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.stores[1]) {
             let bytes = bytemuck::cast_slice(&self.upper_buffer);
-            store.store.resize_with(bytes.len(), || 0);
+
+            if bytes.len() != store.store.len() {
+                store.store.resize_with(bytes.len(), || 0);
+            }
+
             store.store.copy_from_slice(bytes);
             store.changed = true;
         }
-
-        self.orders[0] =
-            DrawOrder::new(false, &Vec3::new(self.pos.x, self.pos.y, 9.0), 0);
-
-        self.orders[1] =
-            DrawOrder::new(false, &Vec3::new(self.pos.x, self.pos.y, 5.0), 1);
-        self.changed = false;
     }
 
     /// Creates a new [`Map`] with tilesize.
@@ -206,6 +207,12 @@ impl Map {
         let lower_index = renderer.new_buffer(map_vertex_size * LOWER_COUNT, 0);
         let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
 
+        let order1 =
+            DrawOrder::new(false, Vec3::new(0.0, 0.0, 9.0), 0);
+
+        let order2 =
+            DrawOrder::new(false, Vec3::new(0.0, 0.0, 5.0), 1);
+
         Self {
             tiles: iter::repeat_n(TileData::default(), 9216).collect(),
             pos: Vec2::default(),
@@ -213,12 +220,53 @@ impl Map {
             filled_tiles: [0; MapLayers::Count as usize],
             lower_buffer: Vec::with_capacity(LOWER_COUNT),
             upper_buffer: Vec::with_capacity(UPPER_COUNT),
-            orders: [DrawOrder::default(), DrawOrder::default()],
+            orders: [order1, order2],
             tilesize,
             can_render: false,
             changed: true,
             camera_type: CameraType::None,
         }
+    }
+
+    /// Updates the [`Map`]'s position.
+    ///
+    pub fn set_position(
+        &mut self,
+        position: Vec2,
+    ) -> &mut Self {
+        self.orders[0].set_position(Vec3::new(position.x, position.y, 9.0));
+        self.orders[1].set_position(Vec3::new(position.x, position.y, 5.0));
+        self.pos = position;
+        self.changed = true;
+        self
+    }
+
+    /// Updates the [`Map`]'s orders to overide the last set position.
+    /// Use this after calls to set_position to set it to a order.
+    ///
+    pub fn set_order_pos(
+        &mut self,
+        order_override: Vec2,
+    ) -> &mut Self {
+        self.orders[0].set_position(Vec3::new(order_override.x, order_override.y, 9.0));
+        self.orders[1].set_position(Vec3::new(order_override.x, order_override.y, 5.0));
+
+        self
+    }
+
+    /// Updates one of the [`Map`]'s order Layer.
+    ///
+    /// Default Orders for Layer 1 is 0 Layer 2 is 1.
+    pub fn set_order_layer(
+        &mut self,
+        index: usize,
+        order_layer: u32,
+    ) -> &mut Self {
+        if let Some(order) = self.orders.get_mut(index) {
+            order.order_layer = order_layer;
+        }
+
+        self
     }
 
     /// Unloades the [`Map`]'s buffer from the buffer store.
@@ -243,9 +291,10 @@ impl Map {
 
     /// Sets the [`CameraType`] this object will use to Render with.
     ///
-    pub fn set_camera_type(&mut self, camera_type: CameraType) {
+    pub fn set_camera_type(&mut self, camera_type: CameraType) -> &mut Self {
         self.camera_type = camera_type;
         self.changed = true;
+        self
     }
 
     /// This sets the tile's Id within the texture,
@@ -287,6 +336,7 @@ impl Map {
         if self.can_render {
             if self.changed {
                 self.create_quad(renderer, atlas);
+                self.changed = false;
             }
 
             let orders = (0..2)

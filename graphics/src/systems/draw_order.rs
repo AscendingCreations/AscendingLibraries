@@ -51,7 +51,7 @@ impl Ord for DrawOrder {
 
 impl DrawOrder {
     /// Creates a DrawOrder with alpha, position and order_layer.
-    pub fn new(alpha: bool, pos: &Vec3, order_layer: u32) -> Self {
+    pub fn new(alpha: bool, pos: Vec3, order_layer: u32) -> Self {
         Self {
             order_layer,
             alpha,
@@ -59,6 +59,12 @@ impl DrawOrder {
             y: (pos.y * 10000.0) as u32,
             z: (pos.z * 10000.0) as u32,
         }
+    }
+
+    pub fn set_position(&mut self, pos: Vec3) {
+        self.x = (pos.x * 10000.0) as u32;
+        self.y = (pos.y * 10000.0) as u32;
+        self.z = (pos.z * 10000.0) as u32;
     }
 }
 

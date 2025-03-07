@@ -44,8 +44,6 @@ pub struct Text {
     pub bounds: Bounds,
     /// Instance Buffer Store Index of Text Buffer.
     pub store_id: Index,
-    /// Rendering Layer of the Text used in DrawOrder.
-    pub render_layer: u32,
     /// the draw order of the Text. created/updated when update is called.
     pub order: DrawOrder,
     /// Cursor the shaping is set too.
@@ -62,8 +60,6 @@ pub struct Text {
     /// Avoids making new vec every create_quad call at risk of more memory.
     /// will only resize when resizing is needed
     pub glyph_vertices: Vec<TextVertex>,
-    /// Overides the absolute order values based on position.
-    pub order_override: Option<Vec3>,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -255,31 +251,30 @@ impl Text {
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
             let bytes: &[u8] = bytemuck::cast_slice(&self.glyph_vertices);
-            store.store.resize_with(bytes.len(), || 0);
+
+            if bytes.len() != store.store.len() {
+                store.store.resize_with(bytes.len(), || 0);
+            }
+
             store.store.copy_from_slice(bytes);
             store.changed = true;
         }
 
-        let order_pos = match self.order_override {
-            Some(o) => o,
-            None => self.pos,
-        };
-
-        self.order = DrawOrder::new(is_alpha, &order_pos, self.render_layer);
-        self.changed = false;
+        self.order.alpha = is_alpha;
 
         Ok(())
     }
 
     /// Creates a new [`Text`].
     ///
+    /// order_layer: Rendering Layer of the Text used in DrawOrder.
     pub fn new(
         renderer: &mut GpuRenderer,
         metrics: Option<Metrics>,
         pos: Vec3,
         size: Vec2,
         scale: f32,
-        render_layer: u32,
+        order_layer: u32,
     ) -> Self {
         let text_starter_size =
             bytemuck::bytes_of(&TextVertex::default()).len() * 64;
@@ -293,7 +288,7 @@ impl Text {
             size,
             bounds: Bounds::default(),
             store_id: renderer.new_buffer(text_starter_size, 0),
-            order: DrawOrder::default(),
+            order: DrawOrder::new(false, pos, order_layer),
             changed: true,
             default_color: Color::rgba(0, 0, 0, 255),
             camera_type: CameraType::None,
@@ -302,8 +297,6 @@ impl Text {
             line: 0,
             scroll: cosmic_text::Scroll::default(),
             scale,
-            render_layer,
-            order_override: None,
             glyph_vertices: Vec::with_capacity(64),
         }
     }
@@ -322,14 +315,24 @@ impl Text {
         renderer.remove_buffer(self.store_id);
     }
 
-    /// Updates the [`Text`]'s order_override.
+    /// Updates the [`Text`]'s order to overide the last set position.
+    /// Use this after calls to set_position to set it to a specific rendering order.
     ///
     pub fn set_order_override(
         &mut self,
-        order_override: Option<Vec3>,
+        order_override: Vec3,
     ) -> &mut Self {
-        self.changed = true;
-        self.order_override = order_override;
+        self.order.set_position(order_override);
+        self
+    }
+
+    /// Updates the [`Text`]'s orders Render Layer.
+    ///
+    pub fn set_order_layer(
+        &mut self,
+        order_layer: u32,
+    ) -> &mut Self {
+        self.order.order_layer = order_layer;
         self
     }
 
@@ -486,6 +489,7 @@ impl Text {
     ///
     pub fn set_position(&mut self, position: Vec3) -> &mut Self {
         self.pos = position;
+        self.order.set_position(position);
         self.changed = true;
         self
     }
@@ -535,6 +539,7 @@ impl Text {
     ) -> Result<OrderedIndex, GraphicsError> {
         if self.changed {
             self.create_quad(cache, atlas, renderer)?;
+            self.changed = false;
         }
 
         Ok(OrderedIndex::new(self.order, self.store_id, 0))

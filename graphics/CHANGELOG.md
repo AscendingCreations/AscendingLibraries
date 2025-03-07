@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.20.0 (7. March, 2025)
+
+### Changed
+- Removed Position Overide and Render Layer from being stored in Object Structs, Shrinking struct sizes.
+- Moved all DrawOrder Updates inside of functions. set_pos, set_color, etc..
+- DrawOrder update functions no longer set Change to true. preventing unnecessary updates to GPU.
+- Made update only call resize_with if the len() actually changed reducing overhead.
+
+### Added
+- Created set_order_alpha function for everything but Light and Text.
+- Updated render_layer to order_layer since it is a rendering layer but its how it is ordered.
+
 ## 0.19.4 (19. February, 2025)
 
 ### Fixed

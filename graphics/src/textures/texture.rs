@@ -1,7 +1,7 @@
 use crate::{Allocation, AtlasSet, GpuRenderer, GraphicsError, TileSheet};
 use image::{DynamicImage, GenericImageView, ImageFormat};
 use std::{
-    io::{Error, ErrorKind},
+    io::Error,
     path::Path,
 };
 
@@ -30,7 +30,7 @@ impl Texture {
             .as_ref()
             .to_str()
             .ok_or_else(|| {
-                Error::new(ErrorKind::Other, "could not convert name to String")
+                Error::other("could not convert name to String")
             })?
             .to_owned();
 
