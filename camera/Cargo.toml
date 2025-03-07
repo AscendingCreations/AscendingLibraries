@@ -1,9 +1,9 @@
 [package]
 name = "ascending_camera"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["S.J.R. van Schaik", "Andrew Wheeler <genusistimelord@gmail.com>"]
 license = "MIT OR Apache-2.0"
-edition = "2021"
+edition = "2024"
 readme = "README.md"
 documentation = "https://docs.rs/ascending_camera"
 keywords = ["wgpu", "camera", "rendering"]
