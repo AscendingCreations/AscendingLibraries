@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.21.0 (10. March, 2025)
+
+### Changed
+- Updated cosmic-text to 0.13.1
+- text set_rich_text added alignment argument.
+
+
 ## 0.20.0 (7. March, 2025)
 
 ### Changed

@@ -3,7 +3,7 @@ use crate::{
     OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
-    Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap,
+    Align, Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap
 };
 
 /// [`Text`] Option Handler for [`Text::measure_string`].
@@ -359,6 +359,7 @@ impl Text {
         spans: I,
         default_attr: Attrs,
         shaping: cosmic_text::Shaping,
+        alignment: Option<Align>,
     ) -> &mut Self
     where
         I: IntoIterator<Item = (&'s str, Attrs<'r>)>,
@@ -368,6 +369,7 @@ impl Text {
             spans,
             default_attr,
             shaping,
+            alignment
         );
         self.changed = true;
         self

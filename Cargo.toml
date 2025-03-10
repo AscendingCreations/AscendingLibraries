@@ -1,5 +1,5 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = ["input", "camera", "graphics"]
 
 [workspace.dependencies]
@@ -11,7 +11,7 @@ image = "0.25.5"
 guillotiere = "0.6.2"
 serde = { version = "1.0.215", features = ["derive"] }
 log = "0.4.22"
-cosmic-text = { version = "0.12.1", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
+cosmic-text = { version = "0.13.1", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
 ordered-float = { version = "5.0.0", features = ["serde"] }
 lru = "0.13.0"
 glam = { version = "0.30.0", features = ["bytemuck", "mint"] }
