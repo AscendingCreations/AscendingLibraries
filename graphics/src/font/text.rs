@@ -3,7 +3,8 @@ use crate::{
     OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
-    Align, Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap
+    Align, Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache,
+    SwashContent, Wrap,
 };
 
 /// [`Text`] Option Handler for [`Text::measure_string`].
@@ -318,20 +319,14 @@ impl Text {
     /// Updates the [`Text`]'s order to overide the last set position.
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
-    pub fn set_order_override(
-        &mut self,
-        order_override: Vec3,
-    ) -> &mut Self {
+    pub fn set_order_override(&mut self, order_override: Vec3) -> &mut Self {
         self.order.set_position(order_override);
         self
     }
 
     /// Updates the [`Text`]'s orders Render Layer.
     ///
-    pub fn set_order_layer(
-        &mut self,
-        order_layer: u32,
-    ) -> &mut Self {
+    pub fn set_order_layer(&mut self, order_layer: u32) -> &mut Self {
         self.order.order_layer = order_layer;
         self
     }
@@ -342,7 +337,7 @@ impl Text {
         &mut self,
         renderer: &mut GpuRenderer,
         text: &str,
-        attrs: Attrs,
+        attrs: &Attrs,
         shaping: cosmic_text::Shaping,
     ) -> &mut Self {
         self.buffer
@@ -357,7 +352,7 @@ impl Text {
         &mut self,
         renderer: &mut GpuRenderer,
         spans: I,
-        default_attr: Attrs,
+        default_attr: &Attrs,
         shaping: cosmic_text::Shaping,
         alignment: Option<Align>,
     ) -> &mut Self
@@ -369,7 +364,7 @@ impl Text {
             spans,
             default_attr,
             shaping,
-            alignment
+            alignment,
         );
         self.changed = true;
         self
@@ -523,7 +518,7 @@ impl Text {
         self.buffer.set_text(
             &mut renderer.font_sys,
             "",
-            cosmic_text::Attrs::new(),
+            &cosmic_text::Attrs::new(),
             cosmic_text::Shaping::Basic,
         );
         self.changed = true;
@@ -594,7 +589,7 @@ impl Text {
     pub fn measure_string(
         font_system: &mut FontSystem,
         text: &str,
-        attrs: Attrs,
+        attrs: &Attrs,
         options: TextOptions,
     ) -> Vec2 {
         let mut buffer = Buffer::new(

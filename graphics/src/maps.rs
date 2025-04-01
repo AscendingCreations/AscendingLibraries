@@ -207,11 +207,9 @@ impl Map {
         let lower_index = renderer.new_buffer(map_vertex_size * LOWER_COUNT, 0);
         let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
 
-        let order1 =
-            DrawOrder::new(false, Vec3::new(0.0, 0.0, 9.0), 0);
+        let order1 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 9.0), 0);
 
-        let order2 =
-            DrawOrder::new(false, Vec3::new(0.0, 0.0, 5.0), 1);
+        let order2 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 5.0), 1);
 
         Self {
             tiles: iter::repeat_n(TileData::default(), 9216).collect(),
@@ -230,10 +228,7 @@ impl Map {
 
     /// Updates the [`Map`]'s position.
     ///
-    pub fn set_position(
-        &mut self,
-        position: Vec2,
-    ) -> &mut Self {
+    pub fn set_position(&mut self, position: Vec2) -> &mut Self {
         self.orders[0].set_position(Vec3::new(position.x, position.y, 9.0));
         self.orders[1].set_position(Vec3::new(position.x, position.y, 5.0));
         self.pos = position;
@@ -244,12 +239,17 @@ impl Map {
     /// Updates the [`Map`]'s orders to overide the last set position.
     /// Use this after calls to set_position to set it to a order.
     ///
-    pub fn set_order_pos(
-        &mut self,
-        order_override: Vec2,
-    ) -> &mut Self {
-        self.orders[0].set_position(Vec3::new(order_override.x, order_override.y, 9.0));
-        self.orders[1].set_position(Vec3::new(order_override.x, order_override.y, 5.0));
+    pub fn set_order_pos(&mut self, order_override: Vec2) -> &mut Self {
+        self.orders[0].set_position(Vec3::new(
+            order_override.x,
+            order_override.y,
+            9.0,
+        ));
+        self.orders[1].set_position(Vec3::new(
+            order_override.x,
+            order_override.y,
+            5.0,
+        ));
 
         self
     }

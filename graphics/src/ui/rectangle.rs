@@ -69,20 +69,14 @@ impl Rect {
     /// Updates the [`Rect`]'s order to overide the last set position.
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
-    pub fn set_order_pos(
-        &mut self,
-        order_override: Vec3,
-    ) -> &mut Self {
+    pub fn set_order_pos(&mut self, order_override: Vec3) -> &mut Self {
         self.order.set_position(order_override);
         self
     }
 
     /// Updates the [`Rect`]'s orders Render Layer.
     ///
-    pub fn set_order_layer(
-        &mut self,
-        order_layer: u32,
-    ) -> &mut Self {
+    pub fn set_order_layer(&mut self, order_layer: u32) -> &mut Self {
         self.order.order_layer = order_layer;
         self
     }
@@ -114,7 +108,9 @@ impl Rect {
     ///
     pub fn set_color(&mut self, color: Color) -> &mut Self {
         self.color = color;
-        self.order.alpha = self.border_color.a() < 255 || self.radius > 0.0 || self.color.a() < 255;
+        self.order.alpha = self.border_color.a() < 255
+            || self.radius > 0.0
+            || self.color.a() < 255;
         self.changed = true;
         self
     }
@@ -123,7 +119,9 @@ impl Rect {
     ///
     pub fn set_border_color(&mut self, color: Color) -> &mut Self {
         self.border_color = color;
-        self.order.alpha = self.border_color.a() < 255 || self.radius > 0.0 || self.color.a() < 255;
+        self.order.alpha = self.border_color.a() < 255
+            || self.radius > 0.0
+            || self.color.a() < 255;
         self.changed = true;
         self
     }
@@ -185,7 +183,8 @@ impl Rect {
     ///
     pub fn set_radius(&mut self, radius: f32) -> &mut Self {
         self.radius = radius;
-        self.order.alpha = self.border_color.a() < 255 || radius > 0.0 || self.color.a() < 255;
+        self.order.alpha =
+            self.border_color.a() < 255 || radius > 0.0 || self.color.a() < 255;
         self.changed = true;
         self
     }

@@ -120,11 +120,7 @@ impl Lights {
                 bytemuck::bytes_of(&LightsVertex::default()).len(),
                 0,
             ),
-            order: DrawOrder::new(
-                true,
-                Vec3::new(0.0, 0.0, z),
-                order_layer,
-            ),
+            order: DrawOrder::new(true, Vec3::new(0.0, 0.0, z), order_layer),
             area_lights: SlotMap::with_capacity_and_key(MAX_AREA_LIGHTS),
             directional_lights: SlotMap::with_capacity_and_key(MAX_DIR_LIGHTS),
             area_count: 0,

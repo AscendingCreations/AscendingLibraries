@@ -3,8 +3,8 @@ use async_trait::async_trait;
 use log::debug;
 use std::{path::Path, sync::Arc};
 use wgpu::{
-    core::instance::RequestAdapterError, Adapter, Backend, Backends,
-    DeviceType, Surface, TextureFormat,
+    Adapter, Backend, Backends, DeviceType, Surface, TextureFormat,
+    core::instance::RequestAdapterError,
 };
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
@@ -279,7 +279,9 @@ impl AdapterExt for wgpu::Adapter {
         } else if let Some(pos) = bgra {
             caps.formats[pos]
         } else {
-            panic!("Your Rendering Device does not support Bgra8UnormSrgb or Rgba8UnormSrgb");
+            panic!(
+                "Your Rendering Device does not support Bgra8UnormSrgb or Rgba8UnormSrgb"
+            );
         };
 
         debug!("surface format: {:?}", format);
@@ -371,7 +373,9 @@ impl InstanceExt for wgpu::Instance {
         }
 
         if compatible_adapters.is_empty() {
-            debug!("Unable to find compatible adapters.\nEnsure the backends are set and not Empty.")
+            debug!(
+                "Unable to find compatible adapters.\nEnsure the backends are set and not Empty."
+            )
         }
 
         compatible_adapters.sort_by(|a, b| b.1.cmp(&a.1));

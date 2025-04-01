@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.22.0 (1. April, 2025)
+
+### Changed
+- Updated cosmic-text to 0.14.0
+- Made Fonts Render using wgpu::BlendState::ALPHA_BLENDING instead of wgpu::BlendState::PREMULTIPLIED_ALPHA_BLENDING
+- measure_string now takes an &Attrs.
+- set_rich_text now takes an &Attrs for Default Attrs.
+- set_text now takes an &Attrs.
+
 ## 0.21.0 (10. March, 2025)
 
 ### Changed

@@ -47,7 +47,9 @@ pub enum GraphicsError {
     EventLoopExternal(#[from] winit::error::ExternalError),
     #[error(transparent)]
     OsError(#[from] winit::error::OsError),
-    #[error("Could not Defragment the Textures due to Failure in Wgpu or other issues.")]
+    #[error(
+        "Could not Defragment the Textures due to Failure in Wgpu or other issues."
+    )]
     DefragFailed,
     #[error("The Atlas already has max layers and can not hold anymore.")]
     AtlasMaxLayers,

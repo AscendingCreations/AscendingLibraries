@@ -1,8 +1,8 @@
 use super::{
+    Key, Location, ModifiersState, MouseButton, PhysicalPosition,
     axis::{Axis, MouseAxis},
     bindings::Bindings,
     button::Button,
-    Key, Location, ModifiersState, MouseButton, PhysicalPosition,
 };
 use ahash::{AHashMap, AHashSet};
 use std::{

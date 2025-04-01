@@ -97,20 +97,14 @@ impl Mesh2D {
     /// Updates the [`Mesh2D`]'s order to overide the last set position.
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
-    pub fn set_order_pos(
-        &mut self,
-        order_override: Vec3,
-    ) -> &mut Self {
+    pub fn set_order_pos(&mut self, order_override: Vec3) -> &mut Self {
         self.order.set_position(order_override);
         self
     }
 
     /// Updates the [`Mesh2D`]'s orders Render Layer.
     ///
-    pub fn set_order_layer(
-        &mut self,
-        order_layer: u32,
-    ) -> &mut Self {
+    pub fn set_order_layer(&mut self, order_layer: u32) -> &mut Self {
         self.order.order_layer = order_layer;
         self
     }

@@ -85,9 +85,7 @@ impl PipeLineLayout for TextRenderPipeline {
                     entry_point: Some("fragment"),
                     targets: &[Some(wgpu::ColorTargetState {
                         format: surface_format,
-                        blend: Some(
-                            wgpu::BlendState::ALPHA_BLENDING,
-                        ),
+                        blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
                     compilation_options: Default::default(),
