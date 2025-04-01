@@ -86,7 +86,7 @@ impl PipeLineLayout for TextRenderPipeline {
                     targets: &[Some(wgpu::ColorTargetState {
                         format: surface_format,
                         blend: Some(
-                            wgpu::BlendState::REPLACE,
+                            wgpu::BlendState::ALPHA_BLENDING,
                         ),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
