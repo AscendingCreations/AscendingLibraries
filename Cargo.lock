@@ -136,7 +136,7 @@ dependencies = [
 
 [[package]]
 name = "ascending_graphics"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "ahash",
  "ascending_camera",
@@ -2561,9 +2561,9 @@ checksum = "f6ccf251212114b54433ec949fd6a7841275f9ada20dddd2f29e9ceea4501493"
 
 [[package]]
 name = "unicode-width"
-version = "0.2.0"
+version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1fc81956842c57dac11422a97c3b8195a1ff727f06e85c84ed2e8aa277c9a0fd"
+checksum = "7dd6e30e90baa6f72411720665d41d89b9a3d039dc45b8faea1ddd07f617f6af"
 
 [[package]]
 name = "v_frame"
