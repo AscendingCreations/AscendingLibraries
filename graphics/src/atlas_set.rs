@@ -4,7 +4,7 @@ use crate::{
 };
 use lru::LruCache;
 use slab::Slab;
-use std::{hash::Hash, rc::Rc, sync::Arc};
+use std::{hash::Hash, sync::Arc};
 use wgpu::{BindGroup, BindGroupLayout, TextureUsages};
 
 mod allocation;

@@ -1,6 +1,7 @@
 use crate::{GpuRenderer, GraphicsError};
 use async_trait::async_trait;
 use log::debug;
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use std::{path::Path, sync::Arc};
 use wgpu::{
@@ -266,14 +267,29 @@ impl AdapterExt for wgpu::Adapter {
 
         debug!("{:?}", caps.formats);
 
+        #[cfg(feature = "rayon")]
         let rgba = caps
             .formats
             .par_iter()
             .find_first(|&&v| v == TextureFormat::Rgba8UnormSrgb);
+
+        #[cfg(feature = "rayon")]
         let bgra = caps
             .formats
             .par_iter()
             .find_first(|&&v| v == TextureFormat::Bgra8UnormSrgb);
+
+        #[cfg(not(feature = "rayon"))]
+        let rgba = caps
+            .formats
+            .iter()
+            .find(|&&v| v == TextureFormat::Rgba8UnormSrgb);
+
+        #[cfg(not(feature = "rayon"))]
+        let bgra = caps
+            .formats
+            .iter()
+            .find(|&&v| v == TextureFormat::Bgra8UnormSrgb);
 
         let format = if rgba.is_some() {
             TextureFormat::Rgba8UnormSrgb
@@ -347,8 +363,42 @@ impl InstanceExt for wgpu::Instance {
         options: AdapterOptions,
     ) -> Vec<(Adapter, u32, u32)> {
         let adapters = self.enumerate_adapters(options.allowed_backends);
+
+        #[cfg(feature = "rayon")]
         let mut compatible_adapters: Vec<(Adapter, u32, u32)> = adapters
             .into_par_iter()
+            .filter_map(|adapter| {
+                let information = adapter.get_info();
+                let backend = information.backend as u32;
+
+                if backend == 0 {
+                    return None;
+                }
+
+                let is_low = options.power == AdapterPowerSettings::LowPower;
+                let device_type = match information.device_type {
+                    DeviceType::IntegratedGpu if is_low => 1,
+                    DeviceType::IntegratedGpu => 2,
+                    DeviceType::DiscreteGpu if is_low => 2,
+                    DeviceType::DiscreteGpu => 1,
+                    DeviceType::Other => 3,
+                    DeviceType::VirtualGpu => 4,
+                    DeviceType::Cpu => 5,
+                };
+
+                if let Some(ref surface) = options.compatible_surface {
+                    if !adapter.is_surface_supported(surface) {
+                        return None;
+                    }
+                }
+
+                Some((adapter, device_type, backend))
+            })
+            .collect();
+
+        #[cfg(not(feature = "rayon"))]
+        let mut compatible_adapters: Vec<(Adapter, u32, u32)> = adapters
+            .into_iter()
             .filter_map(|adapter| {
                 let information = adapter.get_info();
                 let backend = information.backend as u32;
@@ -384,8 +434,12 @@ impl InstanceExt for wgpu::Instance {
             )
         }
 
+        #[cfg(feature = "rayon")]
         compatible_adapters
             .par_sort_by(|a, b| b.1.cmp(&a.1).then(b.2.cmp(&a.2)));
+
+        #[cfg(not(feature = "rayon"))]
+        compatible_adapters.sort_by(|a, b| b.1.cmp(&a.1).then(b.2.cmp(&a.2)));
         compatible_adapters
     }
 

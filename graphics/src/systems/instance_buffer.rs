@@ -2,6 +2,7 @@ use crate::{
     Bounds, Buffer, BufferLayout, CameraType, GpuDevice, GpuRenderer,
     OrderedIndex,
 };
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use std::ops::Range;
 
@@ -188,7 +189,11 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         self.buffer.len = self.needed_size;
 
         for processing in &mut self.unprocessed {
+            #[cfg(feature = "rayon")]
             processing.par_sort();
+
+            #[cfg(not(feature = "rayon"))]
+            processing.sort();
         }
 
         if self.is_clipped {

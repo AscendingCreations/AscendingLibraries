@@ -2,7 +2,6 @@ use crate::{AHashMap, GpuDevice};
 use bytemuck::{Pod, Zeroable};
 use std::{
     any::{Any, TypeId},
-    rc::Rc,
     sync::Arc,
 };
 

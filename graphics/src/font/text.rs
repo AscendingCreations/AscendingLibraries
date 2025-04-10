@@ -6,6 +6,7 @@ use cosmic_text::{
     Align, Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache,
     SwashContent, Wrap,
 };
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
 /// [`Text`] Option Handler for [`Text::measure_string`].
@@ -75,12 +76,18 @@ impl Text {
         atlas: &mut TextAtlas,
         renderer: &mut GpuRenderer,
     ) -> Result<(), GraphicsError> {
+        #[cfg(feature = "rayon")]
         let count: usize = self
             .buffer
             .lines
             .par_iter()
             .map(|line| line.text().len())
             .sum();
+
+        #[cfg(not(feature = "rayon"))]
+        let count: usize =
+            self.buffer.lines.iter().map(|line| line.text().len()).sum();
+
         let mut is_alpha = false;
         let mut width = 0.0;
         let screensize = renderer.size();

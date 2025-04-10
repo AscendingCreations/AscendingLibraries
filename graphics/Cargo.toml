@@ -16,6 +16,7 @@ categories = ["game-development", "graphics"]
 [features]
 default = ["crate_passthru"]
 crate_passthru = []
+rayon = ["dep:rayon"]
 
 [dependencies]
 async-trait.workspace = true
@@ -38,4 +39,4 @@ indexmap.workspace = true
 ahash.workspace = true
 slotmap.workspace = true
 slab.workspace = true
-rayon.workspace = true
+rayon = { workspace = true, optional = true }

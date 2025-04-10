@@ -2,6 +2,7 @@ use crate::{
     AsBufferPass, Bounds, Buffer, BufferData, BufferLayout, BufferPass,
     CameraType, GpuDevice, GpuRenderer, OrderedIndex,
 };
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use std::ops::Range;
 
@@ -196,7 +197,11 @@ impl<K: BufferLayout> VertexBuffer<K> {
         self.vertex_buffer.len = self.vertex_needed;
 
         for processing in &mut self.unprocessed {
+            #[cfg(feature = "rayon")]
             processing.par_sort();
+
+            #[cfg(not(feature = "rayon"))]
+            processing.sort();
         }
 
         if self.buffers.len() < self.unprocessed.len() {

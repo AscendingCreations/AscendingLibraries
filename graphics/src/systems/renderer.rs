@@ -5,7 +5,7 @@ use crate::{
 };
 use cosmic_text::FontSystem;
 use slotmap::SlotMap;
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
 
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
