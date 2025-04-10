@@ -196,13 +196,15 @@ impl<K: BufferLayout> VertexBuffer<K> {
         self.vertex_buffer.count = self.vertex_needed / K::stride();
         self.vertex_buffer.len = self.vertex_needed;
 
-        for processing in &mut self.unprocessed {
-            #[cfg(feature = "rayon")]
-            processing.par_sort();
+        #[cfg(feature = "rayon")]
+        self.unprocessed
+            .par_iter_mut()
+            .for_each(|processing| processing.par_sort());
 
-            #[cfg(not(feature = "rayon"))]
+        #[cfg(not(feature = "rayon"))]
+        self.unprocessed.iter_mut().for_each(|processing| {
             processing.sort();
-        }
+        });
 
         if self.buffers.len() < self.unprocessed.len() {
             for i in self.buffers.len()..self.unprocessed.len() {
@@ -211,9 +213,13 @@ impl<K: BufferLayout> VertexBuffer<K> {
             }
         }
 
-        for buffer in &mut self.buffers {
-            buffer.clear()
-        }
+        #[cfg(feature = "rayon")]
+        self.buffers
+            .par_iter_mut()
+            .for_each(|buffer| buffer.clear());
+
+        #[cfg(not(feature = "rayon"))]
+        self.buffers.iter_mut().for_each(|buffer| buffer.clear());
 
         for (layer, processing) in self.unprocessed.iter().enumerate() {
             for buf in processing {
@@ -296,9 +302,15 @@ impl<K: BufferLayout> VertexBuffer<K> {
             }
         }
 
-        for buffer in &mut self.unprocessed {
-            buffer.clear()
-        }
+        #[cfg(feature = "rayon")]
+        self.unprocessed
+            .par_iter_mut()
+            .for_each(|buffer| buffer.clear());
+
+        #[cfg(not(feature = "rayon"))]
+        self.unprocessed
+            .iter_mut()
+            .for_each(|buffer| buffer.clear());
 
         self.vertex_needed = 0;
         self.index_needed = 0;

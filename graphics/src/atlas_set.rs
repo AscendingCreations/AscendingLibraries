@@ -3,6 +3,8 @@ use crate::{
     TextureLayout, UVec3,
 };
 use lru::LruCache;
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 use slab::Slab;
 use std::{hash::Hash, sync::Arc};
 use wgpu::{BindGroup, BindGroupLayout, TextureUsages};
@@ -386,6 +388,12 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     /// As we normally just overwrite the buffer when we add new Allocations.
     ///
     pub fn clear(&mut self) {
+        #[cfg(feature = "rayon")]
+        self.layers.par_iter_mut().for_each(|layer| {
+            layer.allocator.clear();
+        });
+
+        #[cfg(not(feature = "rayon"))]
         for layer in self.layers.iter_mut() {
             layer.allocator.clear();
         }

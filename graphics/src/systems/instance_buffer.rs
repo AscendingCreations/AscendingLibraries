@@ -188,18 +188,26 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         self.buffer.count = self.needed_size / K::stride();
         self.buffer.len = self.needed_size;
 
-        for processing in &mut self.unprocessed {
-            #[cfg(feature = "rayon")]
-            processing.par_sort();
+        #[cfg(feature = "rayon")]
+        self.unprocessed
+            .par_iter_mut()
+            .for_each(|processing| processing.par_sort());
 
-            #[cfg(not(feature = "rayon"))]
+        #[cfg(not(feature = "rayon"))]
+        self.unprocessed.iter_mut().for_each(|processing| {
             processing.sort();
-        }
+        });
 
         if self.is_clipped {
-            for buffer in &mut self.clipped_buffers {
+            #[cfg(feature = "rayon")]
+            self.clipped_buffers.par_iter_mut().for_each(|buffer| {
                 buffer.clear();
-            }
+            });
+
+            #[cfg(not(feature = "rayon"))]
+            self.clipped_buffers.iter_mut().for_each(|buffer| {
+                buffer.clear();
+            });
 
             if self.clipped_buffers.len() < self.unprocessed.len() {
                 for i in self.clipped_buffers.len()..self.unprocessed.len() {
@@ -256,9 +264,15 @@ impl<K: BufferLayout> InstanceBuffer<K> {
 
         self.needed_size = 0;
 
-        for buffer in &mut self.unprocessed {
-            buffer.clear()
-        }
+        #[cfg(feature = "rayon")]
+        self.unprocessed.par_iter_mut().for_each(|buffer| {
+            buffer.clear();
+        });
+
+        #[cfg(not(feature = "rayon"))]
+        self.unprocessed.iter_mut().for_each(|buffer| {
+            buffer.clear();
+        });
     }
 
     //private but resizes the buffer on the GPU when needed.

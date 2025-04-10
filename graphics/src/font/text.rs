@@ -619,12 +619,28 @@ impl Text {
         );
         buffer.set_text(font_system, text, attrs, options.shaping);
 
+        #[cfg(not(feature = "rayon"))]
         let (width, total_lines) = buffer.layout_runs().fold(
             (0.0, 0usize),
             |(width, total_lines), run| {
                 (run.line_w.max(width), total_lines + 1)
             },
         );
+
+        #[cfg(feature = "rayon")]
+        let (width, total_lines) = buffer
+            .layout_runs()
+            .par_bridge()
+            .fold(
+                || (0.0, 0usize),
+                |(width, total_lines), run| {
+                    (run.line_w.max(width), total_lines + 1)
+                },
+            )
+            .reduce(
+                || (0.0, 0usize),
+                |(w1, t1), (w2, t2)| (w1.max(w2), t1 + t2),
+            );
 
         let (max_width, max_height) = buffer.size();
         let height = total_lines as f32 * buffer.metrics().line_height;
