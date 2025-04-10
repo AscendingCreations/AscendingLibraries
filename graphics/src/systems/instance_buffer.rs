@@ -2,6 +2,7 @@ use crate::{
     Bounds, Buffer, BufferLayout, CameraType, GpuDevice, GpuRenderer,
     OrderedIndex,
 };
+use rayon::prelude::*;
 use std::ops::Range;
 
 /// Details for the Objects Memory location within the instance Buffer.
@@ -187,7 +188,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         self.buffer.len = self.needed_size;
 
         for processing in &mut self.unprocessed {
-            processing.sort();
+            processing.par_sort();
         }
 
         if self.is_clipped {

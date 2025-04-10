@@ -1,5 +1,6 @@
 use crate::{BufferData, BufferLayout};
-use std::iter;
+use rayon::iter::repeatn;
+use rayon::prelude::*;
 
 /// Vertex Details for [`crate::Map`] that matches the Shaders Vertex Layout.
 ///
@@ -42,7 +43,7 @@ impl BufferLayout for MapVertex {
         _index_capacity: usize,
     ) -> BufferData {
         let instance_arr: Vec<MapVertex> =
-            iter::repeat_n(MapVertex::default(), vertex_capacity).collect();
+            repeatn(MapVertex::default(), vertex_capacity).collect();
 
         BufferData {
             vertexs: bytemuck::cast_slice(&instance_arr).to_vec(),

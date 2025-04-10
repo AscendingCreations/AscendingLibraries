@@ -1,5 +1,6 @@
 use crate::{BufferData, BufferLayout};
-use std::iter;
+use rayon::iter::repeatn;
+use rayon::prelude::*;
 
 /// Vertex Details for [`crate::Lights`] that matches the Shaders Vertex Layout.
 ///
@@ -39,7 +40,7 @@ impl BufferLayout for LightsVertex {
         _index_capacity: usize,
     ) -> BufferData {
         let instance_arr: Vec<LightsVertex> =
-            iter::repeat_n(LightsVertex::default(), vertex_capacity).collect();
+            repeatn(LightsVertex::default(), vertex_capacity).collect();
 
         BufferData {
             vertexs: bytemuck::cast_slice(&instance_arr).to_vec(),

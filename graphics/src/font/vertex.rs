@@ -1,5 +1,6 @@
 use crate::{BufferData, BufferLayout};
-use std::iter;
+use rayon::iter::repeatn;
+use rayon::prelude::*;
 
 /// Vertex Details for [`crate::Text`] that matches the Shaders Vertex Layout.
 ///
@@ -44,7 +45,7 @@ impl BufferLayout for TextVertex {
         _index_capacity: usize,
     ) -> BufferData {
         let instance_arr: Vec<TextVertex> =
-            iter::repeat_n(TextVertex::default(), vertex_capacity).collect();
+            repeatn(TextVertex::default(), vertex_capacity).collect();
 
         BufferData {
             vertexs: bytemuck::cast_slice(&instance_arr).to_vec(),

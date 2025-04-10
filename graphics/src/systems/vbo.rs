@@ -2,6 +2,7 @@ use crate::{
     AsBufferPass, Bounds, Buffer, BufferData, BufferLayout, BufferPass,
     CameraType, GpuDevice, GpuRenderer, OrderedIndex,
 };
+use rayon::prelude::*;
 use std::ops::Range;
 
 /// Details for the Objects Memory location within the Vertex Buffer and Index Buffers.
@@ -195,7 +196,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
         self.vertex_buffer.len = self.vertex_needed;
 
         for processing in &mut self.unprocessed {
-            processing.sort();
+            processing.par_sort();
         }
 
         if self.buffers.len() < self.unprocessed.len() {

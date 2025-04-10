@@ -1,9 +1,10 @@
 use crate::{GpuRenderer, GraphicsError};
 use async_trait::async_trait;
 use log::debug;
+use rayon::prelude::*;
 use std::{path::Path, sync::Arc};
 use wgpu::{
-    Adapter, Backend, Backends, DeviceType, Surface, TextureFormat,
+    Adapter, Backends, DeviceType, Surface, TextureFormat,
     core::instance::RequestAdapterError,
 };
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
@@ -267,17 +268,17 @@ impl AdapterExt for wgpu::Adapter {
 
         let rgba = caps
             .formats
-            .iter()
-            .position(|v| *v == TextureFormat::Rgba8UnormSrgb);
+            .par_iter()
+            .find_first(|&&v| v == TextureFormat::Rgba8UnormSrgb);
         let bgra = caps
             .formats
-            .iter()
-            .position(|v| *v == TextureFormat::Bgra8UnormSrgb);
+            .par_iter()
+            .find_first(|&&v| v == TextureFormat::Bgra8UnormSrgb);
 
-        let format = if let Some(pos) = rgba {
-            caps.formats[pos]
-        } else if let Some(pos) = bgra {
-            caps.formats[pos]
+        let format = if rgba.is_some() {
+            TextureFormat::Rgba8UnormSrgb
+        } else if bgra.is_some() {
+            TextureFormat::Bgra8UnormSrgb
         } else {
             panic!(
                 "Your Rendering Device does not support Bgra8UnormSrgb or Rgba8UnormSrgb"
@@ -335,42 +336,47 @@ pub trait InstanceExt {
 
     /// Gets a list of Avaliable Adapters based upon the [`AdapterOptions`].
     ///
-    fn get_adapters(&self, options: AdapterOptions) -> Vec<(Adapter, u32)>;
+    fn get_adapters(&self, options: AdapterOptions)
+    -> Vec<(Adapter, u32, u32)>;
 }
 
 #[async_trait]
 impl InstanceExt for wgpu::Instance {
-    fn get_adapters(&self, options: AdapterOptions) -> Vec<(Adapter, u32)> {
-        let mut adapters = self.enumerate_adapters(options.allowed_backends);
-        let mut compatible_adapters: Vec<(Adapter, u32)> =
-            Vec::with_capacity(12);
+    fn get_adapters(
+        &self,
+        options: AdapterOptions,
+    ) -> Vec<(Adapter, u32, u32)> {
+        let adapters = self.enumerate_adapters(options.allowed_backends);
+        let mut compatible_adapters: Vec<(Adapter, u32, u32)> = adapters
+            .into_par_iter()
+            .filter_map(|adapter| {
+                let information = adapter.get_info();
+                let backend = information.backend as u32;
 
-        while let Some(adapter) = adapters.pop() {
-            let information = adapter.get_info();
-
-            if information.backend == Backend::Empty {
-                continue;
-            }
-
-            let is_low = options.power == AdapterPowerSettings::LowPower;
-            let device_type = match information.device_type {
-                DeviceType::IntegratedGpu if is_low => 1,
-                DeviceType::IntegratedGpu => 2,
-                DeviceType::DiscreteGpu if is_low => 2,
-                DeviceType::DiscreteGpu => 1,
-                DeviceType::Other => 3,
-                DeviceType::VirtualGpu => 4,
-                DeviceType::Cpu => 5,
-            };
-
-            if let Some(ref surface) = options.compatible_surface {
-                if !adapter.is_surface_supported(surface) {
-                    continue;
+                if backend == 0 {
+                    return None;
                 }
-            }
 
-            compatible_adapters.push((adapter, device_type));
-        }
+                let is_low = options.power == AdapterPowerSettings::LowPower;
+                let device_type = match information.device_type {
+                    DeviceType::IntegratedGpu if is_low => 1,
+                    DeviceType::IntegratedGpu => 2,
+                    DeviceType::DiscreteGpu if is_low => 2,
+                    DeviceType::DiscreteGpu => 1,
+                    DeviceType::Other => 3,
+                    DeviceType::VirtualGpu => 4,
+                    DeviceType::Cpu => 5,
+                };
+
+                if let Some(ref surface) = options.compatible_surface {
+                    if !adapter.is_surface_supported(surface) {
+                        return None;
+                    }
+                }
+
+                Some((adapter, device_type, backend))
+            })
+            .collect();
 
         if compatible_adapters.is_empty() {
             debug!(
@@ -378,7 +384,8 @@ impl InstanceExt for wgpu::Instance {
             )
         }
 
-        compatible_adapters.sort_by(|a, b| b.1.cmp(&a.1));
+        compatible_adapters
+            .par_sort_by(|a, b| b.1.cmp(&a.1).then(b.2.cmp(&a.2)));
         compatible_adapters
     }
 
@@ -410,6 +417,14 @@ impl InstanceExt for wgpu::Instance {
                     4 => debug!("A Virtual Adapter was chosen."),
                     5 => debug!("A Software rendering Adapter was chosen."),
                     _ => {}
+                }
+
+                match adapter.2 {
+                    1 => debug!("Vulkan Adapter Choosen"),
+                    2 => debug!("Metal Adapter Choosen"),
+                    3 => debug!("DX12 Adapter Choosen"),
+                    4 => debug!("OpenGL Adapter Choosen"),
+                    _ => debug!("WebGPU Adapter Choosen"),
                 }
 
                 return ret;
