@@ -2,6 +2,8 @@ use crate::{
     AsBufferPass, Bounds, Buffer, BufferData, BufferLayout, BufferPass,
     CameraType, GpuDevice, GpuRenderer, OrderedIndex,
 };
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 use std::ops::Range;
 
 /// Details for the Objects Memory location within the Vertex Buffer and Index Buffers.
@@ -152,7 +154,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
             if self.unprocessed.len() < offset {
                 for _ in self.unprocessed.len()..offset {
                     //Push the layer buffer. if this is a layer we are adding data too lets
-                    //give it a starting size. this cna be adjusted later for better performance
+                    //give it a starting size. this can be adjusted later for better performance
                     //versus ram usage.
                     self.unprocessed.push(Vec::with_capacity(self.layer_size));
                 }
@@ -194,9 +196,15 @@ impl<K: BufferLayout> VertexBuffer<K> {
         self.vertex_buffer.count = self.vertex_needed / K::stride();
         self.vertex_buffer.len = self.vertex_needed;
 
-        for processing in &mut self.unprocessed {
+        #[cfg(feature = "rayon")]
+        self.unprocessed
+            .par_iter_mut()
+            .for_each(|processing| processing.par_sort());
+
+        #[cfg(not(feature = "rayon"))]
+        self.unprocessed.iter_mut().for_each(|processing| {
             processing.sort();
-        }
+        });
 
         if self.buffers.len() < self.unprocessed.len() {
             for i in self.buffers.len()..self.unprocessed.len() {
@@ -205,9 +213,13 @@ impl<K: BufferLayout> VertexBuffer<K> {
             }
         }
 
-        for buffer in &mut self.buffers {
-            buffer.clear()
-        }
+        #[cfg(feature = "rayon")]
+        self.buffers
+            .par_iter_mut()
+            .for_each(|buffer| buffer.clear());
+
+        #[cfg(not(feature = "rayon"))]
+        self.buffers.iter_mut().for_each(|buffer| buffer.clear());
 
         for (layer, processing) in self.unprocessed.iter().enumerate() {
             for buf in processing {
@@ -290,9 +302,15 @@ impl<K: BufferLayout> VertexBuffer<K> {
             }
         }
 
-        for buffer in &mut self.unprocessed {
-            buffer.clear()
-        }
+        #[cfg(feature = "rayon")]
+        self.unprocessed
+            .par_iter_mut()
+            .for_each(|buffer| buffer.clear());
+
+        #[cfg(not(feature = "rayon"))]
+        self.unprocessed
+            .iter_mut()
+            .for_each(|buffer| buffer.clear());
 
         self.vertex_needed = 0;
         self.index_needed = 0;

@@ -3,8 +3,11 @@ use crate::{
     OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
-    Align, Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache, SwashContent, Wrap
+    Align, Attrs, Buffer, Cursor, FontSystem, Metrics, SwashCache,
+    SwashContent, Wrap,
 };
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 
 /// [`Text`] Option Handler for [`Text::measure_string`].
 ///
@@ -73,8 +76,18 @@ impl Text {
         atlas: &mut TextAtlas,
         renderer: &mut GpuRenderer,
     ) -> Result<(), GraphicsError> {
+        #[cfg(feature = "rayon")]
+        let count: usize = self
+            .buffer
+            .lines
+            .par_iter()
+            .map(|line| line.text().len())
+            .sum();
+
+        #[cfg(not(feature = "rayon"))]
         let count: usize =
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
+
         let mut is_alpha = false;
         let mut width = 0.0;
         let screensize = renderer.size();
@@ -318,20 +331,14 @@ impl Text {
     /// Updates the [`Text`]'s order to overide the last set position.
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
-    pub fn set_order_override(
-        &mut self,
-        order_override: Vec3,
-    ) -> &mut Self {
+    pub fn set_order_override(&mut self, order_override: Vec3) -> &mut Self {
         self.order.set_position(order_override);
         self
     }
 
     /// Updates the [`Text`]'s orders Render Layer.
     ///
-    pub fn set_order_layer(
-        &mut self,
-        order_layer: u32,
-    ) -> &mut Self {
+    pub fn set_order_layer(&mut self, order_layer: u32) -> &mut Self {
         self.order.order_layer = order_layer;
         self
     }
@@ -342,7 +349,7 @@ impl Text {
         &mut self,
         renderer: &mut GpuRenderer,
         text: &str,
-        attrs: Attrs,
+        attrs: &Attrs,
         shaping: cosmic_text::Shaping,
     ) -> &mut Self {
         self.buffer
@@ -357,7 +364,7 @@ impl Text {
         &mut self,
         renderer: &mut GpuRenderer,
         spans: I,
-        default_attr: Attrs,
+        default_attr: &Attrs,
         shaping: cosmic_text::Shaping,
         alignment: Option<Align>,
     ) -> &mut Self
@@ -369,7 +376,7 @@ impl Text {
             spans,
             default_attr,
             shaping,
-            alignment
+            alignment,
         );
         self.changed = true;
         self
@@ -523,7 +530,7 @@ impl Text {
         self.buffer.set_text(
             &mut renderer.font_sys,
             "",
-            cosmic_text::Attrs::new(),
+            &cosmic_text::Attrs::new(),
             cosmic_text::Shaping::Basic,
         );
         self.changed = true;
@@ -594,7 +601,7 @@ impl Text {
     pub fn measure_string(
         font_system: &mut FontSystem,
         text: &str,
-        attrs: Attrs,
+        attrs: &Attrs,
         options: TextOptions,
     ) -> Vec2 {
         let mut buffer = Buffer::new(
@@ -612,12 +619,28 @@ impl Text {
         );
         buffer.set_text(font_system, text, attrs, options.shaping);
 
+        #[cfg(not(feature = "rayon"))]
         let (width, total_lines) = buffer.layout_runs().fold(
             (0.0, 0usize),
             |(width, total_lines), run| {
                 (run.line_w.max(width), total_lines + 1)
             },
         );
+
+        #[cfg(feature = "rayon")]
+        let (width, total_lines) = buffer
+            .layout_runs()
+            .par_bridge()
+            .fold(
+                || (0.0, 0usize),
+                |(width, total_lines), run| {
+                    (run.line_w.max(width), total_lines + 1)
+                },
+            )
+            .reduce(
+                || (0.0, 0usize),
+                |(w1, t1), (w2, t2)| (w1.max(w2), t1 + t2),
+            );
 
         let (max_width, max_height) = buffer.size();
         let height = total_lines as f32 * buffer.metrics().line_height;

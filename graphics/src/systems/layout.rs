@@ -2,7 +2,7 @@ use crate::{AHashMap, GpuDevice};
 use bytemuck::{Pod, Zeroable};
 use std::{
     any::{Any, TypeId},
-    rc::Rc,
+    sync::Arc,
 };
 
 /// Trait used to Create and Store [`wgpu::BindGroupLayout`] within a HashMap.
@@ -30,7 +30,7 @@ pub trait Layout: Pod + Zeroable {
 ///
 pub struct LayoutStorage {
     pub(crate) bind_group_map:
-        AHashMap<(TypeId, Vec<u8>), Rc<wgpu::BindGroupLayout>>,
+        AHashMap<(TypeId, Vec<u8>), Arc<wgpu::BindGroupLayout>>,
 }
 
 impl LayoutStorage {
@@ -48,24 +48,24 @@ impl LayoutStorage {
         &mut self,
         device: &mut GpuDevice,
         layout: K,
-    ) -> Rc<wgpu::BindGroupLayout> {
+    ) -> Arc<wgpu::BindGroupLayout> {
         let key = layout.layout_key();
 
         let layout = self
             .bind_group_map
             .entry(key)
-            .or_insert_with(|| Rc::new(layout.create_layout(device)));
+            .or_insert_with(|| Arc::new(layout.create_layout(device)));
 
-        Rc::clone(layout)
+        Arc::clone(layout)
     }
 
     pub fn get_layout<K: Layout>(
         &self,
         layout: K,
-    ) -> Option<Rc<wgpu::BindGroupLayout>> {
+    ) -> Option<Arc<wgpu::BindGroupLayout>> {
         let key = layout.layout_key();
 
-        self.bind_group_map.get(&key).map(Rc::clone)
+        self.bind_group_map.get(&key).map(Arc::clone)
     }
 }
 

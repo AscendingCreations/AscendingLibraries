@@ -26,6 +26,7 @@ Ascending Graphics
 - Tilesheet loader to help with 2D tiles to Textures.
 - Supports both Instance Buffers and Vertex Buffers.
 - Extendable
+- Rayon support for sorting, clearing and anything possible.
 
 ## 🚨 Help
 
@@ -37,7 +38,7 @@ If you need help with this library or have suggestions please go to our [Discord
 ![Client showcase](./images/client.png)
 
 [`Ascending Map Editor`](https://github.com/AscendingCreations/AscendingMapEditor)
+![MapEditor showcase](./images/map_editor.png)
 
 [Render Demo](https://github.com/AscendingCreations/render_demo)
-
 ![Demo showcase](./images/demo.png)

@@ -77,7 +77,7 @@ impl TileSheet {
                 }
             }
 
-            if image.enumerate_pixels().all(|p| p.2 .0[3] == 0) {
+            if image.enumerate_pixels().all(|p| p.2.0[3] == 0) {
                 // lets use our only Blank tile. this will always be the first loaded.
                 // We use this when tiles are empty to avoid issues later when we do use
                 // these spots for other tiles.
@@ -163,7 +163,7 @@ impl TileSheet {
                 }
             }
 
-            if image.enumerate_pixels().all(|p| p.2 .0[3] == 0) {
+            if image.enumerate_pixels().all(|p| p.2.0[3] == 0) {
                 self.tiles.push(Tile {
                     x: tilex,
                     y: tiley,

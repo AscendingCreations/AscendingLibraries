@@ -1,6 +1,6 @@
 [package]
 name = "ascending_graphics"
-version = "0.21.0"
+version = "0.22.0"
 authors = ["S.J.R. van Schaik", "Andrew Wheeler <genusistimelord@gmail.com>"]
 license = "MIT OR Apache-2.0"
 edition = "2024"
@@ -14,8 +14,9 @@ categories = ["game-development", "graphics"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["crate_passthru"]
+default = ["rayon", "crate_passthru"]
 crate_passthru = []
+rayon = ["dep:rayon"]
 
 [dependencies]
 async-trait.workspace = true
@@ -38,3 +39,4 @@ indexmap.workspace = true
 ahash.workspace = true
 slotmap.workspace = true
 slab.workspace = true
+rayon = { workspace = true, optional = true }

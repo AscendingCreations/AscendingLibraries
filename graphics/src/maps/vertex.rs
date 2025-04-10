@@ -1,5 +1,6 @@
 use crate::{BufferData, BufferLayout};
-use std::iter;
+#[cfg(feature = "rayon")]
+use rayon::{iter::repeatn, prelude::*};
 
 /// Vertex Details for [`crate::Map`] that matches the Shaders Vertex Layout.
 ///
@@ -41,8 +42,14 @@ impl BufferLayout for MapVertex {
         vertex_capacity: usize,
         _index_capacity: usize,
     ) -> BufferData {
+        #[cfg(feature = "rayon")]
         let instance_arr: Vec<MapVertex> =
-            iter::repeat_n(MapVertex::default(), vertex_capacity).collect();
+            repeatn(MapVertex::default(), vertex_capacity).collect();
+
+        #[cfg(not(feature = "rayon"))]
+        let instance_arr: Vec<MapVertex> =
+            std::iter::repeat_n(MapVertex::default(), vertex_capacity)
+                .collect();
 
         BufferData {
             vertexs: bytemuck::cast_slice(&instance_arr).to_vec(),

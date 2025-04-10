@@ -147,7 +147,9 @@ where
         buffer_layer: usize,
     ) {
         if buffer.buffer.is_clipped() {
-            error!("Text uses its own clipping mechanisim it does not need to be clipped by the clipper.");
+            error!(
+                "Text uses its own clipping mechanisim it does not need to be clipped by the clipper."
+            );
             return;
         }
 

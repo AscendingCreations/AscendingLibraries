@@ -1,9 +1,6 @@
 use crate::{Allocation, AtlasSet, GpuRenderer, GraphicsError, TileSheet};
 use image::{DynamicImage, GenericImageView, ImageFormat};
-use std::{
-    io::Error,
-    path::Path,
-};
+use std::{io::Error, path::Path};
 
 /// Holds the Textures information for Uploading to the GPU.
 #[derive(Clone, Debug, Default)]
@@ -29,9 +26,7 @@ impl Texture {
         let name = path
             .as_ref()
             .to_str()
-            .ok_or_else(|| {
-                Error::other("could not convert name to String")
-            })?
+            .ok_or_else(|| Error::other("could not convert name to String"))?
             .to_owned();
 
         Ok(Self::from_image(name, image::open(path)?))

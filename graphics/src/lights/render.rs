@@ -3,12 +3,12 @@ use std::{iter, mem};
 use crate::{
     AreaLightLayout, AreaLightRaw, DirLightLayout, DirectionalLightRaw,
     GpuRenderer, GraphicsError, InstanceBuffer, LightRenderPipeline, Lights,
-    LightsVertex, OrderedIndex, StaticVertexBuffer, MAX_AREA_LIGHTS,
-    MAX_DIR_LIGHTS,
+    LightsVertex, MAX_AREA_LIGHTS, MAX_DIR_LIGHTS, OrderedIndex,
+    StaticVertexBuffer,
 };
 
 use log::warn;
-use wgpu::util::{align_to, DeviceExt};
+use wgpu::util::{DeviceExt, align_to};
 
 /// Instance Buffer Setup for [`Lights`].
 ///

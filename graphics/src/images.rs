@@ -86,10 +86,7 @@ impl Image {
     /// Updates the [`Image`]'s order_override.
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
-    pub fn set_order_override(
-        &mut self,
-        order_override: Vec3,
-    ) -> &mut Self {
+    pub fn set_order_override(&mut self, order_override: Vec3) -> &mut Self {
         self.order.set_position(order_override);
         self
     }
