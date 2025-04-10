@@ -5,7 +5,7 @@ use crate::{
 };
 use cosmic_text::FontSystem;
 use slotmap::SlotMap;
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
@@ -247,7 +247,7 @@ impl GpuRenderer {
     pub fn create_layout<K: Layout>(
         &mut self,
         layout: K,
-    ) -> Rc<wgpu::BindGroupLayout> {
+    ) -> Arc<wgpu::BindGroupLayout> {
         self.layout_storage.create_layout(&mut self.device, layout)
     }
 
@@ -256,7 +256,7 @@ impl GpuRenderer {
     pub fn get_layout<K: Layout>(
         &self,
         layout: K,
-    ) -> Option<Rc<wgpu::BindGroupLayout>> {
+    ) -> Option<Arc<wgpu::BindGroupLayout>> {
         self.layout_storage.get_layout(layout)
     }
 

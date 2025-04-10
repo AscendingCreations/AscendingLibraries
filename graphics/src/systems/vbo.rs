@@ -153,7 +153,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
             if self.unprocessed.len() < offset {
                 for _ in self.unprocessed.len()..offset {
                     //Push the layer buffer. if this is a layer we are adding data too lets
-                    //give it a starting size. this cna be adjusted later for better performance
+                    //give it a starting size. this can be adjusted later for better performance
                     //versus ram usage.
                     self.unprocessed.push(Vec::with_capacity(self.layer_size));
                 }

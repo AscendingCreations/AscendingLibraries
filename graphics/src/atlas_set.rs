@@ -4,7 +4,7 @@ use crate::{
 };
 use lru::LruCache;
 use slab::Slab;
-use std::{hash::Hash, rc::Rc};
+use std::{hash::Hash, rc::Rc, sync::Arc};
 use wgpu::{BindGroup, BindGroupLayout, TextureUsages};
 
 mod allocation;
@@ -244,7 +244,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
                         | TextureUsages::TEXTURE_BINDING,
                 ),
             });
-        let atlas_layout: Rc<BindGroupLayout> = renderer
+        let atlas_layout: Arc<BindGroupLayout> = renderer
             .get_layout(TextureLayout)
             .expect("TextureLayout was never created.");
         self.texture_group =
@@ -308,7 +308,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             ),
         });
 
-        let atlas_layout: Rc<BindGroupLayout> =
+        let atlas_layout: Arc<BindGroupLayout> =
             renderer.create_layout(TextureLayout);
         let texture_group =
             TextureGroup::from_view(renderer, texture_view, &atlas_layout);
