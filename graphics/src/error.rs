@@ -32,7 +32,7 @@ pub enum GraphicsError {
     #[error(transparent)]
     Device(#[from] wgpu::RequestDeviceError),
     #[error(transparent)]
-    Adapter(#[from] wgpu::core::instance::RequestAdapterError),
+    Adapter(#[from] wgpu::RequestAdapterError),
     #[error(transparent)]
     ImageError(#[from] image::ImageError),
     #[error("Image atlas has no more space.")]
@@ -53,4 +53,8 @@ pub enum GraphicsError {
     DefragFailed,
     #[error("The Atlas already has max layers and can not hold anymore.")]
     AtlasMaxLayers,
+    #[error(
+        "No Adpater could be created by the system. Maybe its not supported?"
+    )]
+    AdapterNotFound,
 }

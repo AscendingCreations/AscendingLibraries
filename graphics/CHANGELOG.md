@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 - get_adapters now also returns the Backend ID.
+- removed trace_path: Option<&Path>, from create_device and create_renderer. No longer needed.
+- updated to WGPU to v25.0.0
 
 ### Added
 - rayon feature to thread what can be threaded. This will boost speed.
@@ -19,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - measure_string now takes an &Attrs.
 - set_rich_text now takes an &Attrs for Default Attrs.
 - set_text now takes an &Attrs.
+
 
 ## 0.21.0 (10. March, 2025)
 

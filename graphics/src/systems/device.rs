@@ -3,11 +3,8 @@ use async_trait::async_trait;
 use log::debug;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
-use std::{path::Path, sync::Arc};
-use wgpu::{
-    Adapter, Backends, DeviceType, Surface, TextureFormat,
-    core::instance::RequestAdapterError,
-};
+use std::sync::Arc;
+use wgpu::{Adapter, Backends, DeviceType, Surface, TextureFormat};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
 /// Handles the [`wgpu::Device`] and [`wgpu::Queue`] returned from WGPU.
@@ -242,7 +239,6 @@ pub trait AdapterExt {
         instance: &wgpu::Instance,
         window: &Arc<Window>,
         device_descriptor: &wgpu::DeviceDescriptor,
-        trace_path: Option<&Path>,
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError>;
 }
@@ -254,13 +250,11 @@ impl AdapterExt for wgpu::Adapter {
         instance: &wgpu::Instance,
         window: &Arc<Window>,
         device_descriptor: &wgpu::DeviceDescriptor,
-        trace_path: Option<&Path>,
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError> {
         let size = window.inner_size();
 
-        let (device, queue) =
-            self.request_device(device_descriptor, trace_path).await?;
+        let (device, queue) = self.request_device(device_descriptor).await?;
 
         let surface = instance.create_surface(window.clone()).unwrap();
         let caps = surface.get_capabilities(&self);
@@ -346,7 +340,6 @@ pub trait InstanceExt {
         window: Arc<Window>,
         options: AdapterOptions,
         device_descriptor: &wgpu::DeviceDescriptor,
-        trace_path: Option<&Path>,
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError>;
 
@@ -448,7 +441,6 @@ impl InstanceExt for wgpu::Instance {
         window: Arc<Window>,
         options: AdapterOptions,
         device_descriptor: &wgpu::DeviceDescriptor,
-        trace_path: Option<&Path>,
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError> {
         let mut adapters = self.get_adapters(options);
@@ -456,13 +448,7 @@ impl InstanceExt for wgpu::Instance {
         while let Some(adapter) = adapters.pop() {
             let ret = adapter
                 .0
-                .create_renderer(
-                    self,
-                    &window,
-                    device_descriptor,
-                    trace_path,
-                    present_mode,
-                )
+                .create_renderer(self, &window, device_descriptor, present_mode)
                 .await;
 
             if ret.is_ok() {
@@ -485,6 +471,6 @@ impl InstanceExt for wgpu::Instance {
             }
         }
 
-        Err(GraphicsError::Adapter(RequestAdapterError::NotFound))
+        Err(GraphicsError::AdapterNotFound)
     }
 }
