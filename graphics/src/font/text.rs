@@ -102,7 +102,6 @@ impl Text {
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
 
         let mut is_alpha = false;
-        let mut width = 0.0;
         let screensize = renderer.size();
         let bounds_min_x = self.bounds.left.max(0.0);
         let bounds_min_y = self.bounds.bottom.max(0.0);
@@ -133,8 +132,6 @@ impl Text {
             .take_while(is_run_visible);
 
         for run in layout_runs {
-            width = run.line_w.max(width);
-
             for glyph in run.glyphs.iter() {
                 let physical_glyph = glyph.physical(
                     (self.pos.x, self.pos.y + self.size.y),
@@ -156,24 +153,21 @@ impl Text {
                             physical_glyph.cache_key,
                         )
                         .unwrap();
-                    let bitmap = image.data;
                     let is_color = match image.content {
                         SwashContent::Color => true,
                         SwashContent::Mask => false,
                         SwashContent::SubpixelMask => false,
                     };
-                    let width = image.placement.width;
-                    let height = image.placement.height;
 
-                    if width > 0 && height > 0 {
+                    if image.placement.width > 0 && image.placement.height > 0 {
                         if is_color {
                             let (_, allocation) = atlas
                                 .emoji
                                 .upload_with_alloc(
                                     physical_glyph.cache_key,
-                                    &bitmap,
-                                    width,
-                                    height,
+                                    &image.data,
+                                    image.placement.width,
+                                    image.placement.height,
                                     Vec2::new(
                                         image.placement.left as f32,
                                         image.placement.top as f32,
@@ -187,9 +181,9 @@ impl Text {
                                 .text
                                 .upload_with_alloc(
                                     physical_glyph.cache_key,
-                                    &bitmap,
-                                    width,
-                                    height,
+                                    &image.data,
+                                    image.placement.width,
+                                    image.placement.height,
                                     Vec2::new(
                                         image.placement.left as f32,
                                         image.placement.top as f32,
