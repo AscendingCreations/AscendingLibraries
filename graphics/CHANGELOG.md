@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.23.1 (11. April, 2025)
+
+### Added
+- measure_glyphs function to give an Array of Glyph Sizes for a String.
+
 ## 0.23.0 (10. April, 2025)
 
 ### Changed
