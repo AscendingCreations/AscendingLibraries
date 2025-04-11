@@ -20,6 +20,19 @@ pub struct TextOptions {
     pub wrap: Wrap,
 }
 
+impl Default for TextOptions {
+    fn default() -> Self {
+        Self {
+            shaping: cosmic_text::Shaping::Advanced,
+            metrics: Some(Metrics::new(16.0, 16.0).scale(1.0)),
+            buffer_width: None,
+            buffer_height: None,
+            scale: 1.0,
+            wrap: Wrap::None,
+        }
+    }
+}
+
 /// [`Text`] visible width and lines details
 pub struct VisibleDetails {
     /// Visible Width the Text can render as.
@@ -89,7 +102,6 @@ impl Text {
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
 
         let mut is_alpha = false;
-        let mut width = 0.0;
         let screensize = renderer.size();
         let bounds_min_x = self.bounds.left.max(0.0);
         let bounds_min_y = self.bounds.bottom.max(0.0);
@@ -120,8 +132,6 @@ impl Text {
             .take_while(is_run_visible);
 
         for run in layout_runs {
-            width = run.line_w.max(width);
-
             for glyph in run.glyphs.iter() {
                 let physical_glyph = glyph.physical(
                     (self.pos.x, self.pos.y + self.size.y),
@@ -143,24 +153,21 @@ impl Text {
                             physical_glyph.cache_key,
                         )
                         .unwrap();
-                    let bitmap = image.data;
                     let is_color = match image.content {
                         SwashContent::Color => true,
                         SwashContent::Mask => false,
                         SwashContent::SubpixelMask => false,
                     };
-                    let width = image.placement.width;
-                    let height = image.placement.height;
 
-                    if width > 0 && height > 0 {
+                    if image.placement.width > 0 && image.placement.height > 0 {
                         if is_color {
                             let (_, allocation) = atlas
                                 .emoji
                                 .upload_with_alloc(
                                     physical_glyph.cache_key,
-                                    &bitmap,
-                                    width,
-                                    height,
+                                    &image.data,
+                                    image.placement.width,
+                                    image.placement.height,
                                     Vec2::new(
                                         image.placement.left as f32,
                                         image.placement.top as f32,
@@ -174,9 +181,9 @@ impl Text {
                                 .text
                                 .upload_with_alloc(
                                     physical_glyph.cache_key,
-                                    &bitmap,
-                                    width,
-                                    height,
+                                    &image.data,
+                                    image.placement.width,
+                                    image.placement.height,
                                     Vec2::new(
                                         image.placement.left as f32,
                                         image.placement.top as f32,
@@ -649,5 +656,57 @@ impl Text {
             width.min(max_width.unwrap_or(0.0).max(width)),
             height.min(max_height.unwrap_or(0.0).max(height)),
         )
+    }
+
+    /// Allows measuring the String character's Glyph and returning a Vec of their Sizes per character.
+    /// This will not create any buffers in the rendering system.
+    /// This Returns the Exact Width and Height of the character. This will not Return the Line Height for Height.
+    ///
+    pub fn measure_glyphs(
+        font_system: &mut FontSystem,
+        cache: &mut SwashCache,
+        text: &str,
+        attrs: &Attrs,
+        options: TextOptions,
+    ) -> Vec<Vec2> {
+        let mut buffer = Buffer::new(
+            font_system,
+            options
+                .metrics
+                .unwrap_or(Metrics::new(16.0, 16.0).scale(options.scale)),
+        );
+
+        buffer.set_wrap(font_system, options.wrap);
+        buffer.set_size(
+            font_system,
+            options.buffer_width,
+            options.buffer_height,
+        );
+        buffer.set_text(font_system, text, attrs, options.shaping);
+
+        buffer
+            .layout_runs()
+            .flat_map(|run| {
+                run.glyphs
+                    .iter()
+                    .map(|glyph| {
+                        let physical_glyph =
+                            glyph.physical((0.0, 0.0), options.scale);
+
+                        let image = cache
+                            .get_image_uncached(
+                                font_system,
+                                physical_glyph.cache_key,
+                            )
+                            .unwrap();
+
+                        Vec2::new(
+                            image.placement.width as f32,
+                            image.placement.height as f32,
+                        )
+                    })
+                    .collect::<Vec<Vec2>>()
+            })
+            .collect()
     }
 }
