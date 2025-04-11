@@ -20,6 +20,19 @@ pub struct TextOptions {
     pub wrap: Wrap,
 }
 
+impl Default for TextOptions {
+    fn default() -> Self {
+        Self {
+            shaping: cosmic_text::Shaping::Advanced,
+            metrics: Some(Metrics::new(16.0, 16.0).scale(1.0)),
+            buffer_width: None,
+            buffer_height: None,
+            scale: 1.0,
+            wrap: Wrap::None,
+        }
+    }
+}
+
 /// [`Text`] visible width and lines details
 pub struct VisibleDetails {
     /// Visible Width the Text can render as.
@@ -649,5 +662,57 @@ impl Text {
             width.min(max_width.unwrap_or(0.0).max(width)),
             height.min(max_height.unwrap_or(0.0).max(height)),
         )
+    }
+
+    /// Allows measuring the String characters and returning a Vec of their Sizes per Character.
+    /// This will not create any buffers in the rendering system.
+    /// This Returns the Exact Width and Height of the Character. This will not Return the Line Height for Height.
+    ///
+    pub fn measure_charters(
+        font_system: &mut FontSystem,
+        cache: &mut SwashCache,
+        text: &str,
+        attrs: &Attrs,
+        options: TextOptions,
+    ) -> Vec<Vec2> {
+        let mut buffer = Buffer::new(
+            font_system,
+            options
+                .metrics
+                .unwrap_or(Metrics::new(16.0, 16.0).scale(options.scale)),
+        );
+
+        buffer.set_wrap(font_system, options.wrap);
+        buffer.set_size(
+            font_system,
+            options.buffer_width,
+            options.buffer_height,
+        );
+        buffer.set_text(font_system, text, attrs, options.shaping);
+
+        buffer
+            .layout_runs()
+            .flat_map(|run| {
+                run.glyphs
+                    .iter()
+                    .map(|glyph| {
+                        let physical_glyph =
+                            glyph.physical((0.0, 0.0), options.scale);
+
+                        let image = cache
+                            .get_image_uncached(
+                                font_system,
+                                physical_glyph.cache_key,
+                            )
+                            .unwrap();
+
+                        Vec2::new(
+                            image.placement.width as f32,
+                            image.placement.height as f32,
+                        )
+                    })
+                    .collect::<Vec<Vec2>>()
+            })
+            .collect()
     }
 }

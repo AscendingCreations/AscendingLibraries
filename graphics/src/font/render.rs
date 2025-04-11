@@ -53,8 +53,8 @@ impl TextAtlas {
 /// Instance Buffer Setup for [`Text`].
 ///
 pub struct TextRenderer {
-    pub(crate) buffer: InstanceBuffer<TextVertex>,
-    pub(crate) swash_cache: SwashCache,
+    pub buffer: InstanceBuffer<TextVertex>,
+    pub swash_cache: SwashCache,
 }
 
 impl TextRenderer {
