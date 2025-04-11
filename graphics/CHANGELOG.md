@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.24.0 (11. April, 2025)
+
+- measure_glyphs removed cache from API(it was a bad push...)
+- measure_glyphs outputs correct Vec of Sizes.
+
 ## 0.23.1 (11. April, 2025)
 
 ### Added

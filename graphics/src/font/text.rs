@@ -664,7 +664,6 @@ impl Text {
     ///
     pub fn measure_glyphs(
         font_system: &mut FontSystem,
-        cache: &mut SwashCache,
         text: &str,
         attrs: &Attrs,
         options: TextOptions,
@@ -682,30 +681,47 @@ impl Text {
             options.buffer_width,
             options.buffer_height,
         );
-        buffer.set_text(font_system, text, attrs, options.shaping);
 
-        buffer
-            .layout_runs()
-            .flat_map(|run| {
-                run.glyphs
-                    .iter()
-                    .map(|glyph| {
-                        let physical_glyph =
-                            glyph.physical((0.0, 0.0), options.scale);
+        text.char_indices()
+            .map(|(_position, ch)| {
+                //let mut buffer = buffer.clone();
 
-                        let image = cache
-                            .get_image_uncached(
-                                font_system,
-                                physical_glyph.cache_key,
-                            )
-                            .unwrap();
+                let n = ch.len_utf8();
+                let mut buf = vec![0; n];
+                let u = ch.encode_utf8(&mut buf);
 
-                        Vec2::new(
-                            image.placement.width as f32,
-                            image.placement.height as f32,
-                        )
-                    })
-                    .collect::<Vec<Vec2>>()
+                buffer.set_text(font_system, u, attrs, options.shaping);
+
+                #[cfg(not(feature = "rayon"))]
+                let (width, total_lines) = buffer.layout_runs().fold(
+                    (0.0, 0usize),
+                    |(width, total_lines), run| {
+                        (run.line_w.max(width), total_lines + 1)
+                    },
+                );
+
+                #[cfg(feature = "rayon")]
+                let (width, total_lines) = buffer
+                    .layout_runs()
+                    .par_bridge()
+                    .fold(
+                        || (0.0, 0usize),
+                        |(width, total_lines), run| {
+                            (run.line_w.max(width), total_lines + 1)
+                        },
+                    )
+                    .reduce(
+                        || (0.0, 0usize),
+                        |(w1, t1), (w2, t2)| (w1.max(w2), t1 + t2),
+                    );
+
+                let (max_width, max_height) = buffer.size();
+                let height = total_lines as f32 * buffer.metrics().line_height;
+
+                Vec2::new(
+                    width.min(max_width.unwrap_or(0.0).max(width)),
+                    height.min(max_height.unwrap_or(0.0).max(height)),
+                )
             })
             .collect()
     }
