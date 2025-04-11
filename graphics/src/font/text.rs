@@ -664,11 +664,11 @@ impl Text {
         )
     }
 
-    /// Allows measuring the String characters and returning a Vec of their Sizes per Character.
+    /// Allows measuring the String character's Glyph and returning a Vec of their Sizes per character.
     /// This will not create any buffers in the rendering system.
-    /// This Returns the Exact Width and Height of the Character. This will not Return the Line Height for Height.
+    /// This Returns the Exact Width and Height of the character. This will not Return the Line Height for Height.
     ///
-    pub fn measure_charters(
+    pub fn measure_glyphs(
         font_system: &mut FontSystem,
         cache: &mut SwashCache,
         text: &str,
