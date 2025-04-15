@@ -6,7 +6,7 @@ pub use pipeline::*;
 pub use render::*;
 pub use vertex::*;
 
-use std::iter;
+use std::{cell::RefCell, iter};
 
 use crate::{
     AtlasSet, CameraType, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2,
@@ -102,8 +102,6 @@ pub struct Map {
     pub pos: Vec2,
     // tiles per layer.
     pub tiles: Vec<TileData>,
-    pub lower_buffer: Vec<MapVertex>,
-    pub upper_buffer: Vec<MapVertex>,
     /// Store index per each layer.
     pub stores: [Index; 2],
     /// the draw order of the maps. created when update is called.
@@ -120,6 +118,13 @@ pub struct Map {
     pub changed: bool,
 }
 
+// These are used to Reduce the Overall Memory usage of each and every map loaded and allow them all to process though
+// a single point of memory which should help with cache locality.
+thread_local! {
+    static LOWER_BUFFER: RefCell<Vec<MapVertex>> = RefCell::new(Vec::with_capacity(LOWER_COUNT));
+    static UPPER_BUFFER: RefCell<Vec<MapVertex>> = RefCell::new(Vec::with_capacity(UPPER_COUNT));
+}
+
 impl Map {
     /// Updates the [`Map`]'s Buffers to prepare them for rendering.
     ///
@@ -130,8 +135,8 @@ impl Map {
     ) {
         let atlas_width = atlas.size().x / self.tilesize;
 
-        self.lower_buffer.clear();
-        self.upper_buffer.clear();
+        LOWER_BUFFER.with_borrow_mut(|lower_buffer| lower_buffer.clear());
+        UPPER_BUFFER.with_borrow_mut(|upper_buffer| upper_buffer.clear());
 
         for layer in MapLayers::LAYERS {
             let z = layer.indexed_layers();
@@ -167,9 +172,13 @@ impl Map {
                         };
 
                         if layer < MapLayers::Fringe {
-                            self.lower_buffer.push(map_vertex)
+                            LOWER_BUFFER.with_borrow_mut(|lower_buffer| {
+                                lower_buffer.push(map_vertex);
+                            });
                         } else {
-                            self.upper_buffer.push(map_vertex)
+                            UPPER_BUFFER.with_borrow_mut(|upper_buffer| {
+                                upper_buffer.push(map_vertex);
+                            });
                         }
                     }
                 }
@@ -177,25 +186,29 @@ impl Map {
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
-            let bytes = bytemuck::cast_slice(&self.lower_buffer);
+            LOWER_BUFFER.with_borrow(|lower_buffer| {
+                let bytes = bytemuck::cast_slice(lower_buffer);
 
-            if bytes.len() != store.store.len() {
-                store.store.resize_with(bytes.len(), || 0);
-            }
+                if bytes.len() != store.store.len() {
+                    store.store.resize_with(bytes.len(), || 0);
+                }
 
-            store.store.copy_from_slice(bytes);
-            store.changed = true;
+                store.store.copy_from_slice(bytes);
+                store.changed = true;
+            });
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.stores[1]) {
-            let bytes = bytemuck::cast_slice(&self.upper_buffer);
+            UPPER_BUFFER.with_borrow(|upper_buffer| {
+                let bytes = bytemuck::cast_slice(upper_buffer);
 
-            if bytes.len() != store.store.len() {
-                store.store.resize_with(bytes.len(), || 0);
-            }
+                if bytes.len() != store.store.len() {
+                    store.store.resize_with(bytes.len(), || 0);
+                }
 
-            store.store.copy_from_slice(bytes);
-            store.changed = true;
+                store.store.copy_from_slice(bytes);
+                store.changed = true;
+            });
         }
     }
 
@@ -203,12 +216,9 @@ impl Map {
     ///
     pub fn new(renderer: &mut GpuRenderer, tilesize: u32) -> Self {
         let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
-
         let lower_index = renderer.new_buffer(map_vertex_size * LOWER_COUNT, 0);
         let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
-
         let order1 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 9.0), 0);
-
         let order2 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 5.0), 1);
 
         Self {
@@ -216,8 +226,6 @@ impl Map {
             pos: Vec2::default(),
             stores: [lower_index, upper_index],
             filled_tiles: [0; MapLayers::Count as usize],
-            lower_buffer: Vec::with_capacity(LOWER_COUNT),
-            upper_buffer: Vec::with_capacity(UPPER_COUNT),
             orders: [order1, order2],
             tilesize,
             can_render: false,

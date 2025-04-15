@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use crate::{
     Bounds, CameraType, Color, DrawOrder, GpuRenderer, GraphicsError, Index,
     OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
@@ -72,12 +74,12 @@ pub struct Text {
     pub wrap: Wrap,
     /// [`CameraType`] used to render with.
     pub camera_type: CameraType,
-    /// Buffer used to Store Premade Glyphs.
-    /// Avoids making new vec every create_quad call at risk of more memory.
-    /// will only resize when resizing is needed
-    pub glyph_vertices: Vec<TextVertex>,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
+}
+
+thread_local! {
+    static GLYPH_VERTICES: RefCell<Vec<TextVertex>> = RefCell::new(Vec::with_capacity(1024));
 }
 
 impl Text {
@@ -108,11 +110,13 @@ impl Text {
         let bounds_max_x = self.bounds.right.min(screensize.width);
         let bounds_max_y = self.bounds.top.min(screensize.height);
 
-        self.glyph_vertices.clear();
+        GLYPH_VERTICES.with_borrow_mut(|vertices| {
+            vertices.clear();
 
-        if self.glyph_vertices.capacity() < count {
-            self.glyph_vertices.reserve_exact(count);
-        }
+            if vertices.capacity() < count {
+                vertices.reserve(count);
+            }
+        });
 
         // From Glyphon good optimization.
         let is_run_visible = |run: &cosmic_text::LayoutRun| {
@@ -265,19 +269,22 @@ impl Text {
                     is_color: is_color as u32,
                 };
 
-                self.glyph_vertices.push(default);
+                GLYPH_VERTICES
+                    .with_borrow_mut(|vertices| vertices.push(default));
             }
         }
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            let bytes: &[u8] = bytemuck::cast_slice(&self.glyph_vertices);
+            GLYPH_VERTICES.with_borrow(|vertices| {
+                let bytes: &[u8] = bytemuck::cast_slice(vertices);
 
-            if bytes.len() != store.store.len() {
-                store.store.resize_with(bytes.len(), || 0);
-            }
+                if bytes.len() != store.store.len() {
+                    store.store.resize_with(bytes.len(), || 0);
+                }
 
-            store.store.copy_from_slice(bytes);
-            store.changed = true;
+                store.store.copy_from_slice(bytes);
+                store.changed = true;
+            });
         }
 
         self.order.alpha = is_alpha;
@@ -317,7 +324,6 @@ impl Text {
             line: 0,
             scroll: cosmic_text::Scroll::default(),
             scale,
-            glyph_vertices: Vec::with_capacity(64),
         }
     }
 
