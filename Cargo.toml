@@ -3,7 +3,6 @@ resolver = "3"
 members = ["input", "camera", "graphics"]
 
 [workspace.dependencies]
-async-trait = "0.1.88"
 bytemuck = { version = "1.22.0", features = ["derive"] }
 thiserror = "2.0.12"
 winit = { version = "0.30.9", features = ["serde"] }

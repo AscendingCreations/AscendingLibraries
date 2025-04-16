@@ -19,7 +19,6 @@ crate_passthru = []
 rayon = ["dep:rayon"]
 
 [dependencies]
-async-trait.workspace = true
 bytemuck.workspace = true
 thiserror.workspace = true
 winit.workspace = true
