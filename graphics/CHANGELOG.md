@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - Added ThreadLocal Storage for Maps and Fonts. This should help with Cache locality.
 - Removed the Async trait library as we will enfore Rust edition 1.85
+- Added Derives to all supportable types
 
 ## 0.24.0 (11. April, 2025)
 
