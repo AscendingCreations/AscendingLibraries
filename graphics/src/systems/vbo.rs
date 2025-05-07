@@ -265,7 +265,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                 if write_vertex {
                     if let Some(store) = renderer.get_buffer(buf.index) {
                         self.vertex_buffer.write(
-                            &renderer.device,
+                            renderer.queue(),
                             &store.store,
                             old_vertex_pos,
                         );
@@ -275,7 +275,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                 if write_index {
                     if let Some(store) = renderer.get_buffer(buf.index) {
                         self.index_buffer.write(
-                            &renderer.device,
+                            renderer.queue(),
                             &store.indexs,
                             old_index_pos,
                         );
