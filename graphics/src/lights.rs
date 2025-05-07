@@ -12,6 +12,7 @@ use crate::{
     CameraType, Color, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
     Vec4,
 };
+use rayon::prelude::*;
 use slotmap::SlotMap;
 use std::mem;
 use wgpu::util::align_to;
@@ -265,8 +266,22 @@ impl Lights {
         if self.areas_changed {
             let area_alignment: usize =
                 align_to(mem::size_of::<AreaLightRaw>(), 32) as usize;
+            let queue = renderer.queue();
+
+            #[cfg(feature = "rayon")]
+            self.area_lights.iter().enumerate().par_bridge().for_each(
+                |(i, (_key, light))| {
+                    queue.write_buffer(
+                        areas,
+                        (i * area_alignment) as wgpu::BufferAddress,
+                        bytemuck::bytes_of(&light.to_raw()),
+                    );
+                },
+            );
+
+            #[cfg(not(feature = "rayon"))]
             for (i, (_key, light)) in self.area_lights.iter().enumerate() {
-                renderer.queue().write_buffer(
+                queue.write_buffer(
                     areas,
                     (i * area_alignment) as wgpu::BufferAddress,
                     bytemuck::bytes_of(&light.to_raw()),
@@ -279,8 +294,24 @@ impl Lights {
         if self.directionals_changed {
             let dir_alignment: usize =
                 align_to(mem::size_of::<DirectionalLightRaw>(), 48) as usize;
+            let queue = renderer.queue();
+
+            #[cfg(feature = "rayon")]
+            self.directional_lights
+                .iter()
+                .enumerate()
+                .par_bridge()
+                .for_each(|(i, (_key, dir))| {
+                    queue.write_buffer(
+                        dirs,
+                        (i * dir_alignment) as wgpu::BufferAddress,
+                        bytemuck::bytes_of(&dir.to_raw()),
+                    );
+                });
+
+            #[cfg(not(feature = "rayon"))]
             for (i, (_key, dir)) in self.directional_lights.iter().enumerate() {
-                renderer.queue().write_buffer(
+                queue.write_buffer(
                     dirs,
                     (i * dir_alignment) as wgpu::BufferAddress,
                     bytemuck::bytes_of(&dir.to_raw()),

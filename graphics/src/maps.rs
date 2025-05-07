@@ -341,17 +341,17 @@ impl Map {
         &mut self,
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
-    ) -> Option<Vec<OrderedIndex>> {
+    ) -> Option<(OrderedIndex, OrderedIndex)> {
         if self.can_render {
             if self.changed {
                 self.create_quad(renderer, atlas);
                 self.changed = false;
             }
 
-            let orders = (0..2)
-                .map(|i| OrderedIndex::new(self.orders[i], self.stores[i], 0))
-                .collect();
-            Some(orders)
+            Some((
+                OrderedIndex::new(self.orders[0], self.stores[0], 0),
+                OrderedIndex::new(self.orders[1], self.stores[1], 0),
+            ))
         } else {
             None
         }

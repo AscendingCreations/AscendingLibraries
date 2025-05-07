@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Removed the Async trait library as we will enfore Rust edition 1.85
 - Added Derives to all supportable types
 - Added Rayon support for TileSheets
+- Map::Update now returns Option<(OrderedIndex, OrderedIndex)> instead of a Vec to avoid reallocation each loop.
 
 ## 0.24.0 (11. April, 2025)
 
