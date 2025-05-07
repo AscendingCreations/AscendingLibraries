@@ -27,6 +27,7 @@ pub trait PipeLineLayout: Pod + Zeroable {
 
 /// [`wgpu::RenderPipeline`] Storage using a hashmap.
 ///
+#[derive(Debug)]
 pub struct PipelineStorage {
     pub(crate) map: AHashMap<(TypeId, Vec<u8>), wgpu::RenderPipeline>,
 }

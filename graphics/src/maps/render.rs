@@ -6,6 +6,7 @@ use log::warn;
 
 /// Instance Buffer Setup for [`Map`]'s.
 ///
+#[derive(Debug)]
 pub struct MapRenderer {
     /// Instance Buffer holding all Rendering information for [`Map`]'s.
     pub buffer: InstanceBuffer<MapVertex>,

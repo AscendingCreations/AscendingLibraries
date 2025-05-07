@@ -3,6 +3,7 @@ use crate::{
     Mesh2DVertex, OrderedIndex, SetBuffers, System, VertexBuffer,
 };
 
+#[derive(Debug)]
 pub struct Mesh2DRenderer {
     pub vbos: VertexBuffer<Mesh2DVertex>,
 }

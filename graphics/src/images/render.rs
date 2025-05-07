@@ -5,6 +5,7 @@ use crate::{
 
 /// Instance Buffer Setup for [`Image`].
 ///
+#[derive(Debug)]
 pub struct ImageRenderer {
     pub buffer: InstanceBuffer<ImageVertex>,
 }

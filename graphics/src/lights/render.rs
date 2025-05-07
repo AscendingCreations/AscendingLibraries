@@ -12,6 +12,7 @@ use wgpu::util::{DeviceExt, align_to};
 
 /// Instance Buffer Setup for [`Lights`].
 ///
+#[derive(Debug)]
 pub struct LightRenderer {
     /// Instance Buffer holding all Rendering information for [`Lights`].
     pub buffer: InstanceBuffer<LightsVertex>,

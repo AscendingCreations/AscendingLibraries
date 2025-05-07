@@ -7,6 +7,7 @@ use wgpu::{Adapter, Backends, DeviceType, Surface, TextureFormat};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
 /// Handles the [`wgpu::Device`] and [`wgpu::Queue`] returned from WGPU.
+#[derive(Debug)]
 pub struct GpuDevice {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -51,6 +52,7 @@ pub struct AdapterOptions {
 /// Also used to Keep track of [`wgpu::TextureFormat`], [`wgpu::SurfaceConfiguration`]
 /// and [`Window`] Sizes.
 ///
+#[derive(Debug)]
 pub struct GpuWindow {
     /// GPU Adapter we will render from.
     pub(crate) adapter: wgpu::Adapter,
@@ -293,7 +295,7 @@ impl AdapterExt for wgpu::Adapter {
             );
         };
 
-        debug!("surface format: {:?}", format);
+        debug!("surface format: {format:?}");
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,

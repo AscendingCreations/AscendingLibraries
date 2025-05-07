@@ -7,7 +7,7 @@ use bytemuck::{Pod, Zeroable};
 /// [`crate::Lights`] RenderPipeline Layout
 ///
 #[repr(C)]
-#[derive(Clone, Copy, Hash, Pod, Zeroable)]
+#[derive(Clone, Copy, Hash, Pod, Zeroable, Debug)]
 pub struct LightRenderPipeline;
 
 impl PipeLineLayout for LightRenderPipeline {

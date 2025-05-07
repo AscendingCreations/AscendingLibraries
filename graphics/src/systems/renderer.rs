@@ -12,6 +12,7 @@ use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 /// Handles the [`GpuWindow`], [`GpuDevice`] and [`BufferStore`]'s.
 /// Also handles other information important to Rendering to the GPU.
 ///
+#[derive(Debug)]
 pub struct GpuRenderer {
     pub(crate) window: GpuWindow,
     pub(crate) device: GpuDevice,

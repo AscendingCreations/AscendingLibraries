@@ -4,7 +4,7 @@ use wgpu::util::DeviceExt;
 
 /// BufferStore is Storage used to hold and modify the byte arrays that get sent to the GPU.
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct BufferStore {
     /// Storage used for Vertex or Indicies.
     pub store: Vec<u8>,
@@ -72,6 +72,7 @@ pub struct BufferData {
 
 /// GPU Buffer Management Struct. Used to keep track of Counts, Length and The Buffer in the GPU.
 ///
+#[derive(Debug)]
 pub struct Buffer<K: BufferLayout> {
     pub buffer: wgpu::Buffer,
     pub count: usize,

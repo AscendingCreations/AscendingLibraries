@@ -7,6 +7,7 @@ use cosmic_text::Color;
 /// Rectangle to render to screen.
 /// Can contain a Images otherwise just colors.
 ///
+#[derive(Debug)]
 pub struct Rect {
     /// Position on the Screen.
     pub position: Vec3,

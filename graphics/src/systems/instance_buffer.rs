@@ -9,6 +9,7 @@ use std::ops::Range;
 /// Details for the Objects Memory location within the instance Buffer.
 /// This is used to deturmine if the buffers location has changed or not for
 /// reuploading the buffer.
+#[derive(Debug, Copy, Clone)]
 pub struct InstanceDetails {
     /// Start location of the Buffer.
     pub start: u32,
@@ -22,6 +23,7 @@ pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>, CameraType);
 /// Instance buffer holds all the Details to render with instances with a Static VBO.
 /// This stores and handles the orders of all rendered objects to try and reduce the amount
 /// of GPU uploads we make.
+#[derive(Debug)]
 pub struct InstanceBuffer<K: BufferLayout> {
     /// Unprocessed Buffer Data.
     pub unprocessed: Vec<Vec<OrderedIndex>>,

@@ -31,6 +31,7 @@ impl DrawMode {
 
 /// 2D Meshs to render to screen.
 ///
+#[derive(Debug)]
 pub struct Mesh2D {
     /// Position on the Screen.
     pub position: Vec3,

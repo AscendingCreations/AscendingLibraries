@@ -13,6 +13,7 @@ use rayon::prelude::*;
 
 /// [`Text`] Option Handler for [`Text::measure_string`].
 ///
+#[derive(Debug)]
 pub struct TextOptions {
     pub shaping: cosmic_text::Shaping,
     pub metrics: Option<Metrics>,
@@ -36,6 +37,8 @@ impl Default for TextOptions {
 }
 
 /// [`Text`] visible width and lines details
+///
+#[derive(Debug)]
 pub struct VisibleDetails {
     /// Visible Width the Text can render as.
     pub width: f32,
@@ -47,6 +50,7 @@ pub struct VisibleDetails {
 
 /// Text to render to screen.
 ///
+#[derive(Debug)]
 pub struct Text {
     /// Cosmic Text [`Buffer`].
     pub buffer: Buffer,

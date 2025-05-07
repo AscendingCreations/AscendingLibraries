@@ -7,7 +7,7 @@ use bytemuck::{Pod, Zeroable};
 /// [`crate::Mesh2D`] RenderPipeline Layout
 ///
 #[repr(C)]
-#[derive(Clone, Copy, Hash, Pod, Zeroable)]
+#[derive(Clone, Copy, Hash, Pod, Zeroable, Debug)]
 pub struct Mesh2DRenderPipeline;
 
 impl PipeLineLayout for Mesh2DRenderPipeline {

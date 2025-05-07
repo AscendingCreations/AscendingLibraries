@@ -7,7 +7,7 @@ use bytemuck::{Pod, Zeroable};
 /// [`crate::Text`] RenderPipeline Layout
 ///
 #[repr(C)]
-#[derive(Clone, Copy, Hash, Pod, Zeroable)]
+#[derive(Clone, Copy, Hash, Pod, Zeroable, Debug)]
 pub struct TextRenderPipeline;
 
 impl PipeLineLayout for TextRenderPipeline {

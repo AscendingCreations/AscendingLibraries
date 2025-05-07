@@ -25,6 +25,7 @@ pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>, CameraType);
 /// VertexBuffer holds all the Details to render with Verticies and indicies.
 /// This stores and handles the orders of all rendered objects to try and reduce the amount
 /// of GPU uploads we make.
+#[derive(Debug)]
 pub struct VertexBuffer<K: BufferLayout> {
     /// Unprocessed Buffer Data.
     pub unprocessed: Vec<Vec<OrderedIndex>>,

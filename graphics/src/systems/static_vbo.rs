@@ -29,6 +29,7 @@ const VERTS: [Vertex; 4] = [
 
 /// StaticVertexBuffer holds premade vbo and ibo buffers that can be reused between
 /// InstanceBuffered Objects. This Decreases GPU memory and boosts speed.
+#[derive(Debug)]
 pub struct StaticVertexBuffer {
     pub vbo: wgpu::Buffer,
     pub ibo: wgpu::Buffer,

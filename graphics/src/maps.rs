@@ -15,7 +15,7 @@ use crate::{
 use cosmic_text::Color;
 
 #[allow(dead_code)]
-#[derive(Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, PartialOrd, Ord, Eq, Hash, PartialEq)]
 pub enum MapLayers {
     Ground,
     Mask,
@@ -73,7 +73,7 @@ impl MapLayers {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy, Debug, PartialOrd, Ord, Eq, Hash, PartialEq)]
 pub struct TileData {
     ///tiles allocation ID within the texture.
     pub id: usize,
@@ -94,6 +94,7 @@ pub const LOWER_COUNT: usize = 7168;
 pub const UPPER_COUNT: usize = 2048;
 
 /// Handler for rendering Map to GPU.
+#[derive(Clone, Debug, PartialEq)]
 pub struct Map {
     /// X, Y, GroupID for loaded map.
     /// Add this to the higher up Map struct.

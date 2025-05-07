@@ -12,6 +12,8 @@ use crate::{
 };
 
 /// Basic and Fast Image Rendering Type. Best used for Sprites and Objects in the world.
+///
+#[derive(Clone, Debug, PartialEq)]
 pub struct Image {
     /// Position of the object
     pub pos: Vec3,

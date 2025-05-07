@@ -21,6 +21,7 @@ pub const MAX_DIR_LIGHTS: usize = 1_333;
 
 /// Area Lights rendered in the light system.
 ///
+#[derive(Clone, Debug, PartialEq)]
 pub struct AreaLight {
     pub pos: Vec2,
     pub color: Color,
@@ -47,6 +48,7 @@ impl AreaLight {
 
 /// Directional Lights rendered in the light system.
 ///
+#[derive(Clone, Debug, PartialEq)]
 pub struct DirectionalLight {
     pub pos: Vec2,
     pub color: Color,
@@ -80,6 +82,8 @@ impl DirectionalLight {
 }
 
 /// Rendering data for world Light and all Lights.
+///
+#[derive(Clone, Debug)]
 pub struct Lights {
     /// Z Position of the Main Light Layer.
     pub z: f32,

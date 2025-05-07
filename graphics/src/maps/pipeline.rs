@@ -7,7 +7,7 @@ use bytemuck::{Pod, Zeroable};
 /// [`crate::Map`] RenderPipeline Layout
 ///
 #[repr(C)]
-#[derive(Clone, Copy, Hash, Pod, Zeroable)]
+#[derive(Clone, Copy, Hash, Pod, Zeroable, Debug)]
 pub struct MapRenderPipeline;
 
 impl PipeLineLayout for MapRenderPipeline {
