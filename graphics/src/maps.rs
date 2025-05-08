@@ -2,18 +2,15 @@ mod pipeline;
 mod render;
 mod vertex;
 
-use log::info;
-pub use pipeline::*;
-pub use render::*;
-pub use vertex::*;
-
-use std::{cell::RefCell, iter};
-
 use crate::{
     AtlasSet, CameraType, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2,
     Vec3,
 };
 use cosmic_text::Color;
+pub use pipeline::*;
+pub use render::*;
+use std::{cell::RefCell, iter};
+pub use vertex::*;
 
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, Eq, Hash, PartialEq)]
@@ -33,7 +30,7 @@ pub enum MapLayers {
 }
 
 impl MapLayers {
-    pub const LAYERS: [Self; 9] = [
+    pub const LOWER_LAYERS: [Self; 7] = [
         Self::Ground,
         Self::Mask,
         Self::Mask2,
@@ -41,9 +38,9 @@ impl MapLayers {
         Self::Anim2,
         Self::Anim3,
         Self::Anim4,
-        Self::Fringe,
-        Self::Fringe2,
     ];
+
+    pub const UPPER_LAYERS: [Self; 2] = [Self::Fringe, Self::Fringe2];
 
     pub fn indexed_layers(self) -> f32 {
         match self {
@@ -128,6 +125,51 @@ thread_local! {
 }
 
 impl Map {
+    fn generate_layer_vertexes(
+        &self,
+        vertexs: &mut Vec<MapVertex>,
+        atlas: &mut AtlasSet,
+        layer: MapLayers,
+    ) {
+        if self.filled_tiles[layer as usize] == 0 {
+            return;
+        }
+
+        let z = layer.indexed_layers();
+        let atlas_width = atlas.size().x / self.tilesize;
+
+        for x in 0..32 {
+            for y in 0..32 {
+                let tile = &self.tiles
+                    [(x + (y * 32) + (layer as u32 * 1024)) as usize];
+
+                if tile.id == 0 {
+                    continue;
+                }
+
+                if let Some((allocation, _)) = atlas.peek(tile.id) {
+                    let (posx, posy) = allocation.position();
+
+                    let map_vertex = MapVertex {
+                        position: [
+                            self.pos.x + (x * self.tilesize) as f32,
+                            self.pos.y + (y * self.tilesize) as f32,
+                            z,
+                        ],
+                        tilesize: self.tilesize as f32,
+                        tile_id: (posx / self.tilesize)
+                            + ((posy / self.tilesize) * atlas_width),
+                        texture_layer: allocation.layer as u32,
+                        color: tile.color.0,
+                        camera_type: self.camera_type as u32,
+                    };
+
+                    vertexs.push(map_vertex);
+                }
+            }
+        }
+    }
+
     /// Updates the [`Map`]'s Buffers to prepare them for rendering.
     ///
     pub fn create_quad(
@@ -135,60 +177,14 @@ impl Map {
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
     ) {
-        let atlas_width = atlas.size().x / self.tilesize;
-        info!("Map Create Quad Called");
-        LOWER_BUFFER.with_borrow_mut(|lower_buffer| lower_buffer.clear());
-        UPPER_BUFFER.with_borrow_mut(|upper_buffer| upper_buffer.clear());
+        LOWER_BUFFER.with_borrow_mut(|lower_buffer| {
+            lower_buffer.clear();
 
-        for layer in MapLayers::LAYERS {
-            let z = layer.indexed_layers();
+            MapLayers::LOWER_LAYERS.into_iter().for_each(|layer| {
+                self.generate_layer_vertexes(lower_buffer, atlas, layer)
+            });
 
-            if self.filled_tiles[layer as usize] == 0 {
-                continue;
-            }
-
-            for x in 0..32 {
-                for y in 0..32 {
-                    let tile = &self.tiles
-                        [(x + (y * 32) + (layer as u32 * 1024)) as usize];
-
-                    if tile.id == 0 {
-                        continue;
-                    }
-
-                    if let Some((allocation, _)) = atlas.peek(tile.id) {
-                        let (posx, posy) = allocation.position();
-
-                        let map_vertex = MapVertex {
-                            position: [
-                                self.pos.x + (x * self.tilesize) as f32,
-                                self.pos.y + (y * self.tilesize) as f32,
-                                z,
-                            ],
-                            tilesize: self.tilesize as f32,
-                            tile_id: (posx / self.tilesize)
-                                + ((posy / self.tilesize) * atlas_width),
-                            texture_layer: allocation.layer as u32,
-                            color: tile.color.0,
-                            camera_type: self.camera_type as u32,
-                        };
-
-                        if layer < MapLayers::Fringe {
-                            LOWER_BUFFER.with_borrow_mut(|lower_buffer| {
-                                lower_buffer.push(map_vertex);
-                            });
-                        } else {
-                            UPPER_BUFFER.with_borrow_mut(|upper_buffer| {
-                                upper_buffer.push(map_vertex);
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
-            LOWER_BUFFER.with_borrow(|lower_buffer| {
+            if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
                 let bytes = bytemuck::cast_slice(lower_buffer);
 
                 if bytes.len() != store.store.len() {
@@ -197,11 +193,17 @@ impl Map {
 
                 store.store.copy_from_slice(bytes);
                 store.changed = true;
-            });
-        }
+            }
+        });
 
-        if let Some(store) = renderer.get_buffer_mut(self.stores[1]) {
-            UPPER_BUFFER.with_borrow(|upper_buffer| {
+        UPPER_BUFFER.with_borrow_mut(|upper_buffer| {
+            upper_buffer.clear();
+
+            MapLayers::UPPER_LAYERS.into_iter().for_each(|layer| {
+                self.generate_layer_vertexes(upper_buffer, atlas, layer)
+            });
+
+            if let Some(store) = renderer.get_buffer_mut(self.stores[1]) {
                 let bytes = bytemuck::cast_slice(upper_buffer);
 
                 if bytes.len() != store.store.len() {
@@ -210,8 +212,8 @@ impl Map {
 
                 store.store.copy_from_slice(bytes);
                 store.changed = true;
-            });
-        }
+            }
+        });
     }
 
     /// Creates a new [`Map`] with tilesize.
