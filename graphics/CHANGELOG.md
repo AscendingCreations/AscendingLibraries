@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Added Derives to all supportable types
 - Added Rayon support for TileSheets
 - Map::Update now returns Option<(OrderedIndex, OrderedIndex)> instead of a Vec to avoid reallocation each loop.
+- Change AtlasSet Peek functions to take an &self instead of &mut as well as contains.
 
 ## 0.24.0 (11. April, 2025)
 

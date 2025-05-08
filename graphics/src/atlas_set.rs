@@ -531,7 +531,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
 
     /// Gets using key the reference of [`Allocation`] with key if it exists.
     ///
-    pub fn peek_by_key(&mut self, key: &U) -> Option<&(Allocation<Data>, U)> {
+    pub fn peek_by_key(&self, key: &U) -> Option<&(Allocation<Data>, U)> {
         if let Some(id) = self.lookup.get(key) {
             self.store.get(*id)
         } else {
@@ -541,19 +541,19 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
 
     /// Gets using index the reference of [`Allocation`] with key if it exists.
     ///
-    pub fn peek(&mut self, id: usize) -> Option<&(Allocation<Data>, U)> {
+    pub fn peek(&self, id: usize) -> Option<&(Allocation<Data>, U)> {
         self.store.get(id)
     }
 
     /// If [`Allocation`] using key exists.
     ///
-    pub fn contains_key(&mut self, key: &U) -> bool {
+    pub fn contains_key(&self, key: &U) -> bool {
         self.lookup.contains_key(key)
     }
 
     /// If [`Allocation`] at id exists.
     ///
-    pub fn contains(&mut self, id: usize) -> bool {
+    pub fn contains(&self, id: usize) -> bool {
         self.store.contains(id)
     }
 

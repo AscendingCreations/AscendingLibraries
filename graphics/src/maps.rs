@@ -2,6 +2,7 @@ mod pipeline;
 mod render;
 mod vertex;
 
+use log::info;
 pub use pipeline::*;
 pub use render::*;
 pub use vertex::*;
@@ -135,7 +136,7 @@ impl Map {
         atlas: &mut AtlasSet,
     ) {
         let atlas_width = atlas.size().x / self.tilesize;
-
+        info!("Map Create Quad Called");
         LOWER_BUFFER.with_borrow_mut(|lower_buffer| lower_buffer.clear());
         UPPER_BUFFER.with_borrow_mut(|upper_buffer| upper_buffer.clear());
 
