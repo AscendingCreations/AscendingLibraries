@@ -159,20 +159,21 @@ impl Text {
                             )
                             .unwrap();
 
-                        atlas.upload_with_alloc(
-                            renderer,
-                            image.content == SwashContent::Color,
-                            physical_glyph.cache_key,
-                            &image,
-                        )?
+                        if image.placement.width > 0
+                            && image.placement.height > 0
+                        {
+                            atlas.upload_with_alloc(
+                                renderer,
+                                image.content == SwashContent::Color,
+                                physical_glyph.cache_key,
+                                &image,
+                            )?
+                        } else {
+                            continue;
+                        }
                     };
 
                 let position = allocation.data;
-
-                if allocation.size().1 == 1 && position.y == 0.0 {
-                    continue;
-                }
-
                 let (u, v, width, height) = allocation.rect();
                 let (mut u, mut v, mut width, mut height) =
                     (u as f32, v as f32, width as f32, height as f32);
@@ -185,10 +186,7 @@ impl Text {
                 let color = if is_color {
                     Color::rgba(255, 255, 255, 255)
                 } else {
-                    match glyph.color_opt {
-                        Some(color) => color,
-                        None => self.default_color,
-                    }
+                    glyph.color_opt.unwrap_or(self.default_color)
                 };
 
                 if color.a() < 255 {

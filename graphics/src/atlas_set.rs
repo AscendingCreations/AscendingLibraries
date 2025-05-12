@@ -709,7 +709,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
     }
 
     /// Creates an [`Allocation`] without uploading bytes to the texture.
-    /// Useful for Placeholders and caching of stuff that doesnt render.
+    /// Useful for Placeholders of stuff that doesnt render.
     /// used to avoid hitting extra cache writes. This will waste space
     /// and can be used to Precaching allocations for uploading later too.
     /// returns the created [`Allocation`] and Index

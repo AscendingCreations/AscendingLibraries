@@ -69,45 +69,28 @@ impl TextAtlas {
         key: CacheKey,
         image: &SwashImage,
     ) -> Result<(Allocation<Vec2>, bool), GraphicsError> {
-        if image.placement.width > 0 && image.placement.height > 0 {
-            if is_color {
-                let (_, allocation) = self
-                    .emoji
-                    .upload_with_alloc(
-                        key,
-                        &image.data,
-                        image.placement.width,
-                        image.placement.height,
-                        Vec2::new(
-                            image.placement.left as f32,
-                            image.placement.top as f32,
-                        ),
-                        renderer,
-                    )
-                    .ok_or(GraphicsError::AtlasFull)?;
-                Ok((allocation, is_color))
-            } else {
-                let (_, allocation) = self
-                    .text
-                    .upload_with_alloc(
-                        key,
-                        &image.data,
-                        image.placement.width,
-                        image.placement.height,
-                        Vec2::new(
-                            image.placement.left as f32,
-                            image.placement.top as f32,
-                        ),
-                        renderer,
-                    )
-                    .ok_or(GraphicsError::AtlasFull)?;
-                Ok((allocation, is_color))
-            }
+        if is_color {
+            let (_, allocation) = self
+                .emoji
+                .upload_with_alloc(
+                    key,
+                    &image.data,
+                    image.placement.width,
+                    image.placement.height,
+                    Vec2::new(
+                        image.placement.left as f32,
+                        image.placement.top as f32,
+                    ),
+                    renderer,
+                )
+                .ok_or(GraphicsError::AtlasFull)?;
+            Ok((allocation, is_color))
         } else {
             let (_, allocation) = self
                 .text
-                .set_alloc(
+                .upload_with_alloc(
                     key,
+                    &image.data,
                     image.placement.width,
                     image.placement.height,
                     Vec2::new(
