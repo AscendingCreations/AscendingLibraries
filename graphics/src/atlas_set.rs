@@ -708,6 +708,48 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         }
     }
 
+    /// Creates an [`Allocation`] without uploading bytes to the texture.
+    /// Useful for Placeholders and caching of stuff that doesnt render.
+    /// used to avoid hitting extra cache writes. This will waste space
+    /// and can be used to Precaching allocations for uploading later too.
+    /// returns the created [`Allocation`] and Index
+    ///
+    /// # Arguments
+    /// - width: Width of the Texture. if 0 will default to 1.
+    /// - height: Height of the Texture. if 0 will default to 1.
+    /// - data: any specail generic data for the texture.
+    ///
+    #[allow(clippy::too_many_arguments)]
+    pub fn set_alloc(
+        &mut self,
+        key: U,
+        width: u32,
+        height: u32,
+        data: Data,
+        renderer: &GpuRenderer,
+    ) -> Option<(usize, Allocation<Data>)> {
+        let (width, height) = (width.max(1), height.max(1));
+
+        if let Some(&id) = self.lookup.get(&key) {
+            let (allocation, _) = self.store.get(id)?;
+            Some((id, *allocation))
+        } else {
+            let allocation = {
+                let nlayers = self.layers.len();
+                let allocation = self.allocate(width, height, data)?;
+                self.grow(self.layers.len() - nlayers, renderer);
+
+                allocation
+            };
+
+            let id = self.store.insert((allocation, key.clone()));
+            self.layers[allocation.layer].insert_index(id);
+            self.lookup.insert(key.clone(), id);
+            self.cache.push(id, 1);
+            Some((id, allocation))
+        }
+    }
+
     /// Returns the Width and Height of the [`AtlasSet`] and how many Layers Exist.
     ///
     pub fn size(&self) -> UVec3 {

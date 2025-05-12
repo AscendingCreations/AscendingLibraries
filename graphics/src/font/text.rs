@@ -146,65 +146,26 @@ impl Text {
                     self.scale,
                 );
 
-                let (allocation, is_color) = if let Some(allocation) =
-                    atlas.text.get_by_key(&physical_glyph.cache_key)
-                {
-                    (allocation, false)
-                } else if let Some(allocation) =
-                    atlas.emoji.get_by_key(&physical_glyph.cache_key)
-                {
-                    (allocation, true)
-                } else {
-                    let image = cache
-                        .get_image_uncached(
-                            &mut renderer.font_sys,
-                            physical_glyph.cache_key,
-                        )
-                        .unwrap();
-                    let is_color = match image.content {
-                        SwashContent::Color => true,
-                        SwashContent::Mask => false,
-                        SwashContent::SubpixelMask => false,
-                    };
-
-                    if image.placement.width > 0 && image.placement.height > 0 {
-                        if is_color {
-                            let (_, allocation) = atlas
-                                .emoji
-                                .upload_with_alloc(
-                                    physical_glyph.cache_key,
-                                    &image.data,
-                                    image.placement.width,
-                                    image.placement.height,
-                                    Vec2::new(
-                                        image.placement.left as f32,
-                                        image.placement.top as f32,
-                                    ),
-                                    renderer,
-                                )
-                                .ok_or(GraphicsError::AtlasFull)?;
-                            (allocation, is_color)
-                        } else {
-                            let (_, allocation) = atlas
-                                .text
-                                .upload_with_alloc(
-                                    physical_glyph.cache_key,
-                                    &image.data,
-                                    image.placement.width,
-                                    image.placement.height,
-                                    Vec2::new(
-                                        image.placement.left as f32,
-                                        image.placement.top as f32,
-                                    ),
-                                    renderer,
-                                )
-                                .ok_or(GraphicsError::AtlasFull)?;
-                            (allocation, is_color)
-                        }
+                let (allocation, is_color) =
+                    if let Some((allocation, is_color)) =
+                        atlas.get_by_key(&physical_glyph.cache_key)
+                    {
+                        (allocation, is_color)
                     } else {
-                        continue;
-                    }
-                };
+                        let image = cache
+                            .get_image_uncached(
+                                &mut renderer.font_sys,
+                                physical_glyph.cache_key,
+                            )
+                            .unwrap();
+
+                        atlas.upload_with_alloc(
+                            renderer,
+                            image.content == SwashContent::Color,
+                            physical_glyph.cache_key,
+                            &image,
+                        )?
+                    };
 
                 let position = allocation.data;
                 let (u, v, width, height) = allocation.rect();

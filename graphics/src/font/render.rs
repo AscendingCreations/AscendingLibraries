@@ -1,9 +1,9 @@
 use crate::{
-    AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer,
-    OrderedIndex, SetBuffers, StaticVertexBuffer, Text, TextRenderPipeline,
-    TextVertex, Vec2,
+    Allocation, AsBufferPass, AtlasSet, GpuRenderer, GraphicsError,
+    InstanceBuffer, OrderedIndex, SetBuffers, StaticVertexBuffer, Text,
+    TextRenderPipeline, TextVertex, Vec2,
 };
-use cosmic_text::{CacheKey, SwashCache};
+use cosmic_text::{CacheKey, SwashCache, SwashImage};
 use log::{error, warn};
 
 /// [`Text`] text and Emoji AtlasSet holder.
@@ -47,6 +47,78 @@ impl TextAtlas {
     pub fn trim(&mut self) {
         self.emoji.trim();
         self.text.trim();
+    }
+
+    pub fn get_by_key(
+        &mut self,
+        key: &CacheKey,
+    ) -> Option<(Allocation<Vec2>, bool)> {
+        if let Some(allocation) = self.text.get_by_key(key) {
+            Some((allocation, false))
+        } else {
+            self.emoji
+                .get_by_key(key)
+                .map(|allocation| (allocation, true))
+        }
+    }
+
+    pub fn upload_with_alloc(
+        &mut self,
+        renderer: &mut GpuRenderer,
+        is_color: bool,
+        key: CacheKey,
+        image: &SwashImage,
+    ) -> Result<(Allocation<Vec2>, bool), GraphicsError> {
+        if image.placement.width > 0 && image.placement.height > 0 {
+            if is_color {
+                let (_, allocation) = self
+                    .emoji
+                    .upload_with_alloc(
+                        key,
+                        &image.data,
+                        image.placement.width,
+                        image.placement.height,
+                        Vec2::new(
+                            image.placement.left as f32,
+                            image.placement.top as f32,
+                        ),
+                        renderer,
+                    )
+                    .ok_or(GraphicsError::AtlasFull)?;
+                Ok((allocation, is_color))
+            } else {
+                let (_, allocation) = self
+                    .text
+                    .upload_with_alloc(
+                        key,
+                        &image.data,
+                        image.placement.width,
+                        image.placement.height,
+                        Vec2::new(
+                            image.placement.left as f32,
+                            image.placement.top as f32,
+                        ),
+                        renderer,
+                    )
+                    .ok_or(GraphicsError::AtlasFull)?;
+                Ok((allocation, is_color))
+            }
+        } else {
+            let (_, allocation) = self
+                .text
+                .set_alloc(
+                    key,
+                    image.placement.width,
+                    image.placement.height,
+                    Vec2::new(
+                        image.placement.left as f32,
+                        image.placement.top as f32,
+                    ),
+                    renderer,
+                )
+                .ok_or(GraphicsError::AtlasFull)?;
+            Ok((allocation, is_color))
+        }
     }
 }
 
