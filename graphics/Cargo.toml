@@ -16,7 +16,7 @@ categories = ["game-development", "graphics"]
 [features]
 default = ["rayon", "crate_passthru"]
 crate_passthru = []
-rayon = ["dep:rayon"]
+rayon = ["dep:rayon", "indexmap/rayon"]
 
 [dependencies]
 bytemuck.workspace = true
