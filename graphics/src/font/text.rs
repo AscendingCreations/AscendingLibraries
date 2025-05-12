@@ -168,6 +168,11 @@ impl Text {
                     };
 
                 let position = allocation.data;
+
+                if allocation.size().1 == 1 && position.y == 0.0 {
+                    continue;
+                }
+
                 let (u, v, width, height) = allocation.rect();
                 let (mut u, mut v, mut width, mut height) =
                     (u as f32, v as f32, width as f32, height as f32);
