@@ -1,5 +1,6 @@
 use crate::{AtlasSet, GpuRenderer, Texture};
 use image::{EncodableLayout, ImageBuffer, RgbaImage};
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use std::sync::Arc;
 
@@ -253,6 +254,7 @@ impl TileSheet {
         let mut upload_tiles: Vec<TileBuilder> =
             Vec::with_capacity(tilecount as usize);
 
+        #[cfg(feature = "rayon")]
         {
             (0..tilecount)
                 .into_par_iter()

@@ -12,6 +12,7 @@ use crate::{
     CameraType, Color, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
     Vec4,
 };
+#[cfg(feature = "rayon")]
 use rayon::prelude::*;
 use slotmap::SlotMap;
 use std::mem;
