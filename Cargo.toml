@@ -42,4 +42,5 @@ features = ["wgsl-in"]
 #git = "https://github.com/gfx-rs/wgpu"
 #rev = "061e04b"
 #path = "../wgpu-trunk/wgpu"
+features = ["static-dxc"]
 version = "25.0.0"

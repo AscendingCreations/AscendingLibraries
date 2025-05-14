@@ -2,6 +2,7 @@ use crate::{GpuRenderer, GraphicsError};
 use log::debug;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
+use serde::de;
 use std::sync::Arc;
 use wgpu::{Adapter, Backends, DeviceType, Surface, TextureFormat};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
@@ -409,6 +410,12 @@ impl InstanceExt for wgpu::Instance {
                     DeviceType::VirtualGpu => 4,
                     DeviceType::Cpu => 5,
                 };
+
+                if (device_type == 1 || device_type == 2)
+                    && information.driver.is_empty()
+                {
+                    return None;
+                }
 
                 if let Some(ref surface) = options.compatible_surface {
                     if !adapter.is_surface_supported(surface) {
