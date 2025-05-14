@@ -2,7 +2,7 @@ use crate::{GpuRenderer, GraphicsError};
 use log::debug;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
-use serde::de;
+
 use std::sync::Arc;
 use wgpu::{Adapter, Backends, DeviceType, Surface, TextureFormat};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
