@@ -5,16 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
-- Added ThreadLocal Storage for Maps and Fonts. This should help with Cache locality.
-- Removed the Async trait library as we will enfore Rust edition 1.85
+### Added
+- ThreadLocal Storage for Maps and Fonts. This should help with Cache locality.
 - Added Derives to all supportable types
 - Added Rayon support for TileSheets
+- Add feature to enable static-dxc for WGPU
+- Added ability to set Size of Map in Tiles.
+
+### Removed
+- Removed the Async trait library as we will enfore Rust edition 1.85.
+
+### Changed
 - Map::Update now returns Option<(OrderedIndex, OrderedIndex)> instead of a Vec to avoid reallocation each loop.
 - Change AtlasSet Peek functions to take an &self instead of &mut as well as contains.
 - Map Create_quad redone to help reduce any cache issues.
-- Add feature to enable static-dxc for WGPU
 - Changed set_tile and get_tile to use UVec3 instead of tuple.
-- Added ability to set Size of Map in Tiles.
 
 ## 0.24.0 (11. April, 2025)
 
