@@ -5,7 +5,7 @@ members = ["input", "camera", "graphics"]
 [workspace.dependencies]
 bytemuck = { version = "1.23.0", features = ["derive"] }
 thiserror = "2.0.12"
-winit = { version = "0.30.10", features = ["serde"] }
+winit = { version = "0.30.11", features = ["serde"] }
 image = "0.25.6"
 guillotiere = "0.6.2"
 serde = { version = "1.0.219", features = ["derive"] }
@@ -35,12 +35,11 @@ version = "0.4.0"
 [workspace.dependencies.naga]
 #git = "https://github.com/gfx-rs/naga"
 #rev = "76003dc0035d53a474d366dcdf49d2e4d12e921f"
-version = "25.0.0"
+version = "25.0.1"
 features = ["wgsl-in"]
 
 [workspace.dependencies.wgpu]
 #git = "https://github.com/gfx-rs/wgpu"
 #rev = "061e04b"
 #path = "../wgpu-trunk/wgpu"
-features = ["static-dxc"]
-version = "25.0.0"
+version = "25.0.2"

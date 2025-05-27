@@ -3,8 +3,8 @@ mod render;
 mod vertex;
 
 use crate::{
-    AtlasSet, CameraType, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2,
-    Vec3,
+    AtlasSet, CameraType, DrawOrder, GpuRenderer, Index, OrderedIndex, UVec2,
+    UVec3, Vec2, Vec3,
 };
 use cosmic_text::Color;
 pub use pipeline::*;
@@ -87,8 +87,11 @@ impl Default for TileData {
     }
 }
 
+/// Generic map upper and lower layer size defaults. will get overridden when using map::new_width
 pub const TILE_COUNT: usize = 9216;
+/// Generic map lower layers size defaults. will get overridden when using map::new_width
 pub const LOWER_COUNT: usize = 7168;
+/// Generic map upper layers size defaults. will get overridden when using map::new_width
 pub const UPPER_COUNT: usize = 2048;
 
 /// Handler for rendering Map to GPU.
@@ -99,6 +102,8 @@ pub struct Map {
     /// pub world_pos: Vec3,
     /// its render position. within the screen.
     pub pos: Vec2,
+    /// Width and Height of a Map in tiles.
+    pub size: UVec2,
     // tiles per layer.
     pub tiles: Vec<TileData>,
     /// Store index per each layer.
@@ -138,10 +143,12 @@ impl Map {
         let z = layer.indexed_layers();
         let atlas_width = atlas.size().x / self.tilesize;
 
-        for x in 0..32 {
-            for y in 0..32 {
-                let tile = &self.tiles
-                    [(x + (y * 32) + (layer as u32 * 1024)) as usize];
+        for x in 0..self.size.x {
+            for y in 0..self.size.y {
+                let tile = &self.tiles[(x
+                    + (y * self.size.y)
+                    + (layer as u32 * (self.size.x * self.size.y)))
+                    as usize];
 
                 if tile.id == 0 {
                     continue;
@@ -216,7 +223,7 @@ impl Map {
         });
     }
 
-    /// Creates a new [`Map`] with tilesize.
+    /// Creates a new [`Map`] with tilesize and a default size of [32, 32].
     ///
     pub fn new(renderer: &mut GpuRenderer, tilesize: u32) -> Self {
         let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
@@ -235,6 +242,56 @@ impl Map {
             can_render: false,
             changed: true,
             camera_type: CameraType::None,
+            size: UVec2::new(32, 32),
+        }
+    }
+
+    /// Creates a new [`Map`] with tilesize and size.
+    ///
+    pub fn new_with(
+        renderer: &mut GpuRenderer,
+        tilesize: u32,
+        size: UVec2,
+    ) -> Self {
+        let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
+        let lower_index =
+            renderer.new_buffer(map_vertex_size * ((size.x * size.y) * 7), 0);
+        let upper_index =
+            renderer.new_buffer(map_vertex_size * ((size.x * size.y) * 2), 0);
+        let order1 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 9.0), 0);
+        let order2 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 5.0), 1);
+
+        //Since this is different than default we do want to resize the limit to avoid multiple resizes in a render loop.
+        if ((size.x * size.y) * 7) > LOWER_COUNT {
+            LOWER_BUFFER.with_borrow_mut(|buffer| {
+                if buffer.capacity() < ((size.x * size.y) * 7) {
+                    buffer
+                        .reserve_exact(((size.x * size.y) * 7) - buffer.len());
+                }
+            });
+        }
+
+        if ((size.x * size.y) * 2) > UPPER_COUNT {
+            UPPER_BUFFER.with_borrow_mut(|buffer| {
+                if buffer.capacity() < ((size.x * size.y) * 2) {
+                    buffer
+                        .reserve_exact(((size.x * size.y) * 2) - buffer.len());
+                }
+            });
+        }
+
+        Self {
+            tiles: iter::repeat_n(TileData::default(), (size.x * size.y) * 9)
+                .collect(),
+            pos: Vec2::default(),
+            stores: [lower_index, upper_index],
+            filled_tiles: [0; MapLayers::Count as usize],
+            orders: [order1, order2],
+            tilesize,
+            can_render: false,
+            changed: true,
+            camera_type: CameraType::None,
+            size,
         }
     }
 
@@ -292,13 +349,18 @@ impl Map {
     /// gets the [`TileData`] based upon the tiles x, y, and [`MapLayers`].
     /// [`MapLayers::Ground`] is Layer 0.
     ///
-    pub fn get_tile(&self, pos: (u32, u32, u32)) -> TileData {
+    pub fn get_tile(&self, pos: UVec3) -> TileData {
         assert!(
-            pos.0 < 32 || pos.1 < 32 || pos.2 < 9,
-            "pos is invalid. X < 32, y < 256, z < 9"
+            pos.x < self.size.x || pos.y < self.size.y || pos.z < 9,
+            "pos is invalid. X < {}, y < {}, z < 9",
+            self.size.x,
+            self.size.y
         );
 
-        self.tiles[(pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize]
+        self.tiles[(pos.x
+            + (pos.y * self.size.y)
+            + (pos.z * (self.size.x * self.size.y)))
+            as usize]
     }
 
     /// Sets the [`CameraType`] this object will use to Render with.
@@ -313,24 +375,28 @@ impl Map {
     /// layer within the texture array and Alpha for its transparency.
     /// This allows us to loop through the tiles Shader side efficiently.
     ///
-    pub fn set_tile(&mut self, pos: (u32, u32, u32), tile: TileData) {
-        if pos.0 >= 32 || pos.1 >= 32 || pos.2 >= 9 {
+    pub fn set_tile(&mut self, pos: UVec3, tile: TileData) {
+        if pos.x >= self.size.x || pos.y >= self.size.y || pos.z >= 9 {
             return;
         }
-        let tilepos = (pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize;
+
+        let tilepos = (pos.x
+            + (pos.y * self.size.y)
+            + (pos.z * (self.size.x * self.size.y)))
+            as usize;
         let current_tile = self.tiles[tilepos];
 
         if (current_tile.id > 0 && current_tile.color.a() > 0)
             && (tile.color.a() == 0 || tile.id == 0)
         {
-            self.filled_tiles[pos.2 as usize] =
-                self.filled_tiles[pos.2 as usize].saturating_sub(1);
+            self.filled_tiles[pos.z as usize] =
+                self.filled_tiles[pos.z as usize].saturating_sub(1);
         } else if tile.color.a() > 0
             && tile.id > 0
             && (current_tile.id == 0 || current_tile.color.a() == 0)
         {
-            self.filled_tiles[pos.2 as usize] =
-                self.filled_tiles[pos.2 as usize].saturating_add(1);
+            self.filled_tiles[pos.z as usize] =
+                self.filled_tiles[pos.z as usize].saturating_add(1);
         }
 
         self.tiles[tilepos] = tile;

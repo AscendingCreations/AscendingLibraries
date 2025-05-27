@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Change AtlasSet Peek functions to take an &self instead of &mut as well as contains.
 - Map Create_quad redone to help reduce any cache issues.
 - Add feature to enable static-dxc for WGPU
+- Changed set_tile and get_tile to use UVec3 instead of tuple.
+- Added ability to set Size of Map in Tiles.
 
 ## 0.24.0 (11. April, 2025)
 
