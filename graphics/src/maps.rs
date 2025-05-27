@@ -254,35 +254,40 @@ impl Map {
         size: UVec2,
     ) -> Self {
         let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
-        let lower_index =
-            renderer.new_buffer(map_vertex_size * ((size.x * size.y) * 7), 0);
-        let upper_index =
-            renderer.new_buffer(map_vertex_size * ((size.x * size.y) * 2), 0);
+        let lower_index = renderer
+            .new_buffer(map_vertex_size * ((size.x * size.y) * 7) as usize, 0);
+        let upper_index = renderer
+            .new_buffer(map_vertex_size * ((size.x * size.y) * 2) as usize, 0);
         let order1 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 9.0), 0);
         let order2 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 5.0), 1);
 
         //Since this is different than default we do want to resize the limit to avoid multiple resizes in a render loop.
-        if ((size.x * size.y) * 7) > LOWER_COUNT {
+        if ((size.x * size.y) * 7) as usize > LOWER_COUNT {
             LOWER_BUFFER.with_borrow_mut(|buffer| {
-                if buffer.capacity() < ((size.x * size.y) * 7) {
-                    buffer
-                        .reserve_exact(((size.x * size.y) * 7) - buffer.len());
+                if buffer.capacity() < ((size.x * size.y) * 7) as usize {
+                    buffer.reserve_exact(
+                        ((size.x * size.y) * 7) as usize - buffer.len(),
+                    );
                 }
             });
         }
 
-        if ((size.x * size.y) * 2) > UPPER_COUNT {
+        if ((size.x * size.y) * 2) as usize > UPPER_COUNT {
             UPPER_BUFFER.with_borrow_mut(|buffer| {
-                if buffer.capacity() < ((size.x * size.y) * 2) {
-                    buffer
-                        .reserve_exact(((size.x * size.y) * 2) - buffer.len());
+                if buffer.capacity() < ((size.x * size.y) * 2) as usize {
+                    buffer.reserve_exact(
+                        ((size.x * size.y) * 2) as usize - buffer.len(),
+                    );
                 }
             });
         }
 
         Self {
-            tiles: iter::repeat_n(TileData::default(), (size.x * size.y) * 9)
-                .collect(),
+            tiles: iter::repeat_n(
+                TileData::default(),
+                ((size.x * size.y) * 9) as usize,
+            )
+            .collect(),
             pos: Vec2::default(),
             stores: [lower_index, upper_index],
             filled_tiles: [0; MapLayers::Count as usize],
