@@ -61,7 +61,7 @@ impl DrawOrder {
         }
     }
 
-    pub fn set_position(&mut self, pos: Vec3) {
+    pub fn set_pos(&mut self, pos: Vec3) {
         self.x = (pos.x * 10000.0) as u32;
         self.y = (pos.y * 10000.0) as u32;
         self.z = (pos.z * 10000.0) as u32;

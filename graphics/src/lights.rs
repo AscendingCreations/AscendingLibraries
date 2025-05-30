@@ -158,7 +158,7 @@ impl Lights {
 
     pub fn set_z_pos(&mut self, z: f32) -> &mut Self {
         self.z = z;
-        self.order.set_position(Vec3::new(0.0, 0.0, z));
+        self.order.set_pos(Vec3::new(0.0, 0.0, z));
         self.changed = true;
         self
     }

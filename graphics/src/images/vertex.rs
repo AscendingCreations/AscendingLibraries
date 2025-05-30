@@ -7,8 +7,8 @@ use rayon::{iter::repeatn, prelude::*};
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct ImageVertex {
-    pub position: [f32; 3],
-    pub hw: [f32; 2],
+    pub pos: [f32; 3],
+    pub size: [f32; 2],
     pub tex_data: [f32; 4],
     pub color: u32,
     pub frames: [f32; 2],
@@ -23,8 +23,8 @@ pub struct ImageVertex {
 impl Default for ImageVertex {
     fn default() -> Self {
         Self {
-            position: [0.0; 3],
-            hw: [0.0; 2],
+            pos: [0.0; 3],
+            size: [0.0; 2],
             tex_data: [0.0; 4],
             color: 0,
             frames: [0.0; 2],

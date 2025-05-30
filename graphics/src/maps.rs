@@ -158,7 +158,7 @@ impl Map {
                     let (posx, posy) = allocation.position();
 
                     let map_vertex = MapVertex {
-                        position: [
+                        pos: [
                             self.pos.x + (x * self.tilesize) as f32,
                             self.pos.y + (y * self.tilesize) as f32,
                             z,
@@ -225,16 +225,16 @@ impl Map {
 
     /// Creates a new [`Map`] with tilesize and a default size of [32, 32].
     ///
-    pub fn new(renderer: &mut GpuRenderer, tilesize: u32) -> Self {
+    pub fn new(renderer: &mut GpuRenderer, tilesize: u32, pos: Vec2) -> Self {
         let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
         let lower_index = renderer.new_buffer(map_vertex_size * LOWER_COUNT, 0);
         let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
-        let order1 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 9.0), 0);
-        let order2 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 5.0), 1);
+        let order1 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 9.0), 0);
+        let order2 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 5.0), 1);
 
         Self {
             tiles: iter::repeat_n(TileData::default(), 9216).collect(),
-            pos: Vec2::default(),
+            pos,
             stores: [lower_index, upper_index],
             filled_tiles: [0; MapLayers::Count as usize],
             orders: [order1, order2],
@@ -246,11 +246,12 @@ impl Map {
         }
     }
 
-    /// Creates a new [`Map`] with tilesize and size.
+    /// Creates a new [`Map`] with tilesize position, and size.
     ///
     pub fn new_with(
         renderer: &mut GpuRenderer,
         tilesize: u32,
+        pos: Vec2,
         size: UVec2,
     ) -> Self {
         let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
@@ -258,8 +259,8 @@ impl Map {
             .new_buffer(map_vertex_size * ((size.x * size.y) * 7) as usize, 0);
         let upper_index = renderer
             .new_buffer(map_vertex_size * ((size.x * size.y) * 2) as usize, 0);
-        let order1 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 9.0), 0);
-        let order2 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 5.0), 1);
+        let order1 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 9.0), 0);
+        let order2 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 5.0), 1);
 
         //Since this is different than default we do want to resize the limit to avoid multiple resizes in a render loop.
         if ((size.x * size.y) * 7) as usize > LOWER_COUNT {
@@ -288,7 +289,7 @@ impl Map {
                 ((size.x * size.y) * 9) as usize,
             )
             .collect(),
-            pos: Vec2::default(),
+            pos,
             stores: [lower_index, upper_index],
             filled_tiles: [0; MapLayers::Count as usize],
             orders: [order1, order2],
@@ -302,10 +303,10 @@ impl Map {
 
     /// Updates the [`Map`]'s position.
     ///
-    pub fn set_position(&mut self, position: Vec2) -> &mut Self {
-        self.orders[0].set_position(Vec3::new(position.x, position.y, 9.0));
-        self.orders[1].set_position(Vec3::new(position.x, position.y, 5.0));
-        self.pos = position;
+    pub fn set_pos(&mut self, pos: Vec2) -> &mut Self {
+        self.orders[0].set_pos(Vec3::new(pos.x, pos.y, 9.0));
+        self.orders[1].set_pos(Vec3::new(pos.x, pos.y, 5.0));
+        self.pos = pos;
         self.changed = true;
         self
     }
@@ -314,12 +315,12 @@ impl Map {
     /// Use this after calls to set_position to set it to a order.
     ///
     pub fn set_order_pos(&mut self, order_override: Vec2) -> &mut Self {
-        self.orders[0].set_position(Vec3::new(
+        self.orders[0].set_pos(Vec3::new(
             order_override.x,
             order_override.y,
             9.0,
         ));
-        self.orders[1].set_position(Vec3::new(
+        self.orders[1].set_pos(Vec3::new(
             order_override.x,
             order_override.y,
             5.0,

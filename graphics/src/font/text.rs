@@ -228,8 +228,8 @@ impl Text {
                 }
 
                 let default = TextVertex {
-                    position: [x, y, self.pos.z],
-                    hw: [width, height],
+                    pos: [x, y, self.pos.z],
+                    size: [width, height],
                     tex_coord: [u, v],
                     layer: allocation.layer as u32,
                     color: color.0,
@@ -313,7 +313,7 @@ impl Text {
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
     pub fn set_order_override(&mut self, order_override: Vec3) -> &mut Self {
-        self.order.set_position(order_override);
+        self.order.set_pos(order_override);
         self
     }
 
@@ -479,7 +479,7 @@ impl Text {
     ///
     pub fn set_position(&mut self, position: Vec3) -> &mut Self {
         self.pos = position;
-        self.order.set_position(position);
+        self.order.set_pos(position);
         self.changed = true;
         self
     }

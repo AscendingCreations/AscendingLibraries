@@ -10,7 +10,7 @@ use cosmic_text::Color;
 #[derive(Debug)]
 pub struct Rect {
     /// Position on the Screen.
-    pub position: Vec3,
+    pub pos: Vec3,
     /// Width and Height of the Rect.
     pub size: Vec2,
     /// Color of the Rect.
@@ -38,18 +38,53 @@ pub struct Rect {
 }
 
 impl Rect {
-    /// Creates a new [`Rect`] with rendering layer.
+    /// Creates a new [`Rect`] with rendering order layer, position and size.
     ///
-    /// order_layer: Rendering Layer of the rect used in DrawOrder.
-    pub fn new(renderer: &mut GpuRenderer, order_layer: u32) -> Self {
+    /// order_layer: Rendering Order Layer of the rect used in DrawOrder.
+    pub fn new(
+        renderer: &mut GpuRenderer,
+        pos: Vec3,
+        size: Vec2,
+        order_layer: u32,
+    ) -> Self {
         let rect_size = bytemuck::bytes_of(&RectVertex::default()).len();
 
         Self {
-            position: Vec3::default(),
-            size: Vec2::default(),
+            pos,
+            size,
             color: Color::rgba(255, 255, 255, 255),
             image: None,
             uv: Vec4::default(),
+            border_width: 0.0,
+            border_color: Color::rgba(0, 0, 0, 0),
+            radius: 0.0,
+            camera_type: CameraType::None,
+            store_id: renderer.new_buffer(rect_size, 0),
+            order: DrawOrder::new(false, Vec3::default(), order_layer),
+            bounds: None,
+            changed: true,
+        }
+    }
+
+    /// Creates a new [`Rect`] with rendering order layer, position and size, UV and Image
+    ///
+    /// order_layer: Rendering Order Layer of the rect used in DrawOrder.
+    pub fn new_with(
+        renderer: &mut GpuRenderer,
+        image: Option<usize>,
+        pos: Vec3,
+        size: Vec2,
+        uv: Vec4,
+        order_layer: u32,
+    ) -> Self {
+        let rect_size = bytemuck::bytes_of(&RectVertex::default()).len();
+
+        Self {
+            pos,
+            size,
+            color: Color::rgba(255, 255, 255, 255),
+            image,
+            uv,
             border_width: 0.0,
             border_color: Color::rgba(0, 0, 0, 0),
             radius: 0.0,
@@ -71,7 +106,7 @@ impl Rect {
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
     pub fn set_order_pos(&mut self, order_override: Vec3) -> &mut Self {
-        self.order.set_position(order_override);
+        self.order.set_pos(order_override);
         self
     }
 
@@ -157,9 +192,9 @@ impl Rect {
 
     /// Sets the [`Rect`]'s Position.
     ///
-    pub fn set_position(&mut self, position: Vec3) -> &mut Self {
-        self.position = position;
-        self.order.set_position(position);
+    pub fn set_pos(&mut self, pos: Vec3) -> &mut Self {
+        self.pos = pos;
+        self.order.set_pos(pos);
         self.changed = true;
         self
     }
@@ -217,7 +252,7 @@ impl Rect {
         };
 
         let instance = RectVertex {
-            position: self.position.to_array(),
+            pos: self.pos.to_array(),
             size: self.size.to_array(),
             border_width: self.border_width,
             radius: self.radius,
@@ -267,7 +302,7 @@ impl Rect {
     ///
     pub fn check_mouse_bounds(&self, mouse_pos: Vec2) -> bool {
         if self.radius > 0.0 {
-            let pos = [self.position.x, self.position.y];
+            let pos = [self.pos.x, self.pos.y];
 
             let inner_size = [
                 self.size.x - self.radius * 2.0,
@@ -291,10 +326,10 @@ impl Rect {
 
             dist < self.radius
         } else {
-            mouse_pos[0] > self.position.x
-                && mouse_pos[0] < self.position.x + self.size.x
-                && mouse_pos[1] > self.position.y
-                && mouse_pos[1] < self.position.y + self.size.y
+            mouse_pos[0] > self.pos.x
+                && mouse_pos[0] < self.pos.x + self.size.x
+                && mouse_pos[1] > self.pos.y
+                && mouse_pos[1] < self.pos.y + self.size.y
         }
     }
 }

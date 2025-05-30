@@ -8,7 +8,7 @@ use rayon::{iter::repeatn, prelude::*};
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct RectVertex {
     /// Position on the Screen.
-    pub position: [f32; 3],
+    pub pos: [f32; 3],
     /// Width and Height of the Rect.
     pub size: [f32; 2],
     /// Texture X, Y, W and H if any apply.
@@ -30,7 +30,7 @@ pub struct RectVertex {
 impl Default for RectVertex {
     fn default() -> Self {
         Self {
-            position: [0.0; 3],
+            pos: [0.0; 3],
             size: [0.0; 2],
             uv: [0.0; 4],
             color: 0,
