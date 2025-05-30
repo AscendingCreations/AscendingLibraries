@@ -477,9 +477,9 @@ impl Text {
 
     /// Sets the [`Text`]'s screen Posaition.
     ///
-    pub fn set_position(&mut self, position: Vec3) -> &mut Self {
-        self.pos = position;
-        self.order.set_pos(position);
+    pub fn set_pos(&mut self, pos: Vec3) -> &mut Self {
+        self.pos = pos;
+        self.order.set_pos(pos);
         self.changed = true;
         self
     }
