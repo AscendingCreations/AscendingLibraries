@@ -133,114 +133,113 @@ impl Text {
                 && bounds_min_y <= end_y
         };
 
-        let layout_runs = self
-            .buffer
+        self.buffer
             .layout_runs()
             .skip_while(|run| !is_run_visible(run))
-            .take_while(is_run_visible);
+            .take_while(is_run_visible)
+            .for_each(|run| {
+                run.glyphs.iter().for_each(|glyph| {
+                    let physical_glyph = glyph.physical(
+                        (self.pos.x, self.pos.y + self.size.y),
+                        self.scale,
+                    );
 
-        for run in layout_runs {
-            for glyph in run.glyphs.iter() {
-                let physical_glyph = glyph.physical(
-                    (self.pos.x, self.pos.y + self.size.y),
-                    self.scale,
-                );
-
-                let (allocation, is_color) =
-                    if let Some((allocation, is_color)) =
-                        atlas.get_by_key(&physical_glyph.cache_key)
-                    {
-                        (allocation, is_color)
-                    } else {
-                        let image = cache
-                            .get_image_uncached(
-                                &mut renderer.font_sys,
-                                physical_glyph.cache_key,
-                            )
-                            .unwrap();
-
-                        if image.placement.width > 0
-                            && image.placement.height > 0
+                    let (allocation, is_color) =
+                        if let Some((allocation, is_color)) =
+                            atlas.get_by_key(&physical_glyph.cache_key)
                         {
-                            atlas.upload_with_alloc(
-                                renderer,
-                                image.content == SwashContent::Color,
-                                physical_glyph.cache_key,
-                                &image,
-                            )?
+                            (allocation, is_color)
                         } else {
-                            continue;
-                        }
+                            let image = cache
+                                .get_image_uncached(
+                                    &mut renderer.font_sys,
+                                    physical_glyph.cache_key,
+                                )
+                                .unwrap();
+
+                            if image.placement.width > 0
+                                && image.placement.height > 0
+                            {
+                                atlas
+                                    .upload_with_alloc(
+                                        renderer,
+                                        image.content == SwashContent::Color,
+                                        physical_glyph.cache_key,
+                                        &image,
+                                    )
+                                    .unwrap()
+                            } else {
+                                return;
+                            }
+                        };
+
+                    let position = allocation.data;
+                    let (u, v, width, height) = allocation.rect();
+                    let (mut u, mut v, mut width, mut height) =
+                        (u as f32, v as f32, width as f32, height as f32);
+                    let (mut x, mut y) = (
+                        physical_glyph.x as f32 + position.x,
+                        physical_glyph.y as f32
+                            + ((position.y - height)
+                                - (run.line_y * self.scale).round()),
+                    );
+                    let color = if is_color {
+                        Color::rgba(255, 255, 255, 255)
+                    } else {
+                        glyph.color_opt.unwrap_or(self.default_color)
                     };
 
-                let position = allocation.data;
-                let (u, v, width, height) = allocation.rect();
-                let (mut u, mut v, mut width, mut height) =
-                    (u as f32, v as f32, width as f32, height as f32);
-                let (mut x, mut y) = (
-                    physical_glyph.x as f32 + position.x,
-                    physical_glyph.y as f32
-                        + ((position.y - height)
-                            - (run.line_y * self.scale).round()),
-                );
-                let color = if is_color {
-                    Color::rgba(255, 255, 255, 255)
-                } else {
-                    glyph.color_opt.unwrap_or(self.default_color)
-                };
+                    if color.a() < 255 {
+                        is_alpha = true;
+                    }
 
-                if color.a() < 255 {
-                    is_alpha = true;
-                }
+                    // Starts beyond right edge or ends beyond left edge
+                    let max_x = x + width;
+                    if x > bounds_max_x || max_x < bounds_min_x {
+                        return;
+                    }
 
-                // Starts beyond right edge or ends beyond left edge
-                let max_x = x + width;
-                if x > bounds_max_x || max_x < bounds_min_x {
-                    continue;
-                }
+                    // Clip left edge
+                    if x < bounds_min_x {
+                        let right_shift = bounds_min_x - x;
 
-                // Clip left edge
-                if x < bounds_min_x {
-                    let right_shift = bounds_min_x - x;
+                        x = bounds_min_x;
+                        width = max_x - bounds_min_x;
+                        u += right_shift;
+                    }
 
-                    x = bounds_min_x;
-                    width = max_x - bounds_min_x;
-                    u += right_shift;
-                }
+                    // Clip right edge
+                    if x + width > bounds_max_x {
+                        width = bounds_max_x - x;
+                    }
 
-                // Clip right edge
-                if x + width > bounds_max_x {
-                    width = bounds_max_x - x;
-                }
+                    // Clip top edge
+                    if y < bounds_min_y {
+                        height -= bounds_min_y - y;
+                        y = bounds_min_y;
+                    }
 
-                // Clip top edge
-                if y < bounds_min_y {
-                    height -= bounds_min_y - y;
-                    y = bounds_min_y;
-                }
+                    // Clip top edge
+                    if y + height > bounds_max_y {
+                        let bottom_shift = (y + height) - bounds_max_y;
 
-                // Clip top edge
-                if y + height > bounds_max_y {
-                    let bottom_shift = (y + height) - bounds_max_y;
+                        v += bottom_shift;
+                        height -= bottom_shift;
+                    }
 
-                    v += bottom_shift;
-                    height -= bottom_shift;
-                }
-
-                let default = TextVertex {
-                    pos: [x, y, self.pos.z],
-                    size: [width, height],
-                    tex_coord: [u, v],
-                    layer: allocation.layer as u32,
-                    color: color.0,
-                    camera_type: self.camera_type as u32,
-                    is_color: is_color as u32,
-                };
-
-                GLYPH_VERTICES
-                    .with_borrow_mut(|vertices| vertices.push(default));
-            }
-        }
+                    GLYPH_VERTICES.with_borrow_mut(|vertices| {
+                        vertices.push(TextVertex {
+                            pos: [x, y, self.pos.z],
+                            size: [width, height],
+                            tex_coord: [u, v],
+                            layer: allocation.layer as u32,
+                            color: color.0,
+                            camera_type: self.camera_type as u32,
+                            is_color: is_color as u32,
+                        })
+                    });
+                });
+            });
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
             GLYPH_VERTICES.with_borrow(|vertices| {
