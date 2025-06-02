@@ -34,8 +34,9 @@ pub(crate) type AIndexSet<K> = indexmap::IndexSet<K, ABuildHasher>;
 
 /// Type of Camera to use within the Shader per rendered Object.
 ///
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum CameraType {
+    #[default]
     None,
     ControlView,
     ControlViewWithScale,
@@ -45,8 +46,9 @@ pub enum CameraType {
 
 /// Type of Texture Flipping in shader.
 ///
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum FlipStyle {
+    #[default]
     None,
     Horizontal,
     Vertical,

@@ -1,13 +1,14 @@
 use crate::{GpuRenderer, GraphicsError};
-use async_trait::async_trait;
 use log::debug;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
+
 use std::sync::Arc;
 use wgpu::{Adapter, Backends, DeviceType, Surface, TextureFormat};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
 
 /// Handles the [`wgpu::Device`] and [`wgpu::Queue`] returned from WGPU.
+#[derive(Debug)]
 pub struct GpuDevice {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -52,6 +53,7 @@ pub struct AdapterOptions {
 /// Also used to Keep track of [`wgpu::TextureFormat`], [`wgpu::SurfaceConfiguration`]
 /// and [`Window`] Sizes.
 ///
+#[derive(Debug)]
 pub struct GpuWindow {
     /// GPU Adapter we will render from.
     pub(crate) adapter: wgpu::Adapter,
@@ -230,10 +232,10 @@ impl GpuWindow {
 
 /// Trait used to Allow the [`wgpu::Adapter`] to Create a [`GpuRenderer`].
 ///
-#[async_trait]
 pub trait AdapterExt {
     /// Creates a [`GpuRenderer`].
     ///
+    #[allow(async_fn_in_trait)]
     async fn create_renderer(
         self,
         instance: &wgpu::Instance,
@@ -243,13 +245,12 @@ pub trait AdapterExt {
     ) -> Result<GpuRenderer, GraphicsError>;
 }
 
-#[async_trait]
 impl AdapterExt for wgpu::Adapter {
     async fn create_renderer(
         self,
         instance: &wgpu::Instance,
         window: &Arc<Window>,
-        device_descriptor: &wgpu::DeviceDescriptor,
+        device_descriptor: &wgpu::DeviceDescriptor<'_>,
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError> {
         let size = window.inner_size();
@@ -295,7 +296,7 @@ impl AdapterExt for wgpu::Adapter {
             );
         };
 
-        debug!("surface format: {:?}", format);
+        debug!("surface format: {format:?}");
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
@@ -331,10 +332,10 @@ impl AdapterExt for wgpu::Adapter {
 /// Trait used to Allow the [`wgpu::Instance`] to Create a [`GpuRenderer`].
 /// And get Adapters.
 ///
-#[async_trait]
 pub trait InstanceExt {
     /// Creates a [`GpuRenderer`].
     ///
+    #[allow(async_fn_in_trait)]
     async fn create_device(
         &self,
         window: Arc<Window>,
@@ -349,7 +350,6 @@ pub trait InstanceExt {
     -> Vec<(Adapter, u32, u32)>;
 }
 
-#[async_trait]
 impl InstanceExt for wgpu::Instance {
     fn get_adapters(
         &self,
@@ -411,6 +411,12 @@ impl InstanceExt for wgpu::Instance {
                     DeviceType::Cpu => 5,
                 };
 
+                if (device_type == 1 || device_type == 2)
+                    && information.driver.is_empty()
+                {
+                    return None;
+                }
+
                 if let Some(ref surface) = options.compatible_surface {
                     if !adapter.is_surface_supported(surface) {
                         return None;
@@ -440,7 +446,7 @@ impl InstanceExt for wgpu::Instance {
         &self,
         window: Arc<Window>,
         options: AdapterOptions,
-        device_descriptor: &wgpu::DeviceDescriptor,
+        device_descriptor: &wgpu::DeviceDescriptor<'_>,
         present_mode: wgpu::PresentMode,
     ) -> Result<GpuRenderer, GraphicsError> {
         let mut adapters = self.get_adapters(options);

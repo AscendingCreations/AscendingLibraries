@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use crate::{
     Bounds, CameraType, Color, DrawOrder, GpuRenderer, GraphicsError, Index,
     OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
@@ -11,6 +13,7 @@ use rayon::prelude::*;
 
 /// [`Text`] Option Handler for [`Text::measure_string`].
 ///
+#[derive(Debug)]
 pub struct TextOptions {
     pub shaping: cosmic_text::Shaping,
     pub metrics: Option<Metrics>,
@@ -34,6 +37,8 @@ impl Default for TextOptions {
 }
 
 /// [`Text`] visible width and lines details
+///
+#[derive(Debug)]
 pub struct VisibleDetails {
     /// Visible Width the Text can render as.
     pub width: f32,
@@ -45,6 +50,7 @@ pub struct VisibleDetails {
 
 /// Text to render to screen.
 ///
+#[derive(Debug)]
 pub struct Text {
     /// Cosmic Text [`Buffer`].
     pub buffer: Buffer,
@@ -72,12 +78,12 @@ pub struct Text {
     pub wrap: Wrap,
     /// [`CameraType`] used to render with.
     pub camera_type: CameraType,
-    /// Buffer used to Store Premade Glyphs.
-    /// Avoids making new vec every create_quad call at risk of more memory.
-    /// will only resize when resizing is needed
-    pub glyph_vertices: Vec<TextVertex>,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
+}
+
+thread_local! {
+    static GLYPH_VERTICES: RefCell<Vec<TextVertex>> = RefCell::new(Vec::with_capacity(1024));
 }
 
 impl Text {
@@ -108,11 +114,13 @@ impl Text {
         let bounds_max_x = self.bounds.right.min(screensize.width);
         let bounds_max_y = self.bounds.top.min(screensize.height);
 
-        self.glyph_vertices.clear();
+        GLYPH_VERTICES.with_borrow_mut(|vertices| {
+            vertices.clear();
 
-        if self.glyph_vertices.capacity() < count {
-            self.glyph_vertices.reserve_exact(count);
-        }
+            if vertices.capacity() < count {
+                vertices.reserve(count);
+            }
+        });
 
         // From Glyphon good optimization.
         let is_run_visible = |run: &cosmic_text::LayoutRun| {
@@ -125,159 +133,125 @@ impl Text {
                 && bounds_min_y <= end_y
         };
 
-        let layout_runs = self
-            .buffer
+        self.buffer
             .layout_runs()
             .skip_while(|run| !is_run_visible(run))
-            .take_while(is_run_visible);
+            .take_while(is_run_visible)
+            .for_each(|run| {
+                run.glyphs.iter().for_each(|glyph| {
+                    let physical_glyph = glyph.physical(
+                        (self.pos.x, self.pos.y + self.size.y),
+                        self.scale,
+                    );
 
-        for run in layout_runs {
-            for glyph in run.glyphs.iter() {
-                let physical_glyph = glyph.physical(
-                    (self.pos.x, self.pos.y + self.size.y),
-                    self.scale,
-                );
-
-                let (allocation, is_color) = if let Some(allocation) =
-                    atlas.text.get_by_key(&physical_glyph.cache_key)
-                {
-                    (allocation, false)
-                } else if let Some(allocation) =
-                    atlas.emoji.get_by_key(&physical_glyph.cache_key)
-                {
-                    (allocation, true)
-                } else {
-                    let image = cache
-                        .get_image_uncached(
-                            &mut renderer.font_sys,
-                            physical_glyph.cache_key,
-                        )
-                        .unwrap();
-                    let is_color = match image.content {
-                        SwashContent::Color => true,
-                        SwashContent::Mask => false,
-                        SwashContent::SubpixelMask => false,
-                    };
-
-                    if image.placement.width > 0 && image.placement.height > 0 {
-                        if is_color {
-                            let (_, allocation) = atlas
-                                .emoji
-                                .upload_with_alloc(
-                                    physical_glyph.cache_key,
-                                    &image.data,
-                                    image.placement.width,
-                                    image.placement.height,
-                                    Vec2::new(
-                                        image.placement.left as f32,
-                                        image.placement.top as f32,
-                                    ),
-                                    renderer,
-                                )
-                                .ok_or(GraphicsError::AtlasFull)?;
+                    let (allocation, is_color) =
+                        if let Some((allocation, is_color)) =
+                            atlas.get_by_key(&physical_glyph.cache_key)
+                        {
                             (allocation, is_color)
                         } else {
-                            let (_, allocation) = atlas
-                                .text
-                                .upload_with_alloc(
+                            let image = cache
+                                .get_image_uncached(
+                                    &mut renderer.font_sys,
                                     physical_glyph.cache_key,
-                                    &image.data,
-                                    image.placement.width,
-                                    image.placement.height,
-                                    Vec2::new(
-                                        image.placement.left as f32,
-                                        image.placement.top as f32,
-                                    ),
-                                    renderer,
                                 )
-                                .ok_or(GraphicsError::AtlasFull)?;
-                            (allocation, is_color)
-                        }
+                                .unwrap();
+
+                            if image.placement.width > 0
+                                && image.placement.height > 0
+                            {
+                                atlas
+                                    .upload_with_alloc(
+                                        renderer,
+                                        image.content == SwashContent::Color,
+                                        physical_glyph.cache_key,
+                                        &image,
+                                    )
+                                    .unwrap()
+                            } else {
+                                return;
+                            }
+                        };
+
+                    let position = allocation.data;
+                    let (u, v, width, height) = allocation.rect();
+                    let (mut u, mut v, mut width, mut height) =
+                        (u as f32, v as f32, width as f32, height as f32);
+                    let (mut x, mut y) = (
+                        physical_glyph.x as f32 + position.x,
+                        physical_glyph.y as f32
+                            + ((position.y - height)
+                                - (run.line_y * self.scale).round()),
+                    );
+                    let color = if is_color {
+                        Color::rgba(255, 255, 255, 255)
                     } else {
-                        continue;
+                        glyph.color_opt.unwrap_or(self.default_color)
+                    };
+
+                    if color.a() < 255 {
+                        is_alpha = true;
                     }
-                };
 
-                let position = allocation.data;
-                let (u, v, width, height) = allocation.rect();
-                let (mut u, mut v, mut width, mut height) =
-                    (u as f32, v as f32, width as f32, height as f32);
-                let (mut x, mut y) = (
-                    physical_glyph.x as f32 + position.x,
-                    physical_glyph.y as f32
-                        + ((position.y - height)
-                            - (run.line_y * self.scale).round()),
-                );
-                let color = if is_color {
-                    Color::rgba(255, 255, 255, 255)
-                } else {
-                    match glyph.color_opt {
-                        Some(color) => color,
-                        None => self.default_color,
+                    // Starts beyond right edge or ends beyond left edge
+                    let max_x = x + width;
+                    if x > bounds_max_x || max_x < bounds_min_x {
+                        return;
                     }
-                };
 
-                if color.a() < 255 {
-                    is_alpha = true;
-                }
+                    // Clip left edge
+                    if x < bounds_min_x {
+                        let right_shift = bounds_min_x - x;
 
-                // Starts beyond right edge or ends beyond left edge
-                let max_x = x + width;
-                if x > bounds_max_x || max_x < bounds_min_x {
-                    continue;
-                }
+                        x = bounds_min_x;
+                        width = max_x - bounds_min_x;
+                        u += right_shift;
+                    }
 
-                // Clip left edge
-                if x < bounds_min_x {
-                    let right_shift = bounds_min_x - x;
+                    // Clip right edge
+                    if x + width > bounds_max_x {
+                        width = bounds_max_x - x;
+                    }
 
-                    x = bounds_min_x;
-                    width = max_x - bounds_min_x;
-                    u += right_shift;
-                }
+                    // Clip top edge
+                    if y < bounds_min_y {
+                        height -= bounds_min_y - y;
+                        y = bounds_min_y;
+                    }
 
-                // Clip right edge
-                if x + width > bounds_max_x {
-                    width = bounds_max_x - x;
-                }
+                    // Clip top edge
+                    if y + height > bounds_max_y {
+                        let bottom_shift = (y + height) - bounds_max_y;
 
-                // Clip top edge
-                if y < bounds_min_y {
-                    height -= bounds_min_y - y;
-                    y = bounds_min_y;
-                }
+                        v += bottom_shift;
+                        height -= bottom_shift;
+                    }
 
-                // Clip top edge
-                if y + height > bounds_max_y {
-                    let bottom_shift = (y + height) - bounds_max_y;
-
-                    v += bottom_shift;
-                    height -= bottom_shift;
-                }
-
-                let default = TextVertex {
-                    position: [x, y, self.pos.z],
-                    hw: [width, height],
-                    tex_coord: [u, v],
-                    layer: allocation.layer as u32,
-                    color: color.0,
-                    camera_type: self.camera_type as u32,
-                    is_color: is_color as u32,
-                };
-
-                self.glyph_vertices.push(default);
-            }
-        }
+                    GLYPH_VERTICES.with_borrow_mut(|vertices| {
+                        vertices.push(TextVertex {
+                            pos: [x, y, self.pos.z],
+                            size: [width, height],
+                            tex_coord: [u, v],
+                            layer: allocation.layer as u32,
+                            color: color.0,
+                            camera_type: self.camera_type as u32,
+                            is_color: is_color as u32,
+                        })
+                    });
+                });
+            });
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
-            let bytes: &[u8] = bytemuck::cast_slice(&self.glyph_vertices);
+            GLYPH_VERTICES.with_borrow(|vertices| {
+                let bytes: &[u8] = bytemuck::cast_slice(vertices);
 
-            if bytes.len() != store.store.len() {
-                store.store.resize_with(bytes.len(), || 0);
-            }
+                if bytes.len() != store.store.len() {
+                    store.store.resize_with(bytes.len(), || 0);
+                }
 
-            store.store.copy_from_slice(bytes);
-            store.changed = true;
+                store.store.copy_from_slice(bytes);
+                store.changed = true;
+            });
         }
 
         self.order.alpha = is_alpha;
@@ -317,7 +291,6 @@ impl Text {
             line: 0,
             scroll: cosmic_text::Scroll::default(),
             scale,
-            glyph_vertices: Vec::with_capacity(64),
         }
     }
 
@@ -339,7 +312,7 @@ impl Text {
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
     pub fn set_order_override(&mut self, order_override: Vec3) -> &mut Self {
-        self.order.set_position(order_override);
+        self.order.set_pos(order_override);
         self
     }
 
@@ -503,9 +476,9 @@ impl Text {
 
     /// Sets the [`Text`]'s screen Posaition.
     ///
-    pub fn set_position(&mut self, position: Vec3) -> &mut Self {
-        self.pos = position;
-        self.order.set_position(position);
+    pub fn set_pos(&mut self, pos: Vec3) -> &mut Self {
+        self.pos = pos;
+        self.order.set_pos(pos);
         self.changed = true;
         self
     }

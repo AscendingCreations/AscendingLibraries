@@ -4,6 +4,7 @@ use crate::GpuRenderer;
 
 /// [`crate::AtlasSet`] rendering TextureGroup
 ///
+#[derive(Debug)]
 pub struct TextureGroup {
     /// Texture's [`wgpu::TextureView`] for WGPU.
     pub texture_view: wgpu::TextureView,

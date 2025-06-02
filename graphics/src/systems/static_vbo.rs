@@ -7,28 +7,21 @@ use wgpu::util::DeviceExt;
 #[repr(C)]
 #[derive(Clone, Copy, Zeroable, Pod)]
 pub struct Vertex {
-    _position: [f32; 2],
+    _pos: [f32; 2],
 }
 
 const INDICES: [u32; 6] = [0, 1, 2, 0, 2, 3];
 
 const VERTS: [Vertex; 4] = [
-    Vertex {
-        _position: [0.0, 0.0],
-    },
-    Vertex {
-        _position: [1.0, 0.0],
-    },
-    Vertex {
-        _position: [1.0, 1.0],
-    },
-    Vertex {
-        _position: [0.0, 1.0],
-    },
+    Vertex { _pos: [0.0, 0.0] },
+    Vertex { _pos: [1.0, 0.0] },
+    Vertex { _pos: [1.0, 1.0] },
+    Vertex { _pos: [0.0, 1.0] },
 ];
 
 /// StaticVertexBuffer holds premade vbo and ibo buffers that can be reused between
 /// InstanceBuffered Objects. This Decreases GPU memory and boosts speed.
+#[derive(Debug)]
 pub struct StaticVertexBuffer {
     pub vbo: wgpu::Buffer,
     pub ibo: wgpu::Buffer,

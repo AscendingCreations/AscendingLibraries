@@ -1,10 +1,10 @@
 use crate::GpuDevice;
 use std::{marker::PhantomData, ops::Range};
-use wgpu::util::DeviceExt;
+use wgpu::{Queue, util::DeviceExt};
 
 /// BufferStore is Storage used to hold and modify the byte arrays that get sent to the GPU.
 ///
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct BufferStore {
     /// Storage used for Vertex or Indicies.
     pub store: Vec<u8>,
@@ -72,6 +72,7 @@ pub struct BufferData {
 
 /// GPU Buffer Management Struct. Used to keep track of Counts, Length and The Buffer in the GPU.
 ///
+#[derive(Debug)]
 pub struct Buffer<K: BufferLayout> {
     pub buffer: wgpu::Buffer,
     pub count: usize,
@@ -118,9 +119,9 @@ impl<K: BufferLayout> Buffer<K> {
     /// - data: the contents to write to the Buffer.
     /// - pos: Position to write to the buffer from.
     ///
-    pub fn write(&self, device: &GpuDevice, data: &[u8], pos: u64) {
+    pub fn write(&self, queue: &Queue, data: &[u8], pos: u64) {
         if !data.is_empty() {
-            device.queue.write_buffer(&self.buffer, pos, data);
+            queue.write_buffer(&self.buffer, pos, data);
         }
     }
 

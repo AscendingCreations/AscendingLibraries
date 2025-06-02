@@ -13,7 +13,7 @@ pub type Index = AscendingKey;
 ///
 /// Positions are all calculated as (pos * 10000.0) as u32 to increase speed of sorting.
 /// Sort Order is order_layer -> alpha -> y reversed -> x -> z reversed.
-#[derive(Copy, Clone, PartialEq, Eq, Default)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Default)]
 pub struct DrawOrder {
     /// Layer to sort the buffer by. This is not the same as buffer_layer.
     /// Sorted by lowest to highest. First to Sort by.
@@ -61,7 +61,7 @@ impl DrawOrder {
         }
     }
 
-    pub fn set_position(&mut self, pos: Vec3) {
+    pub fn set_pos(&mut self, pos: Vec3) {
         self.x = (pos.x * 10000.0) as u32;
         self.y = (pos.y * 10000.0) as u32;
         self.z = (pos.z * 10000.0) as u32;
@@ -70,7 +70,7 @@ impl DrawOrder {
 
 /// OrderIndex Contains the information needed to Order the buffers and
 /// to set the buffers up for rendering.
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct OrderedIndex {
     /// The Draw Order of the Buffer.
     pub(crate) order: DrawOrder,

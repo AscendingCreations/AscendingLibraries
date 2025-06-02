@@ -531,7 +531,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
 
     /// Gets using key the reference of [`Allocation`] with key if it exists.
     ///
-    pub fn peek_by_key(&mut self, key: &U) -> Option<&(Allocation<Data>, U)> {
+    pub fn peek_by_key(&self, key: &U) -> Option<&(Allocation<Data>, U)> {
         if let Some(id) = self.lookup.get(key) {
             self.store.get(*id)
         } else {
@@ -541,19 +541,19 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
 
     /// Gets using index the reference of [`Allocation`] with key if it exists.
     ///
-    pub fn peek(&mut self, id: usize) -> Option<&(Allocation<Data>, U)> {
+    pub fn peek(&self, id: usize) -> Option<&(Allocation<Data>, U)> {
         self.store.get(id)
     }
 
     /// If [`Allocation`] using key exists.
     ///
-    pub fn contains_key(&mut self, key: &U) -> bool {
+    pub fn contains_key(&self, key: &U) -> bool {
         self.lookup.contains_key(key)
     }
 
     /// If [`Allocation`] at id exists.
     ///
-    pub fn contains(&mut self, id: usize) -> bool {
+    pub fn contains(&self, id: usize) -> bool {
         self.store.contains(id)
     }
 
@@ -700,6 +700,48 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
             };
 
             self.upload_allocation(bytes, &allocation, renderer);
+            let id = self.store.insert((allocation, key.clone()));
+            self.layers[allocation.layer].insert_index(id);
+            self.lookup.insert(key.clone(), id);
+            self.cache.push(id, 1);
+            Some((id, allocation))
+        }
+    }
+
+    /// Creates an [`Allocation`] without uploading bytes to the texture.
+    /// Useful for Placeholders of stuff that doesnt render.
+    /// used to avoid hitting extra cache writes. This will waste space
+    /// and can be used to Precaching allocations for uploading later too.
+    /// returns the created [`Allocation`] and Index
+    ///
+    /// # Arguments
+    /// - width: Width of the Texture. if 0 will default to 1.
+    /// - height: Height of the Texture. if 0 will default to 1.
+    /// - data: any specail generic data for the texture.
+    ///
+    #[allow(clippy::too_many_arguments)]
+    pub fn set_alloc(
+        &mut self,
+        key: U,
+        width: u32,
+        height: u32,
+        data: Data,
+        renderer: &GpuRenderer,
+    ) -> Option<(usize, Allocation<Data>)> {
+        let (width, height) = (width.max(1), height.max(1));
+
+        if let Some(&id) = self.lookup.get(&key) {
+            let (allocation, _) = self.store.get(id)?;
+            Some((id, *allocation))
+        } else {
+            let allocation = {
+                let nlayers = self.layers.len();
+                let allocation = self.allocate(width, height, data)?;
+                self.grow(self.layers.len() - nlayers, renderer);
+
+                allocation
+            };
+
             let id = self.store.insert((allocation, key.clone()));
             self.layers[allocation.layer].insert_index(id);
             self.lookup.insert(key.clone(), id);

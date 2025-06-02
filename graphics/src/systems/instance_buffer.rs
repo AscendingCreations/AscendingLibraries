@@ -9,6 +9,7 @@ use std::ops::Range;
 /// Details for the Objects Memory location within the instance Buffer.
 /// This is used to deturmine if the buffers location has changed or not for
 /// reuploading the buffer.
+#[derive(Debug, Copy, Clone)]
 pub struct InstanceDetails {
     /// Start location of the Buffer.
     pub start: u32,
@@ -22,6 +23,7 @@ pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>, CameraType);
 /// Instance buffer holds all the Details to render with instances with a Static VBO.
 /// This stores and handles the orders of all rendered objects to try and reduce the amount
 /// of GPU uploads we make.
+#[derive(Debug)]
 pub struct InstanceBuffer<K: BufferLayout> {
     /// Unprocessed Buffer Data.
     pub unprocessed: Vec<Vec<OrderedIndex>>,
@@ -128,6 +130,16 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             let offset = buffer_layer.saturating_add(1);
 
             if self.unprocessed.len() < offset {
+                #[cfg(feature = "rayon")]
+                let mut expansions = (self.unprocessed.len()..offset)
+                    .into_par_iter()
+                    .map(|_| Vec::with_capacity(self.layer_size))
+                    .collect();
+
+                #[cfg(feature = "rayon")]
+                self.unprocessed.append(&mut expansions);
+
+                #[cfg(not(feature = "rayon"))]
                 for _ in self.unprocessed.len()..offset {
                     //Push the buffer_layer. if this is a layer we are adding data too lets
                     //give it a starting size. this can be adjusted later for better performance
@@ -161,7 +173,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             if store.store_pos != range || changed || store.changed {
                 store.store_pos = range;
                 store.changed = false;
-                write_buffer = true
+                write_buffer = true;
             }
 
             *pos += store.store.len();
@@ -170,7 +182,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
 
         if write_buffer {
             if let Some(store) = renderer.get_buffer(buf.index) {
-                self.buffer.write(&renderer.device, &store.store, old_pos);
+                self.buffer.write(renderer.queue(), &store.store, old_pos);
             }
         }
     }

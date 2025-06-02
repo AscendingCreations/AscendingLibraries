@@ -31,9 +31,10 @@ impl DrawMode {
 
 /// 2D Meshs to render to screen.
 ///
+#[derive(Debug)]
 pub struct Mesh2D {
     /// Position on the Screen.
-    pub position: Vec3,
+    pub pos: Vec3,
     /// Width and Height of the mesh.
     pub size: Vec2,
     /// Saved Verticies of the Mesh.
@@ -51,12 +52,16 @@ pub struct Mesh2D {
 }
 
 impl Mesh2D {
-    /// Creates a new [`Mesh2D`] with rendering layer.
+    /// Creates a new [`Mesh2D`] with rendering order layer.
     ///
-    /// order_layer: Rendering Layer of the rect used in DrawOrder.
-    pub fn new(renderer: &mut GpuRenderer, order_layer: u32) -> Self {
+    /// order_layer: Rendering Order Layer of the rect used in DrawOrder.
+    pub fn new(
+        renderer: &mut GpuRenderer,
+        pos: Vec3,
+        order_layer: u32,
+    ) -> Self {
         Self {
-            position: Vec3::default(),
+            pos,
             size: Vec2::default(),
             vbo_store_id: renderer.default_buffer(),
             order: DrawOrder::new(false, Vec3::default(), order_layer),
@@ -67,17 +72,18 @@ impl Mesh2D {
         }
     }
 
-    /// Creates a new [`Mesh2D`] with rendering layer and a indices and vbo se to capacity.
+    /// Creates a new [`Mesh2D`] with rendering order layer and a indices and vbo se to capacity.
     ///
-    /// order_layer: Rendering Layer of the rect used in DrawOrder.
+    /// order_layer: Rendering Order Layer of the rect used in DrawOrder.
     /// capacity: Size to Pre-Create the Vertices and indices at.
     pub fn with_capacity(
         renderer: &mut GpuRenderer,
+        pos: Vec3,
         order_layer: u32,
         capacity: usize,
     ) -> Self {
         Self {
-            position: Vec3::default(),
+            pos,
             size: Vec2::default(),
             vbo_store_id: renderer.default_buffer(),
             order: DrawOrder::new(false, Vec3::default(), order_layer),
@@ -98,7 +104,7 @@ impl Mesh2D {
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
     pub fn set_order_pos(&mut self, order_override: Vec3) -> &mut Self {
-        self.order.set_position(order_override);
+        self.order.set_pos(order_override);
         self
     }
 
@@ -135,8 +141,8 @@ impl Mesh2D {
         for vertex in &builder.buffer.vertices {
             let mut vertex = *vertex;
 
-            vertex.position[0] += builder.offset.x;
-            vertex.position[1] += builder.offset.y;
+            vertex.pos[0] += builder.offset.x;
+            vertex.pos[1] += builder.offset.y;
 
             if Color(vertex.color).a() < 255 {
                 alpha = true
@@ -168,8 +174,8 @@ impl Mesh2D {
         for vertex in &builder.buffer.vertices {
             let mut vertex = *vertex;
 
-            vertex.position[0] += builder.offset.x;
-            vertex.position[1] += builder.offset.y;
+            vertex.pos[0] += builder.offset.x;
+            vertex.pos[1] += builder.offset.y;
 
             if Color(vertex.color).a() < 255 {
                 alpha = true
@@ -205,9 +211,9 @@ impl Mesh2D {
 
     /// Sets the [`Mesh2D`]'s Position.
     ///
-    pub fn set_position(&mut self, position: Vec3) -> &mut Self {
-        self.position = position;
-        self.order.set_position(position);
+    pub fn set_pos(&mut self, pos: Vec3) -> &mut Self {
+        self.pos = pos;
+        self.order.set_pos(pos);
         self.changed = true;
         self
     }
@@ -229,8 +235,8 @@ impl Mesh2D {
             for vertex in &self.vertices {
                 let mut v = *vertex;
 
-                v.position[0] += self.position.x;
-                v.position[1] += self.position.y;
+                v.pos[0] += self.pos.x;
+                v.pos[1] += self.pos.y;
                 verticies.push(v);
             }
 
@@ -265,10 +271,10 @@ impl Mesh2D {
 
     /// Checks if Mouse position is within the [`Mesh2D`]'s Bounds.
     pub fn check_mouse_bounds(&self, mouse_pos: Vec2) -> bool {
-        mouse_pos[0] > self.position.x
-            && mouse_pos[0] < self.position.x + self.size.x
-            && mouse_pos[1] > self.position.y
-            && mouse_pos[1] < self.position.y + self.size.y
+        mouse_pos[0] > self.pos.x
+            && mouse_pos[0] < self.pos.x + self.size.x
+            && mouse_pos[1] > self.pos.y
+            && mouse_pos[1] < self.pos.y + self.size.y
     }
 }
 
@@ -334,7 +340,7 @@ impl Mesh2DBuilder {
         let [minx, miny, maxx, maxy, minz] = self.buffer.vertices.iter().fold(
             [f32::MAX, f32::MAX, f32::MIN, f32::MIN, 1.0],
             |[minx, miny, maxx, maxy, minz], vert| {
-                let [x, y, z] = vert.position;
+                let [x, y, z] = vert.pos;
                 [
                     minx.min(x),
                     miny.min(y),

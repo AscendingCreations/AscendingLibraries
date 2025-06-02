@@ -7,7 +7,7 @@ use rayon::{iter::repeatn, prelude::*};
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct MapVertex {
-    pub position: [f32; 3],
+    pub pos: [f32; 3],
     pub tilesize: f32,
     pub tile_id: u32,
     pub texture_layer: u32,
@@ -18,7 +18,7 @@ pub struct MapVertex {
 impl Default for MapVertex {
     fn default() -> Self {
         Self {
-            position: [0.0; 3],
+            pos: [0.0; 3],
             tilesize: 0.0,
             tile_id: 0,
             texture_layer: 0,

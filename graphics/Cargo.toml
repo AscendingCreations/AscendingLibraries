@@ -16,10 +16,10 @@ categories = ["game-development", "graphics"]
 [features]
 default = ["rayon", "crate_passthru"]
 crate_passthru = []
-rayon = ["dep:rayon"]
+rayon = ["dep:rayon", "indexmap/rayon"]
+static_dx = ["wgpu/static-dxc"]
 
 [dependencies]
-async-trait.workspace = true
 bytemuck.workspace = true
 thiserror.workspace = true
 winit.workspace = true

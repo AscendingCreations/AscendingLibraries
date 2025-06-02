@@ -2,20 +2,18 @@ mod pipeline;
 mod render;
 mod vertex;
 
-pub use pipeline::*;
-pub use render::*;
-pub use vertex::*;
-
-use std::iter;
-
 use crate::{
-    AtlasSet, CameraType, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2,
-    Vec3,
+    AtlasSet, CameraType, DrawOrder, GpuRenderer, Index, OrderedIndex, UVec2,
+    UVec3, Vec2, Vec3,
 };
 use cosmic_text::Color;
+pub use pipeline::*;
+pub use render::*;
+use std::{cell::RefCell, iter};
+pub use vertex::*;
 
 #[allow(dead_code)]
-#[derive(Copy, Clone, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, PartialOrd, Ord, Eq, Hash, PartialEq)]
 pub enum MapLayers {
     Ground,
     Mask,
@@ -32,7 +30,7 @@ pub enum MapLayers {
 }
 
 impl MapLayers {
-    pub const LAYERS: [Self; 9] = [
+    pub const LOWER_LAYERS: [Self; 7] = [
         Self::Ground,
         Self::Mask,
         Self::Mask2,
@@ -40,9 +38,9 @@ impl MapLayers {
         Self::Anim2,
         Self::Anim3,
         Self::Anim4,
-        Self::Fringe,
-        Self::Fringe2,
     ];
+
+    pub const UPPER_LAYERS: [Self; 2] = [Self::Fringe, Self::Fringe2];
 
     pub fn indexed_layers(self) -> f32 {
         match self {
@@ -73,7 +71,7 @@ impl MapLayers {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy, Debug, PartialOrd, Ord, Eq, Hash, PartialEq)]
 pub struct TileData {
     ///tiles allocation ID within the texture.
     pub id: usize,
@@ -89,21 +87,25 @@ impl Default for TileData {
     }
 }
 
+/// Generic map upper and lower layer size defaults. will get overridden when using map::new_width
 pub const TILE_COUNT: usize = 9216;
+/// Generic map lower layers size defaults. will get overridden when using map::new_width
 pub const LOWER_COUNT: usize = 7168;
+/// Generic map upper layers size defaults. will get overridden when using map::new_width
 pub const UPPER_COUNT: usize = 2048;
 
 /// Handler for rendering Map to GPU.
+#[derive(Clone, Debug, PartialEq)]
 pub struct Map {
     /// X, Y, GroupID for loaded map.
     /// Add this to the higher up Map struct.
     /// pub world_pos: Vec3,
     /// its render position. within the screen.
     pub pos: Vec2,
+    /// Width and Height of a Map in tiles.
+    pub size: UVec2,
     // tiles per layer.
     pub tiles: Vec<TileData>,
-    pub lower_buffer: Vec<MapVertex>,
-    pub upper_buffer: Vec<MapVertex>,
     /// Store index per each layer.
     pub stores: [Index; 2],
     /// the draw order of the maps. created when update is called.
@@ -120,7 +122,61 @@ pub struct Map {
     pub changed: bool,
 }
 
+// These are used to Reduce the Overall Memory usage of each and every map loaded and allow them all to process though
+// a single point of memory which should help with cache locality.
+thread_local! {
+    static LOWER_BUFFER: RefCell<Vec<MapVertex>> = RefCell::new(Vec::with_capacity(LOWER_COUNT));
+    static UPPER_BUFFER: RefCell<Vec<MapVertex>> = RefCell::new(Vec::with_capacity(UPPER_COUNT));
+}
+
 impl Map {
+    fn generate_layer_vertexes(
+        &self,
+        vertexs: &mut Vec<MapVertex>,
+        atlas: &mut AtlasSet,
+        layer: MapLayers,
+    ) {
+        if self.filled_tiles[layer as usize] == 0 {
+            return;
+        }
+
+        let z = layer.indexed_layers();
+        let atlas_width = atlas.size().x / self.tilesize;
+
+        for x in 0..self.size.x {
+            for y in 0..self.size.y {
+                let tile = &self.tiles[(x
+                    + (y * self.size.y)
+                    + (layer as u32 * (self.size.x * self.size.y)))
+                    as usize];
+
+                if tile.id == 0 {
+                    continue;
+                }
+
+                if let Some((allocation, _)) = atlas.peek(tile.id) {
+                    let (posx, posy) = allocation.position();
+
+                    let map_vertex = MapVertex {
+                        pos: [
+                            self.pos.x + (x * self.tilesize) as f32,
+                            self.pos.y + (y * self.tilesize) as f32,
+                            z,
+                        ],
+                        tilesize: self.tilesize as f32,
+                        tile_id: (posx / self.tilesize)
+                            + ((posy / self.tilesize) * atlas_width),
+                        texture_layer: allocation.layer as u32,
+                        color: tile.color.0,
+                        camera_type: self.camera_type as u32,
+                    };
+
+                    vertexs.push(map_vertex);
+                }
+            }
+        }
+    }
+
     /// Updates the [`Map`]'s Buffers to prepare them for rendering.
     ///
     pub fn create_quad(
@@ -128,110 +184,129 @@ impl Map {
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
     ) {
-        let atlas_width = atlas.size().x / self.tilesize;
+        LOWER_BUFFER.with_borrow_mut(|lower_buffer| {
+            lower_buffer.clear();
 
-        self.lower_buffer.clear();
-        self.upper_buffer.clear();
+            MapLayers::LOWER_LAYERS.into_iter().for_each(|layer| {
+                self.generate_layer_vertexes(lower_buffer, atlas, layer)
+            });
 
-        for layer in MapLayers::LAYERS {
-            let z = layer.indexed_layers();
+            if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
+                let bytes = bytemuck::cast_slice(lower_buffer);
 
-            if self.filled_tiles[layer as usize] == 0 {
-                continue;
-            }
-
-            for x in 0..32 {
-                for y in 0..32 {
-                    let tile = &self.tiles
-                        [(x + (y * 32) + (layer as u32 * 1024)) as usize];
-
-                    if tile.id == 0 {
-                        continue;
-                    }
-
-                    if let Some((allocation, _)) = atlas.peek(tile.id) {
-                        let (posx, posy) = allocation.position();
-
-                        let map_vertex = MapVertex {
-                            position: [
-                                self.pos.x + (x * self.tilesize) as f32,
-                                self.pos.y + (y * self.tilesize) as f32,
-                                z,
-                            ],
-                            tilesize: self.tilesize as f32,
-                            tile_id: (posx / self.tilesize)
-                                + ((posy / self.tilesize) * atlas_width),
-                            texture_layer: allocation.layer as u32,
-                            color: tile.color.0,
-                            camera_type: self.camera_type as u32,
-                        };
-
-                        if layer < MapLayers::Fringe {
-                            self.lower_buffer.push(map_vertex)
-                        } else {
-                            self.upper_buffer.push(map_vertex)
-                        }
-                    }
+                if bytes.len() != store.store.len() {
+                    store.store.resize_with(bytes.len(), || 0);
                 }
+
+                store.store.copy_from_slice(bytes);
+                store.changed = true;
             }
-        }
+        });
 
-        if let Some(store) = renderer.get_buffer_mut(self.stores[0]) {
-            let bytes = bytemuck::cast_slice(&self.lower_buffer);
+        UPPER_BUFFER.with_borrow_mut(|upper_buffer| {
+            upper_buffer.clear();
 
-            if bytes.len() != store.store.len() {
-                store.store.resize_with(bytes.len(), || 0);
+            MapLayers::UPPER_LAYERS.into_iter().for_each(|layer| {
+                self.generate_layer_vertexes(upper_buffer, atlas, layer)
+            });
+
+            if let Some(store) = renderer.get_buffer_mut(self.stores[1]) {
+                let bytes = bytemuck::cast_slice(upper_buffer);
+
+                if bytes.len() != store.store.len() {
+                    store.store.resize_with(bytes.len(), || 0);
+                }
+
+                store.store.copy_from_slice(bytes);
+                store.changed = true;
             }
-
-            store.store.copy_from_slice(bytes);
-            store.changed = true;
-        }
-
-        if let Some(store) = renderer.get_buffer_mut(self.stores[1]) {
-            let bytes = bytemuck::cast_slice(&self.upper_buffer);
-
-            if bytes.len() != store.store.len() {
-                store.store.resize_with(bytes.len(), || 0);
-            }
-
-            store.store.copy_from_slice(bytes);
-            store.changed = true;
-        }
+        });
     }
 
-    /// Creates a new [`Map`] with tilesize.
+    /// Creates a new [`Map`] with tilesize and a default size of [32, 32].
     ///
-    pub fn new(renderer: &mut GpuRenderer, tilesize: u32) -> Self {
+    pub fn new(renderer: &mut GpuRenderer, tilesize: u32, pos: Vec2) -> Self {
         let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
-
         let lower_index = renderer.new_buffer(map_vertex_size * LOWER_COUNT, 0);
         let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
-
-        let order1 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 9.0), 0);
-
-        let order2 = DrawOrder::new(false, Vec3::new(0.0, 0.0, 5.0), 1);
+        let order1 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 9.0), 0);
+        let order2 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 5.0), 1);
 
         Self {
             tiles: iter::repeat_n(TileData::default(), 9216).collect(),
-            pos: Vec2::default(),
+            pos,
             stores: [lower_index, upper_index],
             filled_tiles: [0; MapLayers::Count as usize],
-            lower_buffer: Vec::with_capacity(LOWER_COUNT),
-            upper_buffer: Vec::with_capacity(UPPER_COUNT),
             orders: [order1, order2],
             tilesize,
             can_render: false,
             changed: true,
             camera_type: CameraType::None,
+            size: UVec2::new(32, 32),
+        }
+    }
+
+    /// Creates a new [`Map`] with tilesize position, and size.
+    ///
+    pub fn new_with(
+        renderer: &mut GpuRenderer,
+        tilesize: u32,
+        pos: Vec2,
+        size: UVec2,
+    ) -> Self {
+        let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
+        let lower_index = renderer
+            .new_buffer(map_vertex_size * ((size.x * size.y) * 7) as usize, 0);
+        let upper_index = renderer
+            .new_buffer(map_vertex_size * ((size.x * size.y) * 2) as usize, 0);
+        let order1 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 9.0), 0);
+        let order2 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 5.0), 1);
+
+        //Since this is different than default we do want to resize the limit to avoid multiple resizes in a render loop.
+        if ((size.x * size.y) * 7) as usize > LOWER_COUNT {
+            LOWER_BUFFER.with_borrow_mut(|buffer| {
+                if buffer.capacity() < ((size.x * size.y) * 7) as usize {
+                    buffer.reserve_exact(
+                        ((size.x * size.y) * 7) as usize - buffer.len(),
+                    );
+                }
+            });
+        }
+
+        if ((size.x * size.y) * 2) as usize > UPPER_COUNT {
+            UPPER_BUFFER.with_borrow_mut(|buffer| {
+                if buffer.capacity() < ((size.x * size.y) * 2) as usize {
+                    buffer.reserve_exact(
+                        ((size.x * size.y) * 2) as usize - buffer.len(),
+                    );
+                }
+            });
+        }
+
+        Self {
+            tiles: iter::repeat_n(
+                TileData::default(),
+                ((size.x * size.y) * 9) as usize,
+            )
+            .collect(),
+            pos,
+            stores: [lower_index, upper_index],
+            filled_tiles: [0; MapLayers::Count as usize],
+            orders: [order1, order2],
+            tilesize,
+            can_render: false,
+            changed: true,
+            camera_type: CameraType::None,
+            size,
         }
     }
 
     /// Updates the [`Map`]'s position.
     ///
-    pub fn set_position(&mut self, position: Vec2) -> &mut Self {
-        self.orders[0].set_position(Vec3::new(position.x, position.y, 9.0));
-        self.orders[1].set_position(Vec3::new(position.x, position.y, 5.0));
-        self.pos = position;
+    pub fn set_pos(&mut self, pos: Vec2) -> &mut Self {
+        self.orders[0].set_pos(Vec3::new(pos.x, pos.y, 9.0));
+        self.orders[1].set_pos(Vec3::new(pos.x, pos.y, 5.0));
+        self.pos = pos;
         self.changed = true;
         self
     }
@@ -240,12 +315,12 @@ impl Map {
     /// Use this after calls to set_position to set it to a order.
     ///
     pub fn set_order_pos(&mut self, order_override: Vec2) -> &mut Self {
-        self.orders[0].set_position(Vec3::new(
+        self.orders[0].set_pos(Vec3::new(
             order_override.x,
             order_override.y,
             9.0,
         ));
-        self.orders[1].set_position(Vec3::new(
+        self.orders[1].set_pos(Vec3::new(
             order_override.x,
             order_override.y,
             5.0,
@@ -280,13 +355,18 @@ impl Map {
     /// gets the [`TileData`] based upon the tiles x, y, and [`MapLayers`].
     /// [`MapLayers::Ground`] is Layer 0.
     ///
-    pub fn get_tile(&self, pos: (u32, u32, u32)) -> TileData {
+    pub fn get_tile(&self, pos: UVec3) -> TileData {
         assert!(
-            pos.0 < 32 || pos.1 < 32 || pos.2 < 9,
-            "pos is invalid. X < 32, y < 256, z < 9"
+            pos.x < self.size.x || pos.y < self.size.y || pos.z < 9,
+            "pos is invalid. X < {}, y < {}, z < 9",
+            self.size.x,
+            self.size.y
         );
 
-        self.tiles[(pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize]
+        self.tiles[(pos.x
+            + (pos.y * self.size.y)
+            + (pos.z * (self.size.x * self.size.y)))
+            as usize]
     }
 
     /// Sets the [`CameraType`] this object will use to Render with.
@@ -301,24 +381,28 @@ impl Map {
     /// layer within the texture array and Alpha for its transparency.
     /// This allows us to loop through the tiles Shader side efficiently.
     ///
-    pub fn set_tile(&mut self, pos: (u32, u32, u32), tile: TileData) {
-        if pos.0 >= 32 || pos.1 >= 32 || pos.2 >= 9 {
+    pub fn set_tile(&mut self, pos: UVec3, tile: TileData) {
+        if pos.x >= self.size.x || pos.y >= self.size.y || pos.z >= 9 {
             return;
         }
-        let tilepos = (pos.0 + (pos.1 * 32) + (pos.2 * 1024)) as usize;
+
+        let tilepos = (pos.x
+            + (pos.y * self.size.y)
+            + (pos.z * (self.size.x * self.size.y)))
+            as usize;
         let current_tile = self.tiles[tilepos];
 
         if (current_tile.id > 0 && current_tile.color.a() > 0)
             && (tile.color.a() == 0 || tile.id == 0)
         {
-            self.filled_tiles[pos.2 as usize] =
-                self.filled_tiles[pos.2 as usize].saturating_sub(1);
+            self.filled_tiles[pos.z as usize] =
+                self.filled_tiles[pos.z as usize].saturating_sub(1);
         } else if tile.color.a() > 0
             && tile.id > 0
             && (current_tile.id == 0 || current_tile.color.a() == 0)
         {
-            self.filled_tiles[pos.2 as usize] =
-                self.filled_tiles[pos.2 as usize].saturating_add(1);
+            self.filled_tiles[pos.z as usize] =
+                self.filled_tiles[pos.z as usize].saturating_add(1);
         }
 
         self.tiles[tilepos] = tile;
@@ -332,17 +416,17 @@ impl Map {
         &mut self,
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
-    ) -> Option<Vec<OrderedIndex>> {
+    ) -> Option<(OrderedIndex, OrderedIndex)> {
         if self.can_render {
             if self.changed {
                 self.create_quad(renderer, atlas);
                 self.changed = false;
             }
 
-            let orders = (0..2)
-                .map(|i| OrderedIndex::new(self.orders[i], self.stores[i], 0))
-                .collect();
-            Some(orders)
+            Some((
+                OrderedIndex::new(self.orders[0], self.stores[0], 0),
+                OrderedIndex::new(self.orders[1], self.stores[1], 0),
+            ))
         } else {
             None
         }

@@ -28,6 +28,7 @@ pub trait Layout: Pod + Zeroable {
 
 /// [`wgpu::BindGroupLayout`] Storage within a HashMap
 ///
+#[derive(Debug)]
 pub struct LayoutStorage {
     pub(crate) bind_group_map:
         AHashMap<(TypeId, Vec<u8>), Arc<wgpu::BindGroupLayout>>,

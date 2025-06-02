@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Added
+- ThreadLocal Storage for Maps and Fonts. This should help with Cache locality.
+- Added Derives to all supportable types
+- Added Rayon support for TileSheets
+- Add feature to enable static-dxc for WGPU
+- Added ability to set Size of Map in Tiles.
+- Rect::new_with to also include image and uv.
+
+### Removed
+- Removed the Async trait library as we will enfore Rust edition 1.85.
+
+### Changed
+- Map::Update now returns Option<(OrderedIndex, OrderedIndex)> instead of a Vec to avoid reallocation each loop.
+- Change AtlasSet Peek functions to take an &self instead of &mut as well as contains.
+- Map Create_quad redone to help reduce any cache issues.
+- Changed set_tile and get_tile to use UVec3 instead of tuple.
+- Map::new added position to Arguments.
+- Image::new added pos, size and uv to Arguments.
+- Rect::new added Position and size.
+- Mesh2D::new and With_capacity get pos argument.
+- All Positions renamed to pos to aligned it better across types.
+- All hw renamed to size to align better across types.
+
 ## 0.24.0 (11. April, 2025)
 
 - measure_glyphs removed cache from API(it was a bad push...)

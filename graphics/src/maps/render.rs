@@ -6,6 +6,7 @@ use log::warn;
 
 /// Instance Buffer Setup for [`Map`]'s.
 ///
+#[derive(Debug)]
 pub struct MapRenderer {
     /// Instance Buffer holding all Rendering information for [`Map`]'s.
     pub buffer: InstanceBuffer<MapVertex>,
@@ -68,10 +69,9 @@ impl MapRenderer {
         atlas: &mut AtlasSet,
         buffer_layers: [usize; 2],
     ) {
-        if let Some(indexs) = map.update(renderer, atlas) {
-            for (id, order_index) in indexs.into_iter().enumerate() {
-                self.add_buffer_store(renderer, order_index, buffer_layers[id]);
-            }
+        if let Some((bottom, upper)) = map.update(renderer, atlas) {
+            self.add_buffer_store(renderer, bottom, buffer_layers[0]);
+            self.add_buffer_store(renderer, upper, buffer_layers[1]);
         }
     }
 

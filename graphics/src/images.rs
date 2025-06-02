@@ -12,11 +12,13 @@ use crate::{
 };
 
 /// Basic and Fast Image Rendering Type. Best used for Sprites and Objects in the world.
+///
+#[derive(Clone, Debug, PartialEq)]
 pub struct Image {
     /// Position of the object
     pub pos: Vec3,
     /// Height and Width
-    pub hw: Vec2,
+    pub size: Vec2,
     /// Static texture offsets or animation frame positions
     pub uv: Vec4,
     /// Color.
@@ -47,18 +49,21 @@ pub struct Image {
 }
 
 impl Image {
-    /// Creates a new [`Image`] with rendering layer.
+    /// Creates a new [`Image`] with rendering order layer, pos, size and uv.
     ///
-    /// order_layer: Rendering Layer used in DrawOrder.
+    /// order_layer: Rendering Order Layer used in DrawOrder.
     pub fn new(
         texture: Option<usize>,
         renderer: &mut GpuRenderer,
+        pos: Vec3,
+        size: Vec2,
+        uv: Vec4,
         order_layer: u32,
     ) -> Self {
         Self {
-            pos: Vec3::default(),
-            hw: Vec2::default(),
-            uv: Vec4::default(),
+            pos,
+            size,
+            uv,
             frames: Vec2::default(),
             switch_time: 0,
             animate: false,
@@ -87,7 +92,7 @@ impl Image {
     /// Use this after calls to set_position to set it to a specific rendering order.
     ///
     pub fn set_order_override(&mut self, order_override: Vec3) -> &mut Self {
-        self.order.set_position(order_override);
+        self.order.set_pos(order_override);
         self
     }
 
@@ -119,15 +124,15 @@ impl Image {
     pub fn set_pos(&mut self, pos: Vec3) -> &mut Self {
         self.changed = true;
         self.pos = pos;
-        self.order.set_position(pos);
+        self.order.set_pos(pos);
         self
     }
 
     /// Updates the [`Image`]'s width and height.
     ///
-    pub fn set_size(&mut self, hw: Vec2) -> &mut Self {
+    pub fn set_size(&mut self, size: Vec2) -> &mut Self {
         self.changed = true;
-        self.hw = hw;
+        self.size = size;
         self
     }
 
@@ -230,8 +235,8 @@ impl Image {
         );
 
         let instance = ImageVertex {
-            position: self.pos.to_array(),
-            hw: self.hw.to_array(),
+            pos: self.pos.to_array(),
+            size: self.size.to_array(),
             tex_data: tex_data.into(),
             color: self.color.0,
             frames: self.frames.to_array(),

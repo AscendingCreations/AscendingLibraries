@@ -25,6 +25,7 @@ pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>, CameraType);
 /// VertexBuffer holds all the Details to render with Verticies and indicies.
 /// This stores and handles the orders of all rendered objects to try and reduce the amount
 /// of GPU uploads we make.
+#[derive(Debug)]
 pub struct VertexBuffer<K: BufferLayout> {
     /// Unprocessed Buffer Data.
     pub unprocessed: Vec<Vec<OrderedIndex>>,
@@ -264,7 +265,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                 if write_vertex {
                     if let Some(store) = renderer.get_buffer(buf.index) {
                         self.vertex_buffer.write(
-                            &renderer.device,
+                            renderer.queue(),
                             &store.store,
                             old_vertex_pos,
                         );
@@ -274,7 +275,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                 if write_index {
                     if let Some(store) = renderer.get_buffer(buf.index) {
                         self.index_buffer.write(
-                            &renderer.device,
+                            renderer.queue(),
                             &store.indexs,
                             old_index_pos,
                         );

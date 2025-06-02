@@ -12,6 +12,8 @@ use crate::{
     CameraType, Color, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
     Vec4,
 };
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 use slotmap::SlotMap;
 use std::mem;
 use wgpu::util::align_to;
@@ -21,6 +23,7 @@ pub const MAX_DIR_LIGHTS: usize = 1_333;
 
 /// Area Lights rendered in the light system.
 ///
+#[derive(Clone, Debug, PartialEq)]
 pub struct AreaLight {
     pub pos: Vec2,
     pub color: Color,
@@ -47,6 +50,7 @@ impl AreaLight {
 
 /// Directional Lights rendered in the light system.
 ///
+#[derive(Clone, Debug, PartialEq)]
 pub struct DirectionalLight {
     pub pos: Vec2,
     pub color: Color,
@@ -80,6 +84,8 @@ impl DirectionalLight {
 }
 
 /// Rendering data for world Light and all Lights.
+///
+#[derive(Clone, Debug)]
 pub struct Lights {
     /// Z Position of the Main Light Layer.
     pub z: f32,
@@ -152,7 +158,7 @@ impl Lights {
 
     pub fn set_z_pos(&mut self, z: f32) -> &mut Self {
         self.z = z;
-        self.order.set_position(Vec3::new(0.0, 0.0, z));
+        self.order.set_pos(Vec3::new(0.0, 0.0, z));
         self.changed = true;
         self
     }
@@ -261,8 +267,22 @@ impl Lights {
         if self.areas_changed {
             let area_alignment: usize =
                 align_to(mem::size_of::<AreaLightRaw>(), 32) as usize;
+            let queue = renderer.queue();
+
+            #[cfg(feature = "rayon")]
+            self.area_lights.iter().enumerate().par_bridge().for_each(
+                |(i, (_key, light))| {
+                    queue.write_buffer(
+                        areas,
+                        (i * area_alignment) as wgpu::BufferAddress,
+                        bytemuck::bytes_of(&light.to_raw()),
+                    );
+                },
+            );
+
+            #[cfg(not(feature = "rayon"))]
             for (i, (_key, light)) in self.area_lights.iter().enumerate() {
-                renderer.queue().write_buffer(
+                queue.write_buffer(
                     areas,
                     (i * area_alignment) as wgpu::BufferAddress,
                     bytemuck::bytes_of(&light.to_raw()),
@@ -275,8 +295,24 @@ impl Lights {
         if self.directionals_changed {
             let dir_alignment: usize =
                 align_to(mem::size_of::<DirectionalLightRaw>(), 48) as usize;
+            let queue = renderer.queue();
+
+            #[cfg(feature = "rayon")]
+            self.directional_lights
+                .iter()
+                .enumerate()
+                .par_bridge()
+                .for_each(|(i, (_key, dir))| {
+                    queue.write_buffer(
+                        dirs,
+                        (i * dir_alignment) as wgpu::BufferAddress,
+                        bytemuck::bytes_of(&dir.to_raw()),
+                    );
+                });
+
+            #[cfg(not(feature = "rayon"))]
             for (i, (_key, dir)) in self.directional_lights.iter().enumerate() {
-                renderer.queue().write_buffer(
+                queue.write_buffer(
                     dirs,
                     (i * dir_alignment) as wgpu::BufferAddress,
                     bytemuck::bytes_of(&dir.to_raw()),

@@ -9,7 +9,7 @@ use rayon::{iter::repeatn, prelude::*};
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Mesh2DVertex {
-    pub position: [f32; 3],
+    pub pos: [f32; 3],
     pub color: u32,
     pub camera: u32,
 }
@@ -17,7 +17,7 @@ pub struct Mesh2DVertex {
 impl Default for Mesh2DVertex {
     fn default() -> Self {
         Self {
-            position: [0.0; 3],
+            pos: [0.0; 3],
             color: 0,
             camera: 0,
         }
@@ -73,9 +73,9 @@ pub struct VertexBuilder {
 }
 
 impl VertexBuilder {
-    pub fn new_vertex(self, position: LPoint) -> Mesh2DVertex {
+    pub fn new_vertex(self, pos: LPoint) -> Mesh2DVertex {
         Mesh2DVertex {
-            position: [position.x, position.y, self.z],
+            pos: [pos.x, pos.y, self.z],
             color: self.color.0,
             camera: self.camera,
         }
@@ -86,7 +86,7 @@ impl tess::StrokeVertexConstructor<Mesh2DVertex> for VertexBuilder {
     fn new_vertex(&mut self, vertex: tess::StrokeVertex) -> Mesh2DVertex {
         let position = vertex.position();
         Mesh2DVertex {
-            position: [position.x, position.y, self.z],
+            pos: [position.x, position.y, self.z],
             color: self.color.0,
             camera: self.camera,
         }
@@ -97,7 +97,7 @@ impl tess::FillVertexConstructor<Mesh2DVertex> for VertexBuilder {
     fn new_vertex(&mut self, vertex: tess::FillVertex) -> Mesh2DVertex {
         let position = vertex.position();
         Mesh2DVertex {
-            position: [position.x, position.y, self.z],
+            pos: [position.x, position.y, self.z],
             color: self.color.0,
             camera: self.camera,
         }

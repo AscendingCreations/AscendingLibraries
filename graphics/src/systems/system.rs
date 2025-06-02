@@ -35,6 +35,7 @@ impl Layout for SystemLayout {
 }
 
 /// System handler that keeps track of Data needed for the shaders struct Global.
+#[derive(Debug)]
 pub struct System<Controls: camera::controls::Controls> {
     /// Camera controller to use to get the
     /// projection, view, eye, inverse view and scale.

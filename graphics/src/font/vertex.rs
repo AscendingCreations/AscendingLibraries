@@ -8,8 +8,8 @@ use rayon::{iter::repeatn, prelude::*};
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct TextVertex {
-    pub position: [f32; 3],
-    pub hw: [f32; 2],
+    pub pos: [f32; 3],
+    pub size: [f32; 2],
     pub tex_coord: [f32; 2],
     pub layer: u32,
     pub color: u32,
@@ -20,8 +20,8 @@ pub struct TextVertex {
 impl Default for TextVertex {
     fn default() -> Self {
         Self {
-            position: [0.0, 0.0, 1.0],
-            hw: [0.0; 2],
+            pos: [0.0, 0.0, 1.0],
+            size: [0.0; 2],
             tex_coord: [0.0; 2],
             layer: 0,
             color: 0,

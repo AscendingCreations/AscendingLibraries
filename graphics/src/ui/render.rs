@@ -5,6 +5,7 @@ use crate::{
 
 /// Instance Buffer Setup for [`Rect`]'s.
 ///
+#[derive(Debug)]
 pub struct RectRenderer {
     /// Instance Buffer holding all Rendering information for [`Rect`]'s.
     pub buffer: InstanceBuffer<RectVertex>,
