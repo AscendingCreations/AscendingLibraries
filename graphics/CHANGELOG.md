@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+
+## 0.25.0 (2. June, 2025)
+
 ### Added
 - ThreadLocal Storage for Maps and Fonts. This should help with Cache locality.
 - Added Derives to all supportable types
