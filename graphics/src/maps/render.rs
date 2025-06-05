@@ -14,8 +14,6 @@ use wgpu::util::{DeviceExt, align_to};
 pub struct MapRenderer {
     /// Instance Buffer holding all Rendering information for [`Map`]'s.
     pub buffer: InstanceBuffer<TileVertex>,
-    /// Stores each viable index to match with the uniform array.
-    pub map_index_buffer: SlotMap<Index, (usize, bool)>,
     /// Stores each unused buffer ID to be pulled into a map_index_buffer for the map ID.
     pub unused_indexs: VecDeque<usize>,
     /// Uniform buffer for the array of [`crate::DirectionalLight`]'s.
@@ -35,7 +33,7 @@ impl MapRenderer {
         map_count: u32,
     ) -> Result<Self, GraphicsError> {
         let map_alignment: usize =
-            align_to(mem::size_of::<MapRaw>(), 32) as usize;
+            align_to(mem::size_of::<MapRaw>(), 16) as usize;
 
         let maps: Vec<u8> =
             iter::repeat_n(0u8, MAX_MAPS * map_alignment).collect();
@@ -71,8 +69,6 @@ impl MapRenderer {
             unused_indexs.push_back(i);
         }
 
-        let map_index_buffer = SlotMap::with_key();
-
         Ok(Self {
             buffer: InstanceBuffer::with_capacity(
                 renderer.gpu_device(),
@@ -82,7 +78,6 @@ impl MapRenderer {
             map_buffer,
             map_bind_group,
             unused_indexs,
-            map_index_buffer,
         })
     }
 
