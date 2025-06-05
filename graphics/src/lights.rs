@@ -87,8 +87,10 @@ impl DirectionalLight {
 ///
 #[derive(Clone, Debug)]
 pub struct Lights {
-    /// Z Position of the Main Light Layer.
-    pub z: f32,
+    /// Position of the Main Light Layer. normally set to 0,0,Z
+    pub pos: Vec3,
+    /// Size of the light Zone, Generally set to Screen size.
+    pub size: Vec2,
     /// Color of the main light layer.
     pub world_color: Vec4,
     /// If the [`AreaLight`] and [`DirectionalLight`] are enabled.
@@ -117,16 +119,22 @@ impl Lights {
     /// Creates a new [`Lights`].
     ///
     /// order_layer: Rendering Layer of the world lights used in DrawOrder.
-    pub fn new(renderer: &mut GpuRenderer, order_layer: u32, z: f32) -> Self {
+    pub fn new(
+        renderer: &mut GpuRenderer,
+        order_layer: u32,
+        pos: Vec3,
+        size: Vec2,
+    ) -> Self {
         Self {
-            z,
+            pos,
+            size,
             world_color: Vec4::new(1.0, 1.0, 1.0, 0.0),
             enable_lights: false,
             store_id: renderer.new_buffer(
                 bytemuck::bytes_of(&LightsVertex::default()).len(),
                 0,
             ),
-            order: DrawOrder::new(true, Vec3::new(0.0, 0.0, z), order_layer),
+            order: DrawOrder::new(true, pos, order_layer),
             area_lights: SlotMap::with_capacity_and_key(MAX_AREA_LIGHTS),
             directional_lights: SlotMap::with_capacity_and_key(MAX_DIR_LIGHTS),
             area_count: 0,
@@ -156,13 +164,18 @@ impl Lights {
         self
     }
 
-    pub fn set_z_pos(&mut self, z: f32) -> &mut Self {
-        self.z = z;
-        self.order.set_pos(Vec3::new(0.0, 0.0, z));
+    pub fn set_pos(&mut self, pos: Vec3) -> &mut Self {
+        self.pos = pos;
+        self.order.set_pos(pos);
         self.changed = true;
         self
     }
 
+    pub fn set_size(&mut self, size: Vec2) -> &mut Self {
+        self.size = size;
+        self.changed = true;
+        self
+    }
     /// Updates the [`Lights`]'s Buffers to prepare them for rendering.
     ///
     pub fn create_quad(&mut self, renderer: &mut GpuRenderer) {
@@ -171,7 +184,8 @@ impl Lights {
             enable_lights: u32::from(self.enable_lights),
             dir_count: self.directional_lights.len() as u32,
             area_count: self.area_lights.len() as u32,
-            z: self.z,
+            pos: self.pos.to_array(),
+            size: self.size.to_array(),
         };
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {

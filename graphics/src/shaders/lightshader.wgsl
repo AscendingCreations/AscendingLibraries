@@ -50,7 +50,8 @@ struct VertexInput {
     @location(2) enable_lights: u32,
     @location(3) dir_count: u32,
     @location(4) area_count: u32,
-    @location(5) z: f32,
+    @location(5) pos: vec3<f32>,
+    @location(6) size: vec2<f32>,
 };
 
 struct VertexOutput {
@@ -98,16 +99,16 @@ fn vertex(
 
     switch v {
         case 1u: {
-            result.clip_position = global.proj * vec4<f32>(global.size.x, 0.0, vertex.z, 1.0);
+            result.clip_position = global.proj * vec4<f32>(vertex.pos.x + vertex.size.x, vertex.pos.y, vertex.pos.z, 1.0);
         }
         case 2u: {
-            result.clip_position = global.proj * vec4<f32>(global.size.x, global.size.y, vertex.z, 1.0);
+            result.clip_position = global.proj * vec4<f32>(vertex.pos.x + vertex.size.x, vertex.pos.y + vertex.size.y, vertex.pos.z, 1.0);
         }
         case 3u: {
-            result.clip_position = global.proj * vec4<f32>(0.0, global.size.y, vertex.z, 1.0);
+            result.clip_position = global.proj * vec4<f32>(vertex.pos.x, vertex.pos.y + vertex.size.y, vertex.pos.z, 1.0);
         }
         default: {
-            result.clip_position = global.proj * vec4<f32>(0.0, 0.0, vertex.z, 1.0);
+            result.clip_position = global.proj * vec4<f32>(vertex.pos.x, vertex.pos.y, vertex.pos.z, 1.0);
         }
     }
 

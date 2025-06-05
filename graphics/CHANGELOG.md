@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Added
+- Light::set_pos() and set_size()
+
+### Changed
+- Light: replaced z with Pos and added Size
+
+### Removed 
+- Light::set_z()
 
 ## 0.25.0 (2. June, 2025)
 

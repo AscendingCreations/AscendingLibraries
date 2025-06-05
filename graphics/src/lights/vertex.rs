@@ -11,7 +11,8 @@ pub struct LightsVertex {
     pub enable_lights: u32,
     pub dir_count: u32,
     pub area_count: u32,
-    pub z: f32,
+    pub pos: [f32; 3],
+    pub size: [f32; 2],
 }
 
 impl Default for LightsVertex {
@@ -21,14 +22,15 @@ impl Default for LightsVertex {
             enable_lights: 0,
             dir_count: 0,
             area_count: 0,
-            z: 0.0,
+            pos: [0.0; 3],
+            size: [0.0; 2],
         }
     }
 }
 
 impl BufferLayout for LightsVertex {
     fn attributes() -> Vec<wgpu::VertexAttribute> {
-        wgpu::vertex_attr_array![1 => Float32x4, 2 => Uint32, 3 => Uint32, 4 => Uint32, 5 => Float32 ].to_vec()
+        wgpu::vertex_attr_array![1 => Float32x4, 2 => Uint32, 3 => Uint32, 4 => Uint32, 5 => Float32x3, 6=>Float32x2 ].to_vec()
     }
 
     fn default_buffer() -> BufferData {
@@ -55,6 +57,6 @@ impl BufferLayout for LightsVertex {
     }
 
     fn stride() -> usize {
-        std::mem::size_of::<[f32; 8]>()
+        std::mem::size_of::<[f32; 12]>()
     }
 }
