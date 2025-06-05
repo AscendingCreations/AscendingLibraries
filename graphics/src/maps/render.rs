@@ -1,10 +1,9 @@
 use crate::{
-    AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, Index, InstanceBuffer,
+    AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer,
     MAX_MAPS, Map, MapLayout, MapRaw, MapRenderPipeline, OrderedIndex,
     SetBuffers, StaticVertexBuffer, TileVertex,
 };
 use log::warn;
-use slotmap::SlotMap;
 use std::{collections::VecDeque, iter, mem};
 use wgpu::util::{DeviceExt, align_to};
 
