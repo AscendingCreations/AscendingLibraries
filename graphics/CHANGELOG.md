@@ -6,13 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
 ### Added
-- Light::set_pos() and set_size()
+- Light::set_pos() and set_size().
 
 ### Changed
-- Light: replaced z with Pos and added Size
+- Light: replaced z with Pos and added Size.
+- Rect::new, Expand to add Color.
 
 ### Removed 
-- Light::set_z()
+- Light::set_z().
 
 ## 0.25.0 (2. June, 2025)
 

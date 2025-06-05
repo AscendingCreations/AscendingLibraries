@@ -45,6 +45,7 @@ impl Rect {
         renderer: &mut GpuRenderer,
         pos: Vec3,
         size: Vec2,
+        color: Color,
         order_layer: u32,
     ) -> Self {
         let rect_size = bytemuck::bytes_of(&RectVertex::default()).len();
@@ -52,7 +53,7 @@ impl Rect {
         Self {
             pos,
             size,
-            color: Color::rgba(255, 255, 255, 255),
+            color,
             image: None,
             uv: Vec4::default(),
             border_width: 0.0,
