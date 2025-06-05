@@ -1,15 +1,21 @@
 use crate::{
     AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer, Map,
-    MapRenderPipeline, MapVertex, OrderedIndex, SetBuffers, StaticVertexBuffer,
+    MapLayout, MapRenderPipeline, OrderedIndex, SetBuffers, StaticVertexBuffer,
+    TileVertex,
 };
 use log::warn;
+use wgpu::util::DeviceExt;
 
 /// Instance Buffer Setup for [`Map`]'s.
 ///
 #[derive(Debug)]
 pub struct MapRenderer {
     /// Instance Buffer holding all Rendering information for [`Map`]'s.
-    pub buffer: InstanceBuffer<MapVertex>,
+    pub buffer: InstanceBuffer<TileVertex>,
+    /// Uniform buffer for the array of [`crate::DirectionalLight`]'s.
+    map_buffer: wgpu::Buffer,
+    /// Uniform buffer BindGroup for the array of [`crate::AreaLight`]'s.
+    map_bind_group: wgpu::BindGroup,
 }
 
 impl MapRenderer {
@@ -22,12 +28,41 @@ impl MapRenderer {
         renderer: &mut GpuRenderer,
         map_count: u32,
     ) -> Result<Self, GraphicsError> {
+        let raw = [0f32; 4];
+
+        let map_buffer = renderer.device().create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("map uniform buffer"),
+                contents: bytemuck::cast_slice(&raw),
+                usage: wgpu::BufferUsages::UNIFORM
+                    | wgpu::BufferUsages::COPY_DST,
+            },
+        );
+
+        // Create the bind group layout for the map
+        let layout = renderer.create_layout(MapLayout);
+
+        // Create the bind group.
+        let map_bind_group =
+            renderer
+                .device()
+                .create_bind_group(&wgpu::BindGroupDescriptor {
+                    layout: &layout,
+                    entries: &[wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: map_buffer.as_entire_binding(),
+                    }],
+                    label: Some("map_bind_group"),
+                });
+
         Ok(Self {
             buffer: InstanceBuffer::with_capacity(
                 renderer.gpu_device(),
                 9_216 * map_count as usize,
                 144,
             ),
+            map_buffer,
+            map_bind_group,
         })
     }
 
@@ -69,7 +104,9 @@ impl MapRenderer {
         atlas: &mut AtlasSet,
         buffer_layers: [usize; 2],
     ) {
-        if let Some((bottom, upper)) = map.update(renderer, atlas) {
+        if let Some((bottom, upper)) =
+            map.update(renderer, atlas, &mut self.map_buffer)
+        {
             self.add_buffer_store(renderer, bottom, buffer_layers[0]);
             self.add_buffer_store(renderer, upper, buffer_layers[1]);
         }
@@ -78,6 +115,12 @@ impl MapRenderer {
     /// Map does not use Clipping.
     pub fn use_clipping(&mut self) {
         warn!("Map does not use Clipping.");
+    }
+
+    /// Returns a reference too [`wgpu::BindGroup`].
+    ///
+    pub fn bind_group(&self) -> &wgpu::BindGroup {
+        &self.map_bind_group
     }
 }
 
@@ -112,6 +155,7 @@ where
             if buffer.buffer.count() > 0 {
                 self.set_buffers(renderer.buffer_object.as_buffer_pass());
                 self.set_bind_group(1, atlas.bind_group(), &[]);
+                self.set_bind_group(2, &buffer.map_bind_group, &[]);
                 self.set_vertex_buffer(1, buffer.buffer.instances(None));
                 self.set_pipeline(
                     renderer.get_pipelines(MapRenderPipeline).unwrap(),

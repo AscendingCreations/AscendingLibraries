@@ -1,6 +1,6 @@
 use crate::{
-    BufferLayout, GpuDevice, LayoutStorage, MapVertex, PipeLineLayout,
-    StaticVertexBuffer, SystemLayout, TextureLayout,
+    BufferLayout, GpuDevice, LayoutStorage, MapLayout, PipeLineLayout,
+    StaticVertexBuffer, SystemLayout, TextureLayout, TileVertex,
 };
 use bytemuck::{Pod, Zeroable};
 
@@ -28,6 +28,7 @@ impl PipeLineLayout for MapRenderPipeline {
 
         let system_layout = layouts.create_layout(gpu_device, SystemLayout);
         let texture_layout = layouts.create_layout(gpu_device, TextureLayout);
+        let map_layout = layouts.create_layout(gpu_device, MapLayout);
 
         // Create the render pipeline.
         gpu_device.device().create_render_pipeline(
@@ -36,7 +37,11 @@ impl PipeLineLayout for MapRenderPipeline {
                 layout: Some(&gpu_device.device().create_pipeline_layout(
                     &wgpu::PipelineLayoutDescriptor {
                         label: Some("Map_render_pipeline_layout"),
-                        bind_group_layouts: &[&system_layout, &texture_layout],
+                        bind_group_layouts: &[
+                            &system_layout,
+                            &texture_layout,
+                            &map_layout,
+                        ],
                         push_constant_ranges: &[],
                     },
                 )),
@@ -52,9 +57,9 @@ impl PipeLineLayout for MapRenderPipeline {
                             ],
                         },
                         wgpu::VertexBufferLayout {
-                            array_stride: MapVertex::stride() as u64,
+                            array_stride: TileVertex::stride() as u64,
                             step_mode: wgpu::VertexStepMode::Instance,
-                            attributes: &MapVertex::attributes(),
+                            attributes: &TileVertex::attributes(),
                         },
                     ],
                     compilation_options: Default::default(),

@@ -10,6 +10,12 @@ struct Global {
     manual_scale: f32,
 };
 
+struct Map {
+    pos: vec2<f32>,
+    tilesize: f32,
+    camera_type: u32,
+};
+
 @group(0)
 @binding(0)
 var<uniform> global: Global;
@@ -18,11 +24,10 @@ struct VertexInput {
     @builtin(vertex_index) vertex_idx: u32,
     @location(0) v_pos: vec2<f32>,
     @location(1) position: vec3<f32>,
-    @location(2) tilesize: f32,
-    @location(3) tile_id: u32,
-    @location(4) texture_layer: u32,
-    @location(5) color: u32,
-    @location(6) camera_type: u32,
+    @location(2) tile_id: u32,
+    @location(3) texture_layer: u32,
+    @location(4) color: u32,
+    @location(5) map_layer: u32,
 };
 
 struct VertexOutput {
@@ -38,6 +43,10 @@ var tex: texture_2d_array<f32>;
 @group(1)
 @binding(1)
 var tex_sample: sampler;
+
+@group(2)
+@binding(0)
+var<uniform> map: Map;
 
 fn srgb_to_linear(c: f32) -> f32 {
     if c <= 0.04045 {
@@ -65,30 +74,33 @@ fn vertex(
     let v = vertex.vertex_idx % 4u;
     let size = textureDimensions(tex);
     let fsize = vec2<f32> (f32(size.x), f32(size.y));
-    let total_tiles = u32(size.x / u32(vertex.tilesize));
-    let tileposx = f32(vertex.tile_id % total_tiles) * vertex.tilesize;
-    let tileposy = f32(vertex.tile_id / total_tiles) * vertex.tilesize;
+    let total_tiles = u32(size.x / u32(map.tilesize));
+    let tileposx = f32(vertex.tile_id % total_tiles) * map.tilesize;
+    let tileposy = f32(vertex.tile_id / total_tiles) * map.tilesize;
+
+    pos.x += map.pos.x;
+    pos.y += map.pos.y;
 
     switch v {
         case 1u: {
-            result.uv = vec2<f32>(tileposx + vertex.tilesize, tileposy + vertex.tilesize) / fsize;
-            pos.x += vertex.tilesize;
+            result.uv = vec2<f32>(tileposx + map.tilesize, tileposy + map.tilesize) / fsize;
+            pos.x += map.tilesize;
         }
         case 2u: {
-            result.uv = vec2<f32>(tileposx + vertex.tilesize, tileposy) / fsize;
-            pos.x += vertex.tilesize;
-            pos.y += vertex.tilesize;
+            result.uv = vec2<f32>(tileposx + map.tilesize, tileposy) / fsize;
+            pos.x += map.tilesize;
+            pos.y += map.tilesize;
         }
         case 3u: {
             result.uv = vec2<f32>(tileposx, tileposy) / fsize;
-            pos.y += vertex.tilesize;
+            pos.y += map.tilesize;
         }
         default: {
-            result.uv = vec2<f32>(tileposx, tileposy + vertex.tilesize) / fsize;
+            result.uv = vec2<f32>(tileposx, tileposy + map.tilesize) / fsize;
         }
     }
 
-    switch vertex.camera_type {
+    switch map.camera_type {
         case 1u: {
             result.clip_position = (global.proj * global.view) * vec4<f32>(pos, 1.0);
         }
@@ -125,16 +137,16 @@ fn vertex(
     let id = global.seconds / (f32(250) / 1000.0);
     let frame = u32(floor(id % f32(4)));
 
-    if pos.z == 9.3 && frame != 0u {
+    if vertex.map_layer == 3 && frame != 0u {
         result.uv = vec2<f32>(0.0, 0.0);
         result.clip_position = vec4<f32>(0.0, 0.0, 0.0, 0.0);
-    } else if pos.z == 9.2 && frame != 1u {
+    } else if vertex.map_layer == 4 && frame != 1u {
         result.uv = vec2<f32>(0.0, 0.0);
         result.clip_position = vec4<f32>(0.0, 0.0, 0.0, 0.0);
-    } else if pos.z == 9.1 && frame != 2u {
+    } else if vertex.map_layer == 5 && frame != 2u {
         result.uv = vec2<f32>(0.0, 0.0);
         result.clip_position = vec4<f32>(0.0, 0.0, 0.0, 0.0);
-    } else if pos.z == 9.0 && frame != 3u {
+    } else if vertex.map_layer == 6 && frame != 3u {
         result.uv = vec2<f32>(0.0, 0.0);
         result.clip_position = vec4<f32>(0.0, 0.0, 0.0, 0.0);
     }

@@ -6,31 +6,29 @@ use rayon::{iter::repeatn, prelude::*};
 ///
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct MapVertex {
+pub struct TileVertex {
     pub pos: [f32; 3],
-    pub tilesize: f32,
     pub tile_id: u32,
     pub texture_layer: u32,
     pub color: u32,
-    pub camera_type: u32,
+    pub map_layer: u32,
 }
 
-impl Default for MapVertex {
+impl Default for TileVertex {
     fn default() -> Self {
         Self {
             pos: [0.0; 3],
-            tilesize: 0.0,
             tile_id: 0,
             texture_layer: 0,
             color: 0,
-            camera_type: 0,
+            map_layer: 0,
         }
     }
 }
 
-impl BufferLayout for MapVertex {
+impl BufferLayout for TileVertex {
     fn attributes() -> Vec<wgpu::VertexAttribute> {
-        wgpu::vertex_attr_array![1 => Float32x3, 2 => Float32, 3 => Uint32, 4 => Uint32, 5 => Uint32, 6 => Uint32]
+        wgpu::vertex_attr_array![1 => Float32x3, 2 =>  Uint32, 3 => Uint32, 4 => Uint32, 5 => Uint32]
             .to_vec()
     }
 
@@ -43,12 +41,12 @@ impl BufferLayout for MapVertex {
         _index_capacity: usize,
     ) -> BufferData {
         #[cfg(feature = "rayon")]
-        let instance_arr: Vec<MapVertex> =
-            repeatn(MapVertex::default(), vertex_capacity).collect();
+        let instance_arr: Vec<TileVertex> =
+            repeatn(TileVertex::default(), vertex_capacity).collect();
 
         #[cfg(not(feature = "rayon"))]
-        let instance_arr: Vec<MapVertex> =
-            std::iter::repeat_n(MapVertex::default(), vertex_capacity)
+        let instance_arr: Vec<TileVertex> =
+            std::iter::repeat_n(TileVertex::default(), vertex_capacity)
                 .collect();
 
         BufferData {
@@ -58,6 +56,6 @@ impl BufferLayout for MapVertex {
     }
 
     fn stride() -> usize {
-        std::mem::size_of::<[f32; 8]>()
+        std::mem::size_of::<[f32; 7]>()
     }
 }

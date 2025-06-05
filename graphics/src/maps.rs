@@ -1,5 +1,6 @@
 mod pipeline;
 mod render;
+mod uniforms;
 mod vertex;
 
 use crate::{
@@ -10,6 +11,7 @@ use cosmic_text::Color;
 pub use pipeline::*;
 pub use render::*;
 use std::{cell::RefCell, iter};
+pub use uniforms::*;
 pub use vertex::*;
 
 #[allow(dead_code)]
@@ -42,17 +44,17 @@ impl MapLayers {
 
     pub const UPPER_LAYERS: [Self; 2] = [Self::Fringe, Self::Fringe2];
 
-    pub fn indexed_layers(self) -> f32 {
+    pub fn indexed_layers(self, zlayer: &MapZLayers) -> f32 {
         match self {
-            Self::Ground => 9.6,
-            Self::Mask => 9.5,
-            Self::Mask2 => 9.4,
-            Self::Anim1 => 9.3,
-            Self::Anim2 => 9.2,
-            Self::Anim3 => 9.1,
-            Self::Anim4 => 9.0,
-            Self::Fringe => 5.1,
-            _ => 5.0,
+            Self::Ground => zlayer.ground,
+            Self::Mask => zlayer.mask,
+            Self::Mask2 => zlayer.mask2,
+            Self::Anim1 => zlayer.anim1,
+            Self::Anim2 => zlayer.anim2,
+            Self::Anim3 => zlayer.anim3,
+            Self::Anim4 => zlayer.anim4,
+            Self::Fringe => zlayer.fringe,
+            _ => zlayer.fringe2,
         }
     }
 
@@ -67,6 +69,37 @@ impl MapLayers {
             Self::Anim4 => "Anim 4",
             Self::Fringe => "Fringe",
             _ => "Fringe 2",
+        }
+    }
+}
+
+#[allow(dead_code)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MapZLayers {
+    pub ground: f32,
+    pub mask: f32,
+    pub mask2: f32,
+    pub anim1: f32,
+    pub anim2: f32,
+    pub anim3: f32,
+    pub anim4: f32,
+    /// always above player. \/
+    pub fringe: f32,
+    pub fringe2: f32,
+}
+
+impl Default for MapZLayers {
+    fn default() -> Self {
+        Self {
+            ground: 9.6,
+            mask: 9.5,
+            mask2: 9.4,
+            anim1: 9.3,
+            anim2: 9.2,
+            anim3: 9.1,
+            anim4: 9.0,
+            fringe: 5.1,
+            fringe2: 5.0,
         }
     }
 }
@@ -118,21 +151,25 @@ pub struct Map {
     /// Used to deturmine if the map can be rendered or if its just a preload.
     pub can_render: bool,
     pub camera_type: CameraType,
-    /// If the position or a tile gets changed.
-    pub changed: bool,
+    /// Each layers Z position. Default is 9.6-9.0 for lower levels and 5.1-5.0 for upper.
+    pub zlayers: MapZLayers,
+    /// If tiles vertex data got changed.
+    pub tiles_changed: bool,
+    /// If the uniform map data got changed.
+    pub map_changed: bool,
 }
 
 // These are used to Reduce the Overall Memory usage of each and every map loaded and allow them all to process though
 // a single point of memory which should help with cache locality.
 thread_local! {
-    static LOWER_BUFFER: RefCell<Vec<MapVertex>> = RefCell::new(Vec::with_capacity(LOWER_COUNT));
-    static UPPER_BUFFER: RefCell<Vec<MapVertex>> = RefCell::new(Vec::with_capacity(UPPER_COUNT));
+    static LOWER_BUFFER: RefCell<Vec<TileVertex>> = RefCell::new(Vec::with_capacity(LOWER_COUNT));
+    static UPPER_BUFFER: RefCell<Vec<TileVertex>> = RefCell::new(Vec::with_capacity(UPPER_COUNT));
 }
 
 impl Map {
     fn generate_layer_vertexes(
         &self,
-        vertexs: &mut Vec<MapVertex>,
+        vertexs: &mut Vec<TileVertex>,
         atlas: &mut AtlasSet,
         layer: MapLayers,
     ) {
@@ -140,7 +177,7 @@ impl Map {
             return;
         }
 
-        let z = layer.indexed_layers();
+        let z = layer.indexed_layers(&self.zlayers);
         let atlas_width = atlas.size().x / self.tilesize;
 
         for x in 0..self.size.x {
@@ -157,18 +194,17 @@ impl Map {
                 if let Some((allocation, _)) = atlas.peek(tile.id) {
                     let (posx, posy) = allocation.position();
 
-                    let map_vertex = MapVertex {
+                    let map_vertex = TileVertex {
                         pos: [
-                            self.pos.x + (x * self.tilesize) as f32,
-                            self.pos.y + (y * self.tilesize) as f32,
+                            (x * self.tilesize) as f32,
+                            (y * self.tilesize) as f32,
                             z,
                         ],
-                        tilesize: self.tilesize as f32,
                         tile_id: (posx / self.tilesize)
                             + ((posy / self.tilesize) * atlas_width),
                         texture_layer: allocation.layer as u32,
                         color: tile.color.0,
-                        camera_type: self.camera_type as u32,
+                        map_layer: layer as u32,
                     };
 
                     vertexs.push(map_vertex);
@@ -225,8 +261,13 @@ impl Map {
 
     /// Creates a new [`Map`] with tilesize and a default size of [32, 32].
     ///
-    pub fn new(renderer: &mut GpuRenderer, tilesize: u32, pos: Vec2) -> Self {
-        let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
+    pub fn new(
+        renderer: &mut GpuRenderer,
+        tilesize: u32,
+        pos: Vec2,
+        zlayers: MapZLayers,
+    ) -> Self {
+        let map_vertex_size = bytemuck::bytes_of(&TileVertex::default()).len();
         let lower_index = renderer.new_buffer(map_vertex_size * LOWER_COUNT, 0);
         let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
         let order1 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 9.0), 0);
@@ -240,8 +281,10 @@ impl Map {
             orders: [order1, order2],
             tilesize,
             can_render: false,
-            changed: true,
+            tiles_changed: true,
+            map_changed: true,
             camera_type: CameraType::None,
+            zlayers,
             size: UVec2::new(32, 32),
         }
     }
@@ -253,8 +296,9 @@ impl Map {
         tilesize: u32,
         pos: Vec2,
         size: UVec2,
+        zlayers: MapZLayers,
     ) -> Self {
-        let map_vertex_size = bytemuck::bytes_of(&MapVertex::default()).len();
+        let map_vertex_size = bytemuck::bytes_of(&TileVertex::default()).len();
         let lower_index = renderer
             .new_buffer(map_vertex_size * ((size.x * size.y) * 7) as usize, 0);
         let upper_index = renderer
@@ -295,19 +339,39 @@ impl Map {
             orders: [order1, order2],
             tilesize,
             can_render: false,
-            changed: true,
+            tiles_changed: true,
+            map_changed: true,
             camera_type: CameraType::None,
             size,
+            zlayers,
         }
     }
 
     /// Updates the [`Map`]'s position.
     ///
     pub fn set_pos(&mut self, pos: Vec2) -> &mut Self {
-        self.orders[0].set_pos(Vec3::new(pos.x, pos.y, 9.0));
-        self.orders[1].set_pos(Vec3::new(pos.x, pos.y, 5.0));
+        self.orders[0].set_pos(Vec3::new(pos.x, pos.y, self.zlayers.anim4));
+        self.orders[1].set_pos(Vec3::new(pos.x, pos.y, self.zlayers.fringe2));
         self.pos = pos;
-        self.changed = true;
+        self.map_changed = true;
+        self
+    }
+
+    /// Updates the [`Map`]'s Tile layer z positions.
+    ///
+    pub fn set_zlayers(&mut self, zlayers: MapZLayers) -> &mut Self {
+        self.orders[0].set_pos(Vec3::new(
+            self.pos.x,
+            self.pos.y,
+            zlayers.anim4,
+        ));
+        self.orders[1].set_pos(Vec3::new(
+            self.pos.x,
+            self.pos.y,
+            zlayers.fringe2,
+        ));
+        self.zlayers = zlayers;
+        self.tiles_changed = true;
         self
     }
 
@@ -318,12 +382,12 @@ impl Map {
         self.orders[0].set_pos(Vec3::new(
             order_override.x,
             order_override.y,
-            9.0,
+            self.zlayers.anim4,
         ));
         self.orders[1].set_pos(Vec3::new(
             order_override.x,
             order_override.y,
-            5.0,
+            self.zlayers.fringe2,
         ));
 
         self
@@ -373,7 +437,7 @@ impl Map {
     ///
     pub fn set_camera_type(&mut self, camera_type: CameraType) -> &mut Self {
         self.camera_type = camera_type;
-        self.changed = true;
+        self.map_changed = true;
         self
     }
 
@@ -406,7 +470,7 @@ impl Map {
         }
 
         self.tiles[tilepos] = tile;
-        self.changed = true;
+        self.tiles_changed = true;
     }
 
     /// Used to check and update the [`Map`]'s Buffer for Rendering.
@@ -416,11 +480,29 @@ impl Map {
         &mut self,
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
+        map_buffer: &mut wgpu::Buffer,
     ) -> Option<(OrderedIndex, OrderedIndex)> {
         if self.can_render {
-            if self.changed {
+            if self.tiles_changed {
                 self.create_quad(renderer, atlas);
-                self.changed = false;
+                self.tiles_changed = false;
+            }
+
+            if self.map_changed {
+                let queue = renderer.queue();
+                let map = MapRaw {
+                    pos: self.pos.to_array(),
+                    tilesize: self.tilesize as f32,
+                    camera_type: self.camera_type as u32,
+                };
+
+                queue.write_buffer(
+                    map_buffer,
+                    0 as wgpu::BufferAddress,
+                    bytemuck::bytes_of(&map),
+                );
+
+                self.map_changed = false;
             }
 
             Some((
