@@ -16,6 +16,8 @@ struct Map {
     camera_type: u32,
 };
 
+const c_maps: u32 = 500u;
+
 @group(0)
 @binding(0)
 var<uniform> global: Global;
@@ -28,6 +30,7 @@ struct VertexInput {
     @location(3) texture_layer: u32,
     @location(4) color: u32,
     @location(5) map_layer: u32,
+    @location(6) map_id: u32,
 };
 
 struct VertexOutput {
@@ -46,7 +49,7 @@ var tex_sample: sampler;
 
 @group(2)
 @binding(0)
-var<uniform> map: Map;
+var<uniform> map: array<Map, c_maps>;
 
 fn srgb_to_linear(c: f32) -> f32 {
     if c <= 0.04045 {
@@ -74,33 +77,33 @@ fn vertex(
     let v = vertex.vertex_idx % 4u;
     let size = textureDimensions(tex);
     let fsize = vec2<f32> (f32(size.x), f32(size.y));
-    let total_tiles = u32(size.x / u32(map.tilesize));
-    let tileposx = f32(vertex.tile_id % total_tiles) * map.tilesize;
-    let tileposy = f32(vertex.tile_id / total_tiles) * map.tilesize;
+    let total_tiles = u32(size.x / u32(map[vertex.map_id].tilesize));
+    let tileposx = f32(vertex.tile_id % total_tiles) * map[vertex.map_id].tilesize;
+    let tileposy = f32(vertex.tile_id / total_tiles) * map[vertex.map_id].tilesize;
 
-    pos.x += map.pos.x;
-    pos.y += map.pos.y;
+    pos.x += map[vertex.map_id].pos.x;
+    pos.y += map[vertex.map_id].pos.y;
 
     switch v {
         case 1u: {
-            result.uv = vec2<f32>(tileposx + map.tilesize, tileposy + map.tilesize) / fsize;
-            pos.x += map.tilesize;
+            result.uv = vec2<f32>(tileposx + map[vertex.map_id].tilesize, tileposy + map[vertex.map_id].tilesize) / fsize;
+            pos.x += map[vertex.map_id].tilesize;
         }
         case 2u: {
-            result.uv = vec2<f32>(tileposx + map.tilesize, tileposy) / fsize;
-            pos.x += map.tilesize;
-            pos.y += map.tilesize;
+            result.uv = vec2<f32>(tileposx + map[vertex.map_id].tilesize, tileposy) / fsize;
+            pos.x += map[vertex.map_id].tilesize;
+            pos.y += map[vertex.map_id].tilesize;
         }
         case 3u: {
             result.uv = vec2<f32>(tileposx, tileposy) / fsize;
-            pos.y += map.tilesize;
+            pos.y += map[vertex.map_id].tilesize;
         }
         default: {
-            result.uv = vec2<f32>(tileposx, tileposy + map.tilesize) / fsize;
+            result.uv = vec2<f32>(tileposx, tileposy + map[vertex.map_id].tilesize) / fsize;
         }
     }
 
-    switch map.camera_type {
+    switch map[vertex.map_id].camera_type {
         case 1u: {
             result.clip_position = (global.proj * global.view) * vec4<f32>(pos, 1.0);
         }

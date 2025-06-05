@@ -12,6 +12,7 @@ pub struct TileVertex {
     pub texture_layer: u32,
     pub color: u32,
     pub map_layer: u32,
+    pub map_index: u32,
 }
 
 impl Default for TileVertex {
@@ -22,13 +23,14 @@ impl Default for TileVertex {
             texture_layer: 0,
             color: 0,
             map_layer: 0,
+            map_index: 0,
         }
     }
 }
 
 impl BufferLayout for TileVertex {
     fn attributes() -> Vec<wgpu::VertexAttribute> {
-        wgpu::vertex_attr_array![1 => Float32x3, 2 =>  Uint32, 3 => Uint32, 4 => Uint32, 5 => Uint32]
+        wgpu::vertex_attr_array![1 => Float32x3, 2 =>  Uint32, 3 => Uint32, 4 => Uint32, 5 => Uint32, 6 => Uint32]
             .to_vec()
     }
 
@@ -56,6 +58,6 @@ impl BufferLayout for TileVertex {
     }
 
     fn stride() -> usize {
-        std::mem::size_of::<[f32; 7]>()
+        std::mem::size_of::<[f32; 8]>()
     }
 }

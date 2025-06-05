@@ -10,9 +10,10 @@ use crate::{
 use cosmic_text::Color;
 pub use pipeline::*;
 pub use render::*;
-use std::{cell::RefCell, iter};
+use std::{cell::RefCell, iter, mem};
 pub use uniforms::*;
 pub use vertex::*;
+use wgpu::util::align_to;
 
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, PartialOrd, Ord, Eq, Hash, PartialEq)]
@@ -157,6 +158,8 @@ pub struct Map {
     pub tiles_changed: bool,
     /// If the uniform map data got changed.
     pub map_changed: bool,
+    /// Index of map in uniform Data.
+    pub map_index: usize,
 }
 
 // These are used to Reduce the Overall Memory usage of each and every map loaded and allow them all to process though
@@ -205,6 +208,7 @@ impl Map {
                         texture_layer: allocation.layer as u32,
                         color: tile.color.0,
                         map_layer: layer as u32,
+                        map_index: self.map_index as u32,
                     };
 
                     vertexs.push(map_vertex);
@@ -263,17 +267,19 @@ impl Map {
     ///
     pub fn new(
         renderer: &mut GpuRenderer,
+        map_render: &mut MapRenderer,
         tilesize: u32,
         pos: Vec2,
         zlayers: MapZLayers,
-    ) -> Self {
+    ) -> Option<Self> {
+        let map_index = map_render.unused_indexs.pop_front()?;
         let map_vertex_size = bytemuck::bytes_of(&TileVertex::default()).len();
         let lower_index = renderer.new_buffer(map_vertex_size * LOWER_COUNT, 0);
         let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
         let order1 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 9.0), 0);
         let order2 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 5.0), 1);
 
-        Self {
+        Some(Self {
             tiles: iter::repeat_n(TileData::default(), 9216).collect(),
             pos,
             stores: [lower_index, upper_index],
@@ -286,18 +292,21 @@ impl Map {
             camera_type: CameraType::None,
             zlayers,
             size: UVec2::new(32, 32),
-        }
+            map_index,
+        })
     }
 
     /// Creates a new [`Map`] with tilesize position, and size.
     ///
     pub fn new_with(
         renderer: &mut GpuRenderer,
+        map_render: &mut MapRenderer,
         tilesize: u32,
         pos: Vec2,
         size: UVec2,
         zlayers: MapZLayers,
-    ) -> Self {
+    ) -> Option<Self> {
+        let map_index = map_render.unused_indexs.pop_front()?;
         let map_vertex_size = bytemuck::bytes_of(&TileVertex::default()).len();
         let lower_index = renderer
             .new_buffer(map_vertex_size * ((size.x * size.y) * 7) as usize, 0);
@@ -327,7 +336,7 @@ impl Map {
             });
         }
 
-        Self {
+        Some(Self {
             tiles: iter::repeat_n(
                 TileData::default(),
                 ((size.x * size.y) * 9) as usize,
@@ -344,7 +353,8 @@ impl Map {
             camera_type: CameraType::None,
             size,
             zlayers,
-        }
+            map_index,
+        })
     }
 
     /// Updates the [`Map`]'s position.
@@ -410,10 +420,38 @@ impl Map {
 
     /// Unloades the [`Map`]'s buffer from the buffer store.
     ///
-    pub fn unload(&self, renderer: &mut GpuRenderer) {
+    pub fn unload(
+        &self,
+        renderer: &mut GpuRenderer,
+        map_render: &mut MapRenderer,
+    ) {
         for index in &self.stores {
             renderer.remove_buffer(*index);
         }
+
+        map_render.unused_indexs.push_front(self.map_index);
+    }
+
+    /// Unloades the [`Map`]'s Index and sets can_render to false.
+    ///
+    pub fn unload_map_index(&mut self, map_render: &mut MapRenderer) {
+        map_render.unused_indexs.push_front(self.map_index);
+        self.can_render = false;
+    }
+
+    /// aquires a new [`Map`]'s Index and sets can_render, tiles and map to true.
+    ///
+    pub fn aquire_map_index(
+        &mut self,
+        map_render: &mut MapRenderer,
+    ) -> Option<()> {
+        let index = map_render.unused_indexs.pop_front()?;
+        self.map_index = index;
+        self.can_render = true;
+        self.tiles_changed = true;
+        self.map_changed = true;
+
+        Some(())
     }
 
     /// gets the [`TileData`] based upon the tiles x, y, and [`MapLayers`].
@@ -496,9 +534,12 @@ impl Map {
                     camera_type: self.camera_type as u32,
                 };
 
+                let map_alignment: usize =
+                    align_to(mem::size_of::<MapRaw>(), 16) as usize;
+
                 queue.write_buffer(
                     map_buffer,
-                    0 as wgpu::BufferAddress,
+                    (self.map_index * map_alignment) as wgpu::BufferAddress,
                     bytemuck::bytes_of(&map),
                 );
 

@@ -8,11 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Added
 - Light::set_pos() and set_size().
 - MapZLayer to set layer Z, Default uses the old static set layers.
+- unload_map_index and aquire_map_index for allowing map store and quicker reloads. will need to adjust later.
 
 ### Changed
 - Light: replaced z with Pos and added Size.
 - Rect::new, Expand to add Color.
 - Map data now remove from tile and set to uniform. Should boost map position update speeds.
+- Map new and new_with now requires &mut Map_renderer to get uniform indexs.
 
 ### Removed 
 - Light::set_z().

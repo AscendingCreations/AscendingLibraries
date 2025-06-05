@@ -1,10 +1,12 @@
 use crate::{
-    AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, InstanceBuffer, Map,
-    MapLayout, MapRenderPipeline, OrderedIndex, SetBuffers, StaticVertexBuffer,
-    TileVertex,
+    AsBufferPass, AtlasSet, GpuRenderer, GraphicsError, Index, InstanceBuffer,
+    MAX_MAPS, Map, MapLayout, MapRaw, MapRenderPipeline, OrderedIndex,
+    SetBuffers, StaticVertexBuffer, TileVertex,
 };
 use log::warn;
-use wgpu::util::DeviceExt;
+use slotmap::SlotMap;
+use std::{collections::VecDeque, iter, mem};
+use wgpu::util::{DeviceExt, align_to};
 
 /// Instance Buffer Setup for [`Map`]'s.
 ///
@@ -12,6 +14,10 @@ use wgpu::util::DeviceExt;
 pub struct MapRenderer {
     /// Instance Buffer holding all Rendering information for [`Map`]'s.
     pub buffer: InstanceBuffer<TileVertex>,
+    /// Stores each viable index to match with the uniform array.
+    pub map_index_buffer: SlotMap<Index, (usize, bool)>,
+    /// Stores each unused buffer ID to be pulled into a map_index_buffer for the map ID.
+    pub unused_indexs: VecDeque<usize>,
     /// Uniform buffer for the array of [`crate::DirectionalLight`]'s.
     map_buffer: wgpu::Buffer,
     /// Uniform buffer BindGroup for the array of [`crate::AreaLight`]'s.
@@ -28,12 +34,16 @@ impl MapRenderer {
         renderer: &mut GpuRenderer,
         map_count: u32,
     ) -> Result<Self, GraphicsError> {
-        let raw = [0f32; 4];
+        let map_alignment: usize =
+            align_to(mem::size_of::<MapRaw>(), 32) as usize;
+
+        let maps: Vec<u8> =
+            iter::repeat_n(0u8, MAX_MAPS * map_alignment).collect();
 
         let map_buffer = renderer.device().create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("map uniform buffer"),
-                contents: bytemuck::cast_slice(&raw),
+                contents: &maps, //500
                 usage: wgpu::BufferUsages::UNIFORM
                     | wgpu::BufferUsages::COPY_DST,
             },
@@ -55,6 +65,14 @@ impl MapRenderer {
                     label: Some("map_bind_group"),
                 });
 
+        let mut unused_indexs = VecDeque::with_capacity(MAX_MAPS);
+
+        for i in 0..MAX_MAPS {
+            unused_indexs.push_back(i);
+        }
+
+        let map_index_buffer = SlotMap::with_key();
+
         Ok(Self {
             buffer: InstanceBuffer::with_capacity(
                 renderer.gpu_device(),
@@ -63,6 +81,8 @@ impl MapRenderer {
             ),
             map_buffer,
             map_bind_group,
+            unused_indexs,
+            map_index_buffer,
         })
     }
 
