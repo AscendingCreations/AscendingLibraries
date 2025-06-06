@@ -99,7 +99,7 @@ impl Rect {
 
     /// Unloads the [`Rect`] from the Instance Buffers Store.
     ///
-    pub fn unload(&self, renderer: &mut GpuRenderer) {
+    pub fn unload(self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
     }
 

@@ -314,8 +314,10 @@ impl Map {
         let map_vertex_size = bytemuck::bytes_of(&TileVertex::default()).len();
         let lower_index = renderer.new_buffer(map_vertex_size * LOWER_COUNT, 0);
         let upper_index = renderer.new_buffer(map_vertex_size * UPPER_COUNT, 0);
-        let order1 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 9.0), 0);
-        let order2 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 5.0), 1);
+        let order1 =
+            DrawOrder::new(false, Vec3::new(pos.x, pos.y, zlayers.anim4), 0);
+        let order2 =
+            DrawOrder::new(false, Vec3::new(pos.x, pos.y, zlayers.fringe2), 1);
 
         Some(Self {
             tiles: iter::repeat_n(TileData::default(), 9216).collect(),
@@ -350,8 +352,10 @@ impl Map {
             .new_buffer(map_vertex_size * ((size.x * size.y) * 7) as usize, 0);
         let upper_index = renderer
             .new_buffer(map_vertex_size * ((size.x * size.y) * 2) as usize, 0);
-        let order1 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 9.0), 0);
-        let order2 = DrawOrder::new(false, Vec3::new(pos.x, pos.y, 5.0), 1);
+        let order1 =
+            DrawOrder::new(false, Vec3::new(pos.x, pos.y, zlayers.anim4), 0);
+        let order2 =
+            DrawOrder::new(false, Vec3::new(pos.x, pos.y, zlayers.fringe2), 1);
 
         //Since this is different than default we do want to resize the limit to avoid multiple resizes in a render loop.
         if ((size.x * size.y) * 7) as usize > LOWER_COUNT {
