@@ -275,24 +275,22 @@ impl TileSheet {
                         }
                     }
 
-                    if image.enumerate_pixels().all(|p| p.2.0[3] == 0) {
-                        TileBuilder {
-                            id: loc,
-                            x: tilex,
-                            y: tiley,
-                            image,
-                            is_empty: true,
-                            name: String::default(),
-                        }
-                    } else {
-                        TileBuilder {
-                            id: loc,
-                            x: tilex,
-                            y: tiley,
-                            image,
-                            is_empty: false,
-                            name: format!("{}-{}", texture.name(), id),
-                        }
+                    let is_empty = image
+                        .enumerate_pixels()
+                        .par_bridge()
+                        .all(|p| p.2.0[3] == 0);
+
+                    TileBuilder {
+                        id: loc,
+                        x: tilex,
+                        y: tiley,
+                        image,
+                        is_empty,
+                        name: if is_empty {
+                            String::default()
+                        } else {
+                            format!("{}-{}", texture.name(), id)
+                        },
                     }
                 })
                 .collect_into_vec(&mut upload_tiles);
