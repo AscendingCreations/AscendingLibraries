@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Rect::new, Expand to add Color.
 - Map data now remove from tile and set to uniform. Should boost map position update speeds.
 - Map new and new_with now requires &mut Map_renderer to get uniform indexs.
+- Map internal tile vertex generation now uses rayon when enabled to boost vertex generation speed.
 
 ### Removed 
 - Light::set_z().
