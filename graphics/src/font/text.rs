@@ -304,7 +304,7 @@ impl Text {
 
     /// Unloads the [`Text`] from the Instance Buffers Store and its outline from the VBO Store.
     ///
-    pub fn unload(&self, renderer: &mut GpuRenderer) {
+    pub fn unload(self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.store_id);
     }
 

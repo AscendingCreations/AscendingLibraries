@@ -1,6 +1,4 @@
 use crate::{Allocation, Atlas, AtlasSet, GraphicsError};
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
 use std::hash::Hash;
 use wgpu::CommandEncoder;
 

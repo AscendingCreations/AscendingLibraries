@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Map data now remove from tile and set to uniform. Should boost map position update speeds.
 - Map new and new_with now requires &mut Map_renderer to get uniform indexs.
 - Map internal tile vertex generation now uses rayon when enabled to boost vertex generation speed.
+- All unloads now consume Self to drop Self after unload is complete.
 
 ### Removed 
 - Light::set_z().

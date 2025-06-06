@@ -96,7 +96,7 @@ impl Mesh2D {
 
     /// Unloads the [`Mesh2D`] from the Instance Buffers Store.
     ///
-    pub fn unload(&self, renderer: &mut GpuRenderer) {
+    pub fn unload(self, renderer: &mut GpuRenderer) {
         renderer.remove_buffer(self.vbo_store_id);
     }
 
