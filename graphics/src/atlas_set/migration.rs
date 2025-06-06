@@ -1,4 +1,6 @@
 use crate::{Allocation, Atlas, AtlasSet, GraphicsError};
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 use std::hash::Hash;
 use wgpu::CommandEncoder;
 
@@ -32,7 +34,7 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         task: &mut MigrationTask,
     ) -> Result<Vec<(usize, Allocation<Data>)>, GraphicsError> {
         let mut migrated = Vec::with_capacity(32);
-        let mut migrating = Vec::with_capacity(32);
+        let migrating: Vec<(usize, Allocation<Data>)>;
 
         //Tis be fragmented heavily my lord. We need more layers!
         if task.avaliable.is_empty() {
@@ -45,11 +47,20 @@ impl<U: Hash + Eq + Clone, Data: Copy + Default> AtlasSet<U, Data> {
         // Lets Gather all the ones we want to Migrate that Exist within the Layer we
         // are working with in this round.
         if let Some(layer) = self.layers.get_mut(migrating_layer_id) {
-            for alloc_id in layer.allocated.clone() {
-                if let Some((allocation, _hash)) = self.peek(alloc_id) {
-                    migrating.push((alloc_id, *allocation));
-                }
-            }
+            migrating = layer
+                .allocated
+                .clone()
+                .into_iter()
+                .filter_map(|alloc_id| {
+                    if let Some((allocation, _hash)) = self.peek(alloc_id) {
+                        Some((alloc_id, *allocation))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+        } else {
+            migrating = vec![];
         }
 
         'outer: for (id, allocation) in migrating {
