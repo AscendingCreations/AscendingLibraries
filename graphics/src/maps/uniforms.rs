@@ -1,7 +1,7 @@
 use crate::{GpuDevice, Layout};
 use bytemuck::{Pod, Zeroable};
 
-pub const MAX_MAPS: usize = 400;
+pub const MAX_MAPS: usize = 500;
 
 /// Uniform Details for [crate::Map`] that matches the Shaders Uniform Layout.
 ///
