@@ -15,9 +15,9 @@ pub struct MapRenderer {
     pub buffer: InstanceBuffer<TileVertex>,
     /// Stores each unused buffer ID to be pulled into a map_index_buffer for the map ID.
     pub unused_indexs: VecDeque<usize>,
-    /// Uniform buffer for the array of [`crate::DirectionalLight`]'s.
+    /// Uniform buffer for the 500 count array of [`crate::Map`]'s base shared data.
     map_buffer: wgpu::Buffer,
-    /// Uniform buffer BindGroup for the array of [`crate::AreaLight`]'s.
+    /// Uniform buffer BindGroup for the 500 count array of [`crate::Map`]'s base shared data.
     map_bind_group: wgpu::BindGroup,
 }
 

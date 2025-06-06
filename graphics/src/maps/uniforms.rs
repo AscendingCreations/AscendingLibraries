@@ -1,6 +1,7 @@
 use crate::{GpuDevice, Layout};
 use bytemuck::{Pod, Zeroable};
 
+///Current Max uniform Array size in wgpu shader.
 pub const MAX_MAPS: usize = 500;
 
 /// Uniform Details for [crate::Map`] that matches the Shaders Uniform Layout.
@@ -13,7 +14,7 @@ pub struct MapRaw {
     pub camera_type: u32,
 }
 
-/// Uniform Layout for [crate::AreaLight`].
+/// Uniform Layout for [crate::Map`] base shared Data.
 ///
 #[repr(C)]
 #[derive(Clone, Copy, Hash, Pod, Zeroable)]
