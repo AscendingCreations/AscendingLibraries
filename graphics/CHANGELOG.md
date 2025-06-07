@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Light::set_pos() and set_size().
 - MapZLayer to set layer Z, Default uses the old static set layers.
 - unload_map_index and aquire_map_index for allowing map store and quicker reloads. will need to adjust later.
+- map.set_visibility to enforce instance buffer updates if previously set to Hidden so they render correctly.
 
 ### Changed
 - Light: replaced z with Pos and added Size.
