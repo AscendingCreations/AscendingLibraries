@@ -301,6 +301,22 @@ impl Map {
         });
     }
 
+    pub fn set_visibility(
+        &mut self,
+        renderer: &mut GpuRenderer,
+        visible: bool,
+    ) {
+        if self.can_render == false && visible == true {
+            for i in 0..=1 {
+                if let Some(store) = renderer.get_buffer_mut(self.stores[i]) {
+                    store.changed = true;
+                }
+            }
+        }
+
+        self.can_render = visible;
+    }
+
     /// Creates a new [`Map`] with tilesize and a default size of [32, 32].
     ///
     pub fn new(
