@@ -16,7 +16,7 @@ pub struct MapRenderer {
     /// Stores each unused buffer ID to be pulled into a map_index_buffer for the map ID.
     pub unused_indexs: VecDeque<usize>,
     /// Uniform buffer for the 500 count array of [`crate::Map`]'s base shared data.
-    map_buffer: wgpu::Buffer,
+    pub(crate) map_buffer: wgpu::Buffer,
     /// Uniform buffer BindGroup for the 500 count array of [`crate::Map`]'s base shared data.
     map_bind_group: wgpu::BindGroup,
 }
@@ -118,9 +118,7 @@ impl MapRenderer {
         atlas: &mut AtlasSet,
         buffer_layers: [usize; 2],
     ) {
-        if let Some((bottom, upper)) =
-            map.update(renderer, atlas, &mut self.map_buffer)
-        {
+        if let Some((bottom, upper)) = map.update(renderer, atlas, &self) {
             self.add_buffer_store(renderer, bottom, buffer_layers[0]);
             self.add_buffer_store(renderer, upper, buffer_layers[1]);
         }

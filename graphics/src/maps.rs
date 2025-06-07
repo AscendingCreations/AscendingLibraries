@@ -560,7 +560,7 @@ impl Map {
         &mut self,
         renderer: &mut GpuRenderer,
         atlas: &mut AtlasSet,
-        map_buffer: &mut wgpu::Buffer,
+        map_buffer: &MapRenderer,
     ) -> Option<(OrderedIndex, OrderedIndex)> {
         if self.can_render {
             if self.tiles_changed {
@@ -580,7 +580,7 @@ impl Map {
                     align_to(mem::size_of::<MapRaw>(), 16) as usize;
 
                 queue.write_buffer(
-                    map_buffer,
+                    &map_buffer.map_buffer,
                     (self.map_index * map_alignment) as wgpu::BufferAddress,
                     bytemuck::bytes_of(&map),
                 );
