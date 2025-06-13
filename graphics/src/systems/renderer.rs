@@ -114,7 +114,7 @@ impl GpuRenderer {
 
     /// Returns a reference to [`wgpu::Surface`].
     ///
-    pub fn surface(&self) -> &wgpu::Surface {
+    pub fn surface(&self) -> &wgpu::Surface<'_> {
         &self.window.surface
     }
 
