@@ -15,6 +15,7 @@ struct AreaLights {
     color: u32,
     max_distance: f32,
     anim_speed: f32,
+    dither: f32,
     animate: u32,
     camera_type: u32,
 };
@@ -26,6 +27,9 @@ struct DirLights {
     max_width: f32,
     anim_speed: f32,
     angle: f32,
+    dither: f32,
+    fade_distance: f32,
+    edge_fade_distance: f32,
     animate: u32,
     camera_type: u32,
 };
@@ -181,7 +185,7 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
             max_distance = max_distance - (f32(light.animate) *(1.0 * sin(global.seconds * light.anim_speed)));
             let dist = distance(pos.xy, vertex.tex_coords.xy);
             let cutoff = max(0.1, max_distance);
-            let value = 1.0 - (dist / cutoff);
+            let value = 1.0 - (dist / cutoff);//fade(dist, 0.0, 1.0, cutoff, light.dither);
             var color2 = col; 
             let alpha = select(color2.a, mix(color2.a, light_color.a, value), dist <= cutoff);
             color2.a = alpha;
@@ -194,6 +198,8 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
             var pos = vec4<f32>(light.pos.x, light.pos.y, 1.0, 1.0);
             var max_distance = light.max_distance;
             var max_width = light.max_width;
+            var fade_distance = light.fade_distance;
+            var edge_fade_distance = light.edge_fade_distance;
 
             switch light.camera_type {
                 case 1u: {
@@ -210,6 +216,8 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
                     pos = (global.view * scale_mat) * vec4<f32>(light_pos, 1.0);
                     max_distance = max_distance * global.scale;
                     max_width = max_width * global.scale;
+                    fade_distance = fade_distance * global.scale;
+                    edge_fade_distance = edge_fade_distance * global.scale;
                 }
                 case 3u: {
                     pos = (global.manual_view) * vec4<f32>(light_pos, 1.0);
@@ -225,6 +233,8 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
                     pos = (global.manual_view * scale_mat) * vec4<f32>(light_pos, 1.0);
                     max_distance = max_distance * global.manual_scale;
                     max_width = max_width * global.manual_scale;
+                    fade_distance = fade_distance * global.manual_scale;
+                    edge_fade_distance = edge_fade_distance * global.manual_scale;
                 }
                 default: {}
             }
