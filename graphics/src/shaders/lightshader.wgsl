@@ -15,7 +15,6 @@ struct AreaLights {
     color: u32,
     max_distance: f32,
     anim_speed: f32,
-    dither: f32,
     animate: u32,
     camera_type: u32,
 };
@@ -27,9 +26,6 @@ struct DirLights {
     max_width: f32,
     anim_speed: f32,
     angle: f32,
-    dither: f32,
-    fade_distance: f32,
-    edge_fade_distance: f32,
     animate: u32,
     camera_type: u32,
 };
@@ -116,65 +112,25 @@ fn vertex(
     return result;
 }
 
-fn fade(d: f32, x0: f32, x1: f32, c: f32, w: f32) -> f32 {
-   let w1 = max(0.000001, w);
-   let sD = 1.0 / (1.0 + exp((-(c - d)) / w1));
-   return x1 - (x0 + (x1 - x0)*(1.0 - sD));
-}
+const pi: f32 = 3.14159265;
+const two_pi: f32 = 6.2831853;
 
-fn normalize_360(angle: f32) -> f32 {
-    let a = angle % 720.0;
-    let a1 = select(a + 360.0, a, a < -360.0);
-    let a2 = a1 % 720.0;
-
-    return select(a2 - 360.0, a2, a2 > 360.0);
-}
-
-fn normalize_180(angle: f32) -> f32 {
-    let a = angle % 360.0;
-    let a1 = select(a + 360.0, a, a < -180.0);
-    let a2 = a1 % 360.0;
-
-    return select(a2 - 360.0, a2, a2 > 180.0);
-}
-
-fn within_range(testAngle: f32, a: f32, b: f32 ) -> bool {
-    let a1 = a - testAngle;
-    let b1 = b - testAngle;
-
-    let a2 = normalize_180( a1 );
-    let b2 = normalize_180( b1 );
-
-    return select(false, abs( a2 - b2 ) < 180.0, a2 * b2 >= 0.0);
-}
-
-fn within_range_test(testAngle: f32, a: f32, b: f32 ) -> bool {
-    let a1 = a - testAngle;
-    let b1 = b - testAngle;
-
-    let a2 = normalize_180( a1 );
-    let b2 = normalize_180( b1 );
-
-    return select(false, abs( a2 - b2 ) < 180.0, a2 * b2 >= 0.0);
-}
-
-fn flash_light(light_pos: vec2<f32>, pixel_pos: vec2<f32>, dir: f32, w_angle: f32, range: f32, dither: f32, edge_fade_percent: f32, edge_fade_dist: f32) -> f32 {
-    let dir2 = select(360.0, dir, dir == 0.0);
-    let s_angle = dir2 - (w_angle / 2.0);
-    let e_angle = dir2 + (w_angle / 2.0);
-    let deg = normalize_360(atan2(pixel_pos.y - light_pos.y, pixel_pos.x - light_pos.x) * 180.0 / 3.14159265);
+fn flash_light(light_pos: vec2<f32>, pixel_pos: vec2<f32>, dir: f32, w_angle: f32, range: f32) -> f32 {
     let d = distance(light_pos, pixel_pos);
-    let degree_radian = radians(dir2);
-    let direction = vec2<f32>(cos(degree_radian), sin(degree_radian));
-    let dir_ret = dot(normalize(pixel_pos - light_pos), normalize(direction));
-    let check = select(true , d > range , dir_ret > cos(degree_radian));
+    let degree_radian = radians(dir);
+    let w_radian = clamp(radians(w_angle), 0.0, 2.0 * pi);
+    // Calculate the start angle from the direction angle and the angle width of the "cone".
+    let s_angle = degree_radian - (w_radian / 2.0);
+    // Calculate the start vector.
+    let s = vec2<f32>(cos(s_angle), sin(s_angle));
+    // Calculate the direction between the pixel position and the light position and normalize the vector.
+    let direction = normalize(pixel_pos - light_pos);
+    let p_pos = vec3<f32>(pixel_pos.x, pixel_pos.y, 0.0);
+    let l_pos = vec3<f32>(light_pos.x, light_pos.y, 0.0);
+    let d_dir = vec3<f32>(direction.x, direction.y, 0.0);
 
-    if (check) {
-        return 0.0;
-    }
-
-    let flash =  select(1.0 - (d / range), 0.0, within_range(deg, s_angle , e_angle));
-    return select(flash, max((1.0 - min(abs(deg - dir2) / ((w_angle + 4.0) / 2.0), 1.0)) - edge_fade_percent, 0.0) / (1.0 - edge_fade_percent), within_range(deg, s_angle, e_angle));
+    // Only emit light if the direction projected onto the start vector is within the angle width of our cone. 1.0 - (d / range)
+    return select(1.0 - (d / range), 0.0, atan2(length(cross(vec3(direction, 0.0), vec3(s, 0.0))), dot(direction, s)) >= w_radian);
 }
 
 // Fragment shader
@@ -225,13 +181,11 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
             max_distance = max_distance - (f32(light.animate) *(1.0 * sin(global.seconds * light.anim_speed)));
             let dist = distance(pos.xy, vertex.tex_coords.xy);
             let cutoff = max(0.1, max_distance);
-
-
-            let value = fade(dist, 0.0, 1.0, cutoff, light.dither);
+            let value = 1.0 - (dist / cutoff);
             var color2 = col; 
-            let alpha = mix(color2.a, light_color.a, value);
+            let alpha = select(color2.a, mix(color2.a, light_color.a, value), dist <= cutoff);
             color2.a = alpha;
-            col = mix(color2, light_color, vec4<f32>(value));
+            col = select(color2, mix(color2, light_color, vec4<f32>(value)), dist <= cutoff);
         }
 
         for(var i = 0u; i < min(vertex.dir_count, c_dir_lights); i += 1u) {
@@ -240,8 +194,6 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
             var pos = vec4<f32>(light.pos.x, light.pos.y, 1.0, 1.0);
             var max_distance = light.max_distance;
             var max_width = light.max_width;
-            var fade_distance = light.fade_distance;
-            var edge_fade_distance = light.edge_fade_distance;
 
             switch light.camera_type {
                 case 1u: {
@@ -258,8 +210,6 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
                     pos = (global.view * scale_mat) * vec4<f32>(light_pos, 1.0);
                     max_distance = max_distance * global.scale;
                     max_width = max_width * global.scale;
-                    fade_distance = fade_distance * global.scale;
-                    edge_fade_distance = edge_fade_distance * global.scale;
                 }
                 case 3u: {
                     pos = (global.manual_view) * vec4<f32>(light_pos, 1.0);
@@ -275,8 +225,6 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
                     pos = (global.manual_view * scale_mat) * vec4<f32>(light_pos, 1.0);
                     max_distance = max_distance * global.manual_scale;
                     max_width = max_width * global.manual_scale;
-                    fade_distance = fade_distance * global.manual_scale;
-                    edge_fade_distance = edge_fade_distance * global.manual_scale;
                 }
                 default: {}
             }
@@ -286,11 +234,12 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
             let dist_cutoff = max(0.1, max_distance);
             max_width = max_width - (f32(light.animate) *(1.0 * sin(global.seconds * light.anim_speed)));
             let width_cutoff = max(0.1, max_width);
-            let value = flash_light(pos.xy, vertex.tex_coords.xy, light.angle, width_cutoff, dist_cutoff, light.dither, edge_fade_distance, fade_distance);
+            let value = flash_light(pos.xy, vertex.tex_coords.xy, light.angle, width_cutoff, dist_cutoff);
             var color2 = col; 
-            let alpha = mix(color2.a, light_color.a, value);
+            let d = distance(pos.xy, vertex.tex_coords.xy);
+            let alpha = select(color2.a, mix(color2.a, light_color.a, value),  d <= dist_cutoff);
             color2.a = alpha;
-            col = mix(color2, light_color, vec4<f32>(value));
+            col = select(color2, mix(color2, light_color, vec4<f32>(value)),  d <= dist_cutoff);
         }
     } 
 
