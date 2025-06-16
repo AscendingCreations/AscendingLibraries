@@ -355,7 +355,10 @@ impl<K: BufferLayout> InstanceBuffer<K> {
     /// Returns [`wgpu::BufferSlice`] of vertices.
     /// bounds is used to set a specific Range if needed.
     /// If bounds is None then range is 0..vertex_count.
-    pub fn instances(&self, bounds: Option<Range<u64>>) -> wgpu::BufferSlice {
+    pub fn instances(
+        &self,
+        bounds: Option<Range<u64>>,
+    ) -> wgpu::BufferSlice<'_> {
         let range = if let Some(bounds) = bounds {
             bounds
         } else {

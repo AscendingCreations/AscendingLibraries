@@ -106,7 +106,7 @@ impl GpuWindow {
 
     /// Returns Reference to the [`wgpu::Surface`].
     ///
-    pub fn surface(&self) -> &wgpu::Surface {
+    pub fn surface(&self) -> &wgpu::Surface<'_> {
         &self.surface
     }
 

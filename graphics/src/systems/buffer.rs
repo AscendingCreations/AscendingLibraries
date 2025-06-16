@@ -133,7 +133,7 @@ impl<K: BufferLayout> Buffer<K> {
 
     /// Returns a [`wgpu::BufferSlice`] of the buffer to hand off to the GPU.
     ///
-    pub fn buffer_slice(&self, range: Range<u64>) -> wgpu::BufferSlice {
+    pub fn buffer_slice(&self, range: Range<u64>) -> wgpu::BufferSlice<'_> {
         self.buffer.slice(range)
     }
 }

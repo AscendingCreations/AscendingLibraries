@@ -354,7 +354,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
     /// Returns [`wgpu::BufferSlice`] of indices.
     /// bounds is used to set a specific Range if needed.
     /// If bounds is None then range is 0..index_count.
-    pub fn indices(&self, bounds: Option<Range<u64>>) -> wgpu::BufferSlice {
+    pub fn indices(&self, bounds: Option<Range<u64>>) -> wgpu::BufferSlice<'_> {
         let range = if let Some(bounds) = bounds {
             bounds
         } else {
@@ -416,7 +416,10 @@ impl<K: BufferLayout> VertexBuffer<K> {
     /// Returns [`wgpu::BufferSlice`] of vertices.
     /// bounds is used to set a specific Range if needed.
     /// If bounds is None then range is 0..vertex_count.
-    pub fn vertices(&self, bounds: Option<Range<u64>>) -> wgpu::BufferSlice {
+    pub fn vertices(
+        &self,
+        bounds: Option<Range<u64>>,
+    ) -> wgpu::BufferSlice<'_> {
         let range = if let Some(bounds) = bounds {
             bounds
         } else {

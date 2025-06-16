@@ -77,7 +77,7 @@ impl StaticVertexBuffer {
     }
 
     /// Returns the [`wgpu::BufferSlice`] of indices.
-    pub fn indices(&self) -> wgpu::BufferSlice {
+    pub fn indices(&self) -> wgpu::BufferSlice<'_> {
         self.ibo.slice(..)
     }
 
@@ -87,7 +87,7 @@ impl StaticVertexBuffer {
     }
 
     /// Returns the [`wgpu::BufferSlice`] of vertices.
-    pub fn vertices(&self) -> wgpu::BufferSlice {
+    pub fn vertices(&self) -> wgpu::BufferSlice<'_> {
         self.vbo.slice(..)
     }
 }
