@@ -306,7 +306,7 @@ impl Map {
         renderer: &mut GpuRenderer,
         visible: bool,
     ) {
-        if self.can_render == false && visible == true {
+        if !self.can_render && visible {
             for i in 0..=1 {
                 if let Some(store) = renderer.get_buffer_mut(self.stores[i]) {
                     store.changed = true;

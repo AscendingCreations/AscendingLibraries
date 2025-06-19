@@ -23,7 +23,7 @@ pub const MAX_DIR_LIGHTS: usize = 1_333;
 
 /// Area Lights rendered in the light system.
 ///
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct AreaLight {
     pub pos: Vec2,
     pub color: Color,
@@ -35,7 +35,7 @@ pub struct AreaLight {
 }
 
 impl AreaLight {
-    fn to_raw(&self) -> AreaLightRaw {
+    fn to_raw(self) -> AreaLightRaw {
         AreaLightRaw {
             pos: self.pos.to_array(),
             color: self.color.0,
@@ -50,7 +50,7 @@ impl AreaLight {
 
 /// Directional Lights rendered in the light system.
 ///
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct DirectionalLight {
     pub pos: Vec2,
     pub color: Color,
@@ -66,7 +66,7 @@ pub struct DirectionalLight {
 }
 
 impl DirectionalLight {
-    fn to_raw(&self) -> DirectionalLightRaw {
+    fn to_raw(self) -> DirectionalLightRaw {
         DirectionalLightRaw {
             pos: self.pos.to_array(),
             color: self.color.0,

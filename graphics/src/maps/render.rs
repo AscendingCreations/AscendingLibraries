@@ -118,7 +118,7 @@ impl MapRenderer {
         atlas: &mut AtlasSet,
         buffer_layers: [usize; 2],
     ) {
-        if let Some((bottom, upper)) = map.update(renderer, atlas, &self) {
+        if let Some((bottom, upper)) = map.update(renderer, atlas, self) {
             self.add_buffer_store(renderer, bottom, buffer_layers[0]);
             self.add_buffer_store(renderer, upper, buffer_layers[1]);
         }
