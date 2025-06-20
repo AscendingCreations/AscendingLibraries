@@ -119,9 +119,9 @@ fn vertex(
 const pi: f32 = 3.14159265;
 const two_pi: f32 = 6.2831853;
 
-fn flash_light(light_pos: vec2<f32>, pixel_pos: vec2<f32>, dir: f32, w_angle: f32, range: f32) -> f32 {
+fn flash_light(light_pos: vec2<f32>, pixel_pos: vec2<f32>, angle: f32, w_angle: f32, range: f32) -> f32 {
     let d = distance(light_pos, pixel_pos);
-    let degree_radian = radians(dir);
+    let degree_radian = radians(angle + (w_angle / 2.0));
     let w_radian = clamp(radians(w_angle), 0.0, 2.0 * pi);
     // Calculate the start angle from the direction angle and the angle width of the "cone".
     let s_angle = degree_radian - (w_radian / 2.0);
@@ -185,7 +185,7 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
             max_distance = max_distance - (f32(light.animate) *(1.0 * sin(global.seconds * light.anim_speed)));
             let dist = distance(pos.xy, vertex.tex_coords.xy);
             let cutoff = max(0.1, max_distance);
-            let value = 1.0 - (dist / cutoff);//fade(dist, 0.0, 1.0, cutoff, light.dither);
+            let value = 1.0 - (dist / cutoff);
             var color2 = col; 
             let alpha = select(color2.a, mix(color2.a, light_color.a, value), dist <= cutoff);
             color2.a = alpha;

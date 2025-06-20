@@ -3,7 +3,7 @@ use std::time::Instant;
 /// Keeps track of Timing useful for Games.
 /// it keeps track of Delta Seconds and Seconds since
 /// the start of the program.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct FrameTime {
     /// Time between each update call.
     pub delta_seconds: f32,

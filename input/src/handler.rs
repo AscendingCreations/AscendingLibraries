@@ -15,7 +15,6 @@ use winit::{
         DeviceEvent, ElementState, KeyEvent, MouseScrollDelta, WindowEvent,
     },
     keyboard::{self, ModifiersKeyState, NamedKey},
-    window::Window,
 };
 
 #[derive(Default, PartialEq, Eq, Copy, Clone)]
@@ -238,7 +237,14 @@ where
 
     ///Checks if a key is down.
     pub fn is_key_down(&self, key: Key, location: Option<Location>) -> bool {
-        if let Some(k) = self.keys.get(&key) {
+        let key_changed = match key {
+            Key::Character(c) => {
+                Key::Character(c.to_lowercase().next().unwrap_or(c))
+            }
+            Key::Named(named) => Key::Named(named),
+        };
+
+        if let Some(k) = self.keys.get(&key_changed) {
             if let Some(loc) = location {
                 *k == loc
             } else {
@@ -384,7 +390,7 @@ where
     }
 
     ///Update the Input Handler based upon the windows events.
-    pub fn window_updates(&mut self, window: &Window, event: &WindowEvent) {
+    pub fn window_updates(&mut self, event: &WindowEvent) {
         let mut button_action = None;
 
         //We clear and reset everything here.
@@ -401,11 +407,6 @@ where
             self.mouse_button_action.clear();
         }
 
-        //we enforce it to loop more often to allow for better latency on input returns.
-        if self.mouse_button_action != MouseButtonAction::None {
-            window.request_redraw();
-        }
-
         match event {
             WindowEvent::KeyboardInput {
                 event:
@@ -418,10 +419,10 @@ where
                     },
                 ..
             } => {
-                let key = match logical_key {
+                let (key, key_to_add) = match logical_key {
                     keyboard::Key::Named(name) => {
-                        if let Some(txt) = text {
-                            if matches!(
+                        if let Some(txt) = text
+                            && matches!(
                                 name,
                                 NamedKey::Enter
                                     | NamedKey::Home
@@ -432,39 +433,49 @@ where
                                     | NamedKey::End
                                     | NamedKey::PageUp
                                     | NamedKey::PageDown
-                            ) && *location == Location::Numpad
-                            {
-                                let chars: Vec<char> = txt.chars().collect();
+                            )
+                            && *location == Location::Numpad
+                        {
+                            let chars: Vec<char> = txt.chars().collect();
 
-                                if let Some(c) = chars.first() {
-                                    Key::Character(*c)
-                                } else {
-                                    return;
-                                }
+                            if let Some(c) = chars.first() {
+                                (
+                                    Key::Character(*c),
+                                    Key::Character(
+                                        c.to_lowercase().next().unwrap_or(*c),
+                                    ),
+                                )
                             } else {
-                                Key::Named(*name)
+                                return;
                             }
                         } else {
-                            Key::Named(*name)
+                            (Key::Named(*name), Key::Named(*name))
                         }
                     }
                     keyboard::Key::Character(str) => {
                         let chars: Vec<char> = str.chars().collect();
 
                         if let Some(c) = chars.first() {
-                            Key::Character(*c)
+                            (
+                                Key::Character(*c),
+                                Key::Character(
+                                    c.to_lowercase().next().unwrap_or(*c),
+                                ),
+                            )
                         } else {
                             return;
                         }
                     }
-                    _ => return,
+                    _ => {
+                        return;
+                    }
                 };
 
                 if *state == ElementState::Pressed {
                     self.input_events
                         .push_back(InputEvent::key_input(key, *location, true));
-                    self.keys.insert(key, *location);
-                } else if self.keys.remove(&key).is_some() {
+                    self.keys.insert(key_to_add, *location);
+                } else if self.keys.remove(&key_to_add).is_some() {
                     self.input_events.push_back(InputEvent::key_input(
                         key, *location, false,
                     ));
@@ -583,29 +594,13 @@ where
         }
     }
 
-    pub fn device_updates(&mut self, window: &Window, event: &DeviceEvent) {
+    pub fn device_updates(&mut self, event: &DeviceEvent) {
         //We clear and reset everything here.
         self.mouse_delta = (0.0, 0.0);
 
-        //we enforce it to loop more often to allow for better latency on input returns.
-        if self.mouse_button_action != MouseButtonAction::None {
-            window.request_redraw();
-        }
-
-        match event {
-            DeviceEvent::MouseMotion { delta } => {
-                self.mouse_delta.0 -= delta.0;
-                self.mouse_delta.1 -= delta.1;
-                window.request_redraw();
-            }
-            DeviceEvent::Motion { axis: _, value: _ }
-            | DeviceEvent::MouseWheel { delta: _ }
-            | DeviceEvent::Button {
-                button: _,
-                state: _,
-            }
-            | DeviceEvent::Key(_) => window.request_redraw(),
-            _ => (),
+        if let DeviceEvent::MouseMotion { delta } = event {
+            self.mouse_delta.0 -= delta.0;
+            self.mouse_delta.1 -= delta.1;
         }
     }
 }

@@ -3,7 +3,6 @@ use crate::{
     MAX_MAPS, Map, MapLayout, MapRaw, MapRenderPipeline, OrderedIndex,
     SetBuffers, StaticVertexBuffer, TileVertex,
 };
-use log::warn;
 use std::{collections::VecDeque, iter, mem};
 use wgpu::util::{DeviceExt, align_to};
 
@@ -122,11 +121,6 @@ impl MapRenderer {
             self.add_buffer_store(renderer, bottom, buffer_layers[0]);
             self.add_buffer_store(renderer, upper, buffer_layers[1]);
         }
-    }
-
-    /// Map does not use Clipping.
-    pub fn use_clipping(&mut self) {
-        warn!("Map does not use Clipping.");
     }
 
     /// Returns a reference too [`wgpu::BindGroup`].
