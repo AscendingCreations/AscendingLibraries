@@ -418,7 +418,7 @@ where
                     },
                 ..
             } => {
-                let key = match logical_key {
+                let (key, key_to_add) = match logical_key {
                     keyboard::Key::Named(name) => {
                         if let Some(txt) = text {
                             if matches!(
@@ -432,39 +432,57 @@ where
                                     | NamedKey::End
                                     | NamedKey::PageUp
                                     | NamedKey::PageDown
-                            ) && *location == Location::Numpad
-                            {
-                                let chars: Vec<char> = txt.chars().collect();
+                            ) {
+                                if *location == Location::Numpad {
+                                    let chars: Vec<char> =
+                                        txt.chars().collect();
 
-                                if let Some(c) = chars.first() {
-                                    Key::Character(*c)
+                                    if let Some(c) = chars.first() {
+                                        (
+                                            Key::Character(*c),
+                                            Key::Character(
+                                                c.to_lowercase()
+                                                    .next()
+                                                    .unwrap_or(*c),
+                                            ),
+                                        )
+                                    } else {
+                                        return;
+                                    }
                                 } else {
-                                    return;
+                                    (Key::Named(*name), Key::Named(*name))
                                 }
                             } else {
-                                Key::Named(*name)
+                                (Key::Named(*name), Key::Named(*name))
                             }
                         } else {
-                            Key::Named(*name)
+                            (Key::Named(*name), Key::Named(*name))
                         }
                     }
                     keyboard::Key::Character(str) => {
                         let chars: Vec<char> = str.chars().collect();
 
                         if let Some(c) = chars.first() {
-                            Key::Character(*c)
+                            (
+                                Key::Character(*c),
+                                Key::Character(
+                                    c.to_lowercase().next().unwrap_or(*c),
+                                ),
+                            )
                         } else {
                             return;
                         }
                     }
-                    _ => return,
+                    _ => {
+                        return;
+                    }
                 };
 
                 if *state == ElementState::Pressed {
                     self.input_events
                         .push_back(InputEvent::key_input(key, *location, true));
-                    self.keys.insert(key, *location);
-                } else if self.keys.remove(&key).is_some() {
+                    self.keys.insert(key_to_add, *location);
+                } else if self.keys.remove(&key_to_add).is_some() {
                     self.input_events.push_back(InputEvent::key_input(
                         key, *location, false,
                     ));
