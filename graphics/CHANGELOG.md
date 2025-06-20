@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Map new and new_with now requires &mut Map_renderer to get uniform indexs.
 - Map internal tile vertex generation now uses rayon when enabled to boost vertex generation speed.
 - All unloads now consume Self to drop Self after unload is complete.
+- (Breaking) Graphics update no longer triggers redraw requests except when a state becomes invalid.
+- (Breaking) Graphics Update will call window.pre_present_notify() upon successful frame buffer grab.
 
 ### Removed 
 - Light::set_z().

@@ -237,7 +237,14 @@ where
 
     ///Checks if a key is down.
     pub fn is_key_down(&self, key: Key, location: Option<Location>) -> bool {
-        if let Some(k) = self.keys.get(&key) {
+        let key_changed = match key {
+            Key::Character(c) => {
+                Key::Character(c.to_lowercase().next().unwrap_or(c))
+            }
+            Key::Named(named) => Key::Named(named),
+        };
+
+        if let Some(k) = self.keys.get(&key_changed) {
             if let Some(loc) = location {
                 *k == loc
             } else {
