@@ -15,7 +15,6 @@ use winit::{
         DeviceEvent, ElementState, KeyEvent, MouseScrollDelta, WindowEvent,
     },
     keyboard::{self, ModifiersKeyState, NamedKey},
-    window::Window,
 };
 
 #[derive(Default, PartialEq, Eq, Copy, Clone)]
@@ -384,7 +383,7 @@ where
     }
 
     ///Update the Input Handler based upon the windows events.
-    pub fn window_updates(&mut self, window: &Window, event: &WindowEvent) {
+    pub fn window_updates(&mut self, event: &WindowEvent) {
         let mut button_action = None;
 
         //We clear and reset everything here.
@@ -400,11 +399,6 @@ where
             button_action = self.mouse_button_action.get_button();
             self.mouse_button_action.clear();
         }
-
-        //we enforce it to loop more often to allow for better latency on input returns.
-        //if self.mouse_button_action != MouseButtonAction::None {
-        //     window.request_redraw();
-        // }
 
         match event {
             WindowEvent::KeyboardInput {
@@ -593,29 +587,13 @@ where
         }
     }
 
-    pub fn device_updates(&mut self, _window: &Window, event: &DeviceEvent) {
+    pub fn device_updates(&mut self, event: &DeviceEvent) {
         //We clear and reset everything here.
         self.mouse_delta = (0.0, 0.0);
 
-        //we enforce it to loop more often to allow for better latency on input returns.
-        // if self.mouse_button_action != MouseButtonAction::None {
-        //     window.request_redraw();
-        // }
-
-        match event {
-            DeviceEvent::MouseMotion { delta } => {
-                self.mouse_delta.0 -= delta.0;
-                self.mouse_delta.1 -= delta.1;
-                // window.request_redraw();
-            }
-            DeviceEvent::Motion { axis: _, value: _ }
-            | DeviceEvent::MouseWheel { delta: _ }
-            | DeviceEvent::Button {
-                button: _,
-                state: _,
-            }
-            | DeviceEvent::Key(_) => (),
-            _ => (),
+        if let DeviceEvent::MouseMotion { delta } = event {
+            self.mouse_delta.0 -= delta.0;
+            self.mouse_delta.1 -= delta.1;
         }
     }
 }
