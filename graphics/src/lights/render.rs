@@ -4,8 +4,6 @@ use crate::{
     LightsVertex, MAX_AREA_LIGHTS, MAX_DIR_LIGHTS, OrderedIndex,
     StaticVertexBuffer,
 };
-#[cfg(feature = "logging")]
-use log::warn;
 use std::{iter, mem};
 use wgpu::util::{DeviceExt, align_to};
 
@@ -144,16 +142,6 @@ impl LightRenderer {
         );
 
         self.add_buffer_store(renderer, index, buffer_layer);
-    }
-
-    /// Lights do not use Scissor Clipping
-    ///
-    pub fn use_clipping(&mut self) {
-        #[cfg(feature = "logging")]
-        warn!("Light does not use Clipping.");
-
-        #[cfg(not(feature = "logging"))]
-        panic!("Light does not use Clipping.");
     }
 }
 
