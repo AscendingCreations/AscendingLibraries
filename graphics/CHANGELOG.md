@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.26.0 (20. June, 2025)
+
 ### Added
 - Light::set_pos() and set_size().
 - MapZLayer to set layer Z, Default uses the old static set layers.
@@ -20,9 +22,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - All unloads now consume Self to drop Self after unload is complete.
 - (Breaking) Graphics update no longer triggers redraw requests except when a state becomes invalid.
 - (Breaking) Graphics Update will call window.pre_present_notify() upon successful frame buffer grab.
+- Made logging tied behind a feature. Most Error logs will be panics instead if logging disabled.
 
 ### Removed 
 - Light::set_z().
+- use_clipping for types that dont support it.
 
 ## 0.25.0 (2. June, 2025)
 

@@ -1,4 +1,5 @@
 use crate::{GpuRenderer, GraphicsError};
+#[cfg(feature = "logging")]
 use log::debug;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
@@ -260,6 +261,7 @@ impl AdapterExt for wgpu::Adapter {
         let surface = instance.create_surface(window.clone()).unwrap();
         let caps = surface.get_capabilities(&self);
 
+        #[cfg(feature = "logging")]
         debug!("{:?}", caps.formats);
 
         #[cfg(feature = "rayon")]
@@ -296,7 +298,9 @@ impl AdapterExt for wgpu::Adapter {
             );
         };
 
+        #[cfg(feature = "logging")]
         debug!("surface format: {format:?}");
+
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format,
@@ -427,8 +431,16 @@ impl InstanceExt for wgpu::Instance {
             })
             .collect();
 
+        #[cfg(feature = "logging")]
         if compatible_adapters.is_empty() {
             debug!(
+                "Unable to find compatible adapters.\nEnsure the backends are set and not Empty."
+            )
+        }
+
+        #[cfg(not(feature = "logging"))]
+        if compatible_adapters.is_empty() {
+            panic!(
                 "Unable to find compatible adapters.\nEnsure the backends are set and not Empty."
             )
         }
@@ -458,6 +470,7 @@ impl InstanceExt for wgpu::Instance {
                 .await;
 
             if ret.is_ok() {
+                #[cfg(feature = "logging")]
                 match adapter.1 {
                     3 => debug!("A Opengl Or Other Adapter was chosen"),
                     4 => debug!("A Virtual Adapter was chosen."),
@@ -465,6 +478,7 @@ impl InstanceExt for wgpu::Instance {
                     _ => {}
                 }
 
+                #[cfg(feature = "logging")]
                 match adapter.2 {
                     1 => debug!("Vulkan Adapter Choosen"),
                     2 => debug!("Metal Adapter Choosen"),

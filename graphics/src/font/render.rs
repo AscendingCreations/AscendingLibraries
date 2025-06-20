@@ -4,6 +4,7 @@ use crate::{
     TextRenderPipeline, TextVertex, Vec2,
 };
 use cosmic_text::{CacheKey, SwashCache, SwashImage};
+#[cfg(feature = "logging")]
 use log::{error, warn};
 
 /// [`Text`] text and Emoji AtlasSet holder.
@@ -166,13 +167,6 @@ impl TextRenderer {
         self.add_buffer_store(renderer, index, buffer_layer);
         Ok(())
     }
-
-    /// [`Text`] does not use Scissor Clipping.
-    /// It uses its own Internal Bounds Clipper.
-    ///
-    pub fn use_clipping(&mut self) {
-        warn!("Text uses its own Clipping.");
-    }
 }
 
 /// Trait used to Grant Direct [`Text`] Rendering to [`wgpu::RenderPass`]
@@ -203,8 +197,9 @@ where
         buffer_layer: usize,
     ) {
         if buffer.buffer.is_clipped() {
+            #[cfg(feature = "logging")]
             error!(
-                "Text uses its own clipping mechanisim it does not need to be clipped by the clipper."
+                "Text uses its own clipping mechanisim it does not need to be clipped by the clipper. render_text will be skipped."
             );
             return;
         }

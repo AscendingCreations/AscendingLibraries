@@ -1,13 +1,12 @@
-use std::{iter, mem};
-
 use crate::{
     AreaLightLayout, AreaLightRaw, DirLightLayout, DirectionalLightRaw,
     GpuRenderer, GraphicsError, InstanceBuffer, LightRenderPipeline, Lights,
     LightsVertex, MAX_AREA_LIGHTS, MAX_DIR_LIGHTS, OrderedIndex,
     StaticVertexBuffer,
 };
-
+#[cfg(feature = "logging")]
 use log::warn;
+use std::{iter, mem};
 use wgpu::util::{DeviceExt, align_to};
 
 /// Instance Buffer Setup for [`Lights`].
@@ -150,7 +149,11 @@ impl LightRenderer {
     /// Lights do not use Scissor Clipping
     ///
     pub fn use_clipping(&mut self) {
+        #[cfg(feature = "logging")]
         warn!("Light does not use Clipping.");
+
+        #[cfg(not(feature = "logging"))]
+        panic!("Light does not use Clipping.");
     }
 }
 

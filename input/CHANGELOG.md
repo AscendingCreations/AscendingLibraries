@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## 0.5.0 (20. June, 2025)
 
 ### Changed
+FrameTime now is Copy.
 (Breaking) Input Handler Window and Device update no longer take &Window.
 (Breaking) Input Handler No longer triggers a Redraw Request Use winit about to wait to set these requests manually
 (Breaking) Input now only uses Unicode Lowercase for key is pressed Hash storage.
