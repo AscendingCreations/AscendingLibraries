@@ -119,9 +119,9 @@ fn vertex(
 const pi: f32 = 3.14159265;
 const two_pi: f32 = 6.2831853;
 
-fn flash_light(light_pos: vec2<f32>, pixel_pos: vec2<f32>, dir: f32, w_angle: f32, range: f32) -> f32 {
+fn flash_light(light_pos: vec2<f32>, pixel_pos: vec2<f32>, angle: f32, w_angle: f32, range: f32) -> f32 {
     let d = distance(light_pos, pixel_pos);
-    let degree_radian = radians(dir);
+    let degree_radian = radians(angle + (w_angle/2.0));
     let w_radian = clamp(radians(w_angle), 0.0, 2.0 * pi);
     // Calculate the start angle from the direction angle and the angle width of the "cone".
     let s_angle = degree_radian - (w_radian / 2.0);
