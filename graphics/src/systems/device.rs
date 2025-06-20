@@ -149,7 +149,7 @@ impl GpuWindow {
 
                 match self.surface.get_current_texture() {
                     Ok(frame) => {
-                        window.pre_present_notify();
+                        self.window.pre_present_notify();
                         return Ok(Some(frame));
                     }
                     Err(wgpu::SurfaceError::Lost) => {
