@@ -402,9 +402,9 @@ where
         }
 
         //we enforce it to loop more often to allow for better latency on input returns.
-        if self.mouse_button_action != MouseButtonAction::None {
-            window.request_redraw();
-        }
+        //if self.mouse_button_action != MouseButtonAction::None {
+        //     window.request_redraw();
+        // }
 
         match event {
             WindowEvent::KeyboardInput {
@@ -420,8 +420,8 @@ where
             } => {
                 let (key, key_to_add) = match logical_key {
                     keyboard::Key::Named(name) => {
-                        if let Some(txt) = text {
-                            if matches!(
+                        if let Some(txt) = text
+                            && matches!(
                                 name,
                                 NamedKey::Enter
                                     | NamedKey::Home
@@ -432,28 +432,20 @@ where
                                     | NamedKey::End
                                     | NamedKey::PageUp
                                     | NamedKey::PageDown
-                            ) {
-                                if *location == Location::Numpad {
-                                    let chars: Vec<char> =
-                                        txt.chars().collect();
+                            )
+                            && *location == Location::Numpad
+                        {
+                            let chars: Vec<char> = txt.chars().collect();
 
-                                    if let Some(c) = chars.first() {
-                                        (
-                                            Key::Character(*c),
-                                            Key::Character(
-                                                c.to_lowercase()
-                                                    .next()
-                                                    .unwrap_or(*c),
-                                            ),
-                                        )
-                                    } else {
-                                        return;
-                                    }
-                                } else {
-                                    (Key::Named(*name), Key::Named(*name))
-                                }
+                            if let Some(c) = chars.first() {
+                                (
+                                    Key::Character(*c),
+                                    Key::Character(
+                                        c.to_lowercase().next().unwrap_or(*c),
+                                    ),
+                                )
                             } else {
-                                (Key::Named(*name), Key::Named(*name))
+                                return;
                             }
                         } else {
                             (Key::Named(*name), Key::Named(*name))
@@ -601,20 +593,20 @@ where
         }
     }
 
-    pub fn device_updates(&mut self, window: &Window, event: &DeviceEvent) {
+    pub fn device_updates(&mut self, _window: &Window, event: &DeviceEvent) {
         //We clear and reset everything here.
         self.mouse_delta = (0.0, 0.0);
 
         //we enforce it to loop more often to allow for better latency on input returns.
-        if self.mouse_button_action != MouseButtonAction::None {
-            window.request_redraw();
-        }
+        // if self.mouse_button_action != MouseButtonAction::None {
+        //     window.request_redraw();
+        // }
 
         match event {
             DeviceEvent::MouseMotion { delta } => {
                 self.mouse_delta.0 -= delta.0;
                 self.mouse_delta.1 -= delta.1;
-                window.request_redraw();
+                // window.request_redraw();
             }
             DeviceEvent::Motion { axis: _, value: _ }
             | DeviceEvent::MouseWheel { delta: _ }
@@ -622,7 +614,7 @@ where
                 button: _,
                 state: _,
             }
-            | DeviceEvent::Key(_) => window.request_redraw(),
+            | DeviceEvent::Key(_) => (),
             _ => (),
         }
     }

@@ -149,7 +149,7 @@ impl GpuWindow {
 
                 match self.surface.get_current_texture() {
                     Ok(frame) => {
-                        self.window.request_redraw();
+                        //self.window.request_redraw();
                         return Ok(Some(frame));
                     }
                     Err(wgpu::SurfaceError::Lost) => {
@@ -159,6 +159,7 @@ impl GpuWindow {
                         );
                         self.resize(gpu_device, size)?;
                         self.inner_size = self.window.inner_size();
+                        self.window.request_redraw();
 
                         if self.size.width == 0.0
                             || self.size.height == 0.0
@@ -169,12 +170,13 @@ impl GpuWindow {
                         }
                     }
                     Err(wgpu::SurfaceError::Outdated) => {
+                        self.window.request_redraw();
                         return Ok(None);
                     }
                     Err(e) => return Err(GraphicsError::from(e)),
                 }
 
-                self.window.request_redraw();
+                // self.window.request_redraw();
             }
             WindowEvent::Moved(_)
             | WindowEvent::ScaleFactorChanged {
