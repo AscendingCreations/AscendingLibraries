@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.27.0 (10. July, 2025)
+
+### Changed
+- Wgpu & Naga to version 26.0.0
+- Updated LRU to version 0.16
+
 ## 0.26.0 (20. June, 2025)
 
 ### Added
