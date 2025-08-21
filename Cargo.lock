@@ -2848,9 +2848,9 @@ checksum = "a751b3277700db47d3e574514de2eced5e54dc8a5436a3bf7a0b248b2cee16f3"
 
 [[package]]
 name = "wgpu"
-version = "26.0.0"
+version = "26.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8899b410ccd4579c0a02aa2516266ade1645a64b083fbfaeff0fb2ce02b08e7"
+checksum = "70b6ff82bbf6e9206828e1a3178e851f8c20f1c9028e74dd3a8090741ccd5798"
 dependencies = [
  "arrayvec",
  "bitflags 2.9.1",
@@ -2877,9 +2877,9 @@ dependencies = [
 
 [[package]]
 name = "wgpu-core"
-version = "26.0.0"
+version = "26.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f08422cb0febc38cf01a252b76cc8b66dfe2adad6a572e817a8962a09552c6f6"
+checksum = "d5f62f1053bd28c2268f42916f31588f81f64796e2ff91b81293515017ca8bd9"
 dependencies = [
  "arrayvec",
  "bit-set",
@@ -2935,9 +2935,9 @@ dependencies = [
 
 [[package]]
 name = "wgpu-hal"
-version = "26.0.0"
+version = "26.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2971a6c8b903aa9951cf3f3e4d8060904f8c8e905c11f7f5b228edf7faddb719"
+checksum = "cf873d79f5c8e9699e0fffbbff4d0f7eedbbd228bff11a957987a3b82ca8405f"
 dependencies = [
  "android_system_properties",
  "arrayvec",
