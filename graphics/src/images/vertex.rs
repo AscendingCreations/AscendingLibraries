@@ -1,6 +1,6 @@
 use crate::{BufferData, BufferLayout};
 #[cfg(feature = "rayon")]
-use rayon::{iter::repeatn, prelude::*};
+use rayon::{iter::repeat_n, prelude::*};
 
 /// Vertex Details for [`crate::Image`] that matches the Shaders Vertex Layout.
 ///
@@ -54,7 +54,7 @@ impl BufferLayout for ImageVertex {
     ) -> BufferData {
         #[cfg(feature = "rayon")]
         let instance_arr: Vec<ImageVertex> =
-            repeatn(ImageVertex::default(), vertex_capacity).collect();
+            repeat_n(ImageVertex::default(), vertex_capacity).collect();
 
         #[cfg(not(feature = "rayon"))]
         let instance_arr: Vec<ImageVertex> =
