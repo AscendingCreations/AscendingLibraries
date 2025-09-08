@@ -366,10 +366,10 @@ impl InstanceExt for wgpu::Instance {
             .into_par_iter()
             .filter_map(|adapter| {
                 let information = adapter.get_info();
-                let backend = information.backend as u32;
+                let mut backend = information.backend as u32;
 
                 if backend == 0 {
-                    return None;
+                    backend = 6; //NOOP Reordering to last
                 }
 
                 let is_low = options.power == AdapterPowerSettings::LowPower;
@@ -382,6 +382,12 @@ impl InstanceExt for wgpu::Instance {
                     DeviceType::VirtualGpu => 4,
                     DeviceType::Cpu => 5,
                 };
+
+                if (device_type == 1 || device_type == 2)
+                    && information.driver.is_empty()
+                {
+                    return None;
+                }
 
                 if let Some(ref surface) = options.compatible_surface {
                     if !adapter.is_surface_supported(surface) {
@@ -398,10 +404,10 @@ impl InstanceExt for wgpu::Instance {
             .into_iter()
             .filter_map(|adapter| {
                 let information = adapter.get_info();
-                let backend = information.backend as u32;
+                let mut backend = information.backend as u32;
 
                 if backend == 0 {
-                    return None;
+                    backend = 6;
                 }
 
                 let is_low = options.power == AdapterPowerSettings::LowPower;
