@@ -2,7 +2,7 @@ use crate::{BufferData, BufferLayout};
 use cosmic_text::Color;
 use lyon::{math::Point as LPoint, tessellation as tess};
 #[cfg(feature = "rayon")]
-use rayon::{iter::repeatn, prelude::*};
+use rayon::{iter::repeat_n, prelude::*};
 
 /// Vertex Details for [`crate::Mesh2D`] that matches the Shaders Vertex Layout.
 ///
@@ -40,7 +40,7 @@ impl BufferLayout for Mesh2DVertex {
     ) -> BufferData {
         #[cfg(feature = "rayon")]
         let vbo_arr: Vec<Mesh2DVertex> =
-            repeatn(Mesh2DVertex::default(), vertex_capacity).collect();
+            repeat_n(Mesh2DVertex::default(), vertex_capacity).collect();
 
         #[cfg(not(feature = "rayon"))]
         let vbo_arr: Vec<Mesh2DVertex> =
