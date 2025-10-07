@@ -1,4 +1,5 @@
 #![allow(clippy::extra_unused_type_parameters)]
+mod animated_images;
 mod atlas_set;
 mod error;
 mod font;
@@ -11,6 +12,7 @@ mod textures;
 mod tilesheet;
 mod ui;
 
+pub use animated_images::*;
 pub use atlas_set::*;
 pub use cosmic_text::Color;
 pub use error::*;
