@@ -1,5 +1,5 @@
 use crate::{
-    BufferLayout, GpuDevice, ImageVertex, LayoutStorage, PipeLineLayout,
+    AnimImageVertex, BufferLayout, GpuDevice, LayoutStorage, PipeLineLayout,
     StaticVertexBuffer, SystemLayout, TextureLayout,
 };
 use bytemuck::{Pod, Zeroable};
