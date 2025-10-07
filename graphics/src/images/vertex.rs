@@ -11,10 +11,7 @@ pub struct ImageVertex {
     pub size: [f32; 2],
     pub tex_data: [f32; 4],
     pub color: u32,
-    pub frames: [f32; 2],
-    pub animate: u32,
     pub camera_type: u32,
-    pub time: u32,
     pub layer: i32,
     pub angle: f32,
     pub flip_style: u32,
@@ -27,10 +24,7 @@ impl Default for ImageVertex {
             size: [0.0; 2],
             tex_data: [0.0; 4],
             color: 0,
-            frames: [0.0; 2],
-            animate: 0,
             camera_type: 1,
-            time: 0,
             layer: 0,
             angle: 0.0,
             flip_style: 0,
@@ -40,7 +34,7 @@ impl Default for ImageVertex {
 
 impl BufferLayout for ImageVertex {
     fn attributes() -> Vec<wgpu::VertexAttribute> {
-        wgpu::vertex_attr_array![1 => Float32x3, 2 => Float32x2, 3 => Float32x4, 4 => Uint32, 5 => Float32x2, 6 => Uint32, 7 => Uint32, 8 => Uint32, 9 => Sint32, 10 => Float32, 11 => Uint32 ]
+        wgpu::vertex_attr_array![1 => Float32x3, 2 => Float32x2, 3 => Float32x4, 4 => Uint32,  5 => Uint32,  6 => Sint32, 7 => Float32, 8 => Uint32 ]
             .to_vec()
     }
 
@@ -68,6 +62,6 @@ impl BufferLayout for ImageVertex {
     }
 
     fn stride() -> usize {
-        std::mem::size_of::<[f32; 18]>()
+        std::mem::size_of::<[f32; 14]>()
     }
 }

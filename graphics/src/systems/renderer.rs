@@ -275,6 +275,13 @@ impl GpuRenderer {
             &mut self.device,
             &mut self.layout_storage,
             surface_format,
+            crate::AnimImageRenderPipeline,
+        );
+
+        self.pipeline_storage.create_pipeline(
+            &mut self.device,
+            &mut self.layout_storage,
+            surface_format,
             crate::MapRenderPipeline,
         );
 

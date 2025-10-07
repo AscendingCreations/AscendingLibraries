@@ -23,13 +23,6 @@ pub struct Image {
     pub uv: Vec4,
     /// Color.
     pub color: Color,
-    /// frames, frames_per_row: this will cycle thru
-    /// frames per row at the uv start.
-    pub frames: Vec2,
-    /// in millsecs 1000 = 1sec
-    pub switch_time: u32,
-    /// turn on animation if set.
-    pub animate: bool,
     /// Global Camera the Shader will use to render the object with
     pub camera_type: CameraType,
     /// Texture area location in Atlas.
@@ -64,9 +57,6 @@ impl Image {
             pos,
             size,
             uv,
-            frames: Vec2::default(),
-            switch_time: 0,
-            animate: false,
             camera_type: CameraType::None,
             color: Color::rgba(255, 255, 255, 255),
             texture,
@@ -136,22 +126,6 @@ impl Image {
         self
     }
 
-    /// Updates the [`Image`]'s animation frames.
-    ///
-    pub fn set_frames(&mut self, frames: Vec2) -> &mut Self {
-        self.changed = true;
-        self.frames = frames;
-        self
-    }
-
-    /// Updates the [`Image`]'s animate boolean.
-    ///
-    pub fn set_animate(&mut self, animate: bool) -> &mut Self {
-        self.changed = true;
-        self.animate = animate;
-        self
-    }
-
     /// Updates the [`Image`]'s texture x, y, w, h
     ///
     pub fn set_uv(&mut self, uv: Vec4) -> &mut Self {
@@ -200,14 +174,6 @@ impl Image {
         self
     }
 
-    /// Updates the [`Image`]'s animation switch time.
-    ///
-    pub fn set_switch_time(&mut self, switch_time: u32) -> &mut Self {
-        self.changed = true;
-        self.switch_time = switch_time;
-        self
-    }
-
     /// Updates the [`Image`]'s Buffers to prepare them for rendering.
     ///
     fn create_quad(
@@ -239,10 +205,7 @@ impl Image {
             size: self.size.to_array(),
             tex_data: tex_data.into(),
             color: self.color.0,
-            frames: self.frames.to_array(),
-            animate: u32::from(self.animate),
             camera_type: self.camera_type as u32,
-            time: self.switch_time,
             layer: allocation.layer as i32,
             flip_style: self.flip_style as u32,
             angle: self.rotation_angle,

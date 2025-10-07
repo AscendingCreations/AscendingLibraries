@@ -21,13 +21,10 @@ struct VertexInput {
     @location(2) hw: vec2<f32>,
     @location(3) tex_data: vec4<f32>,
     @location(4) color: u32,
-    @location(5) frames: vec2<f32>,
-    @location(6) animate: u32,
-    @location(7) camera_type: u32,
-    @location(8) time: u32,
-    @location(9) layer: i32,
-    @location(10) angle: f32,
-    @location(11) flip_style: u32,
+    @location(5) camera_type: u32,
+    @location(6) layer: i32,
+    @location(7) angle: f32,
+    @location(8) flip_style: u32,
 };
 
 struct VertexOutput {
@@ -35,11 +32,8 @@ struct VertexOutput {
     @location(0) tex_coords: vec2<f32>,
     @location(1) tex_data: vec4<f32>,
     @location(2) col: vec4<f32>,
-    @location(3) frames: vec2<u32>,
-    @location(4) size: vec2<f32>,
-    @location(5) layer: i32,
-    @location(6) time: u32,
-    @location(7) animate: u32,
+    @location(3) size: vec2<f32>,
+    @location(4) layer: i32,
 };
 
 struct Axises {
@@ -240,24 +234,14 @@ fn vertex(
     result.tex_data = tex_data;
     result.layer = vertex.layer;
     result.col = unpack_color(vertex.color);
-    result.frames = vec2<u32>(u32(vertex.frames[0]), u32(vertex.frames[1]));
     result.size = fsize;
-    result.animate = vertex.animate;
-    result.time = vertex.time;
     return result;
 }
 
 // Fragment shader
 @fragment
 fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
-    let id = global.seconds / (f32(vertex.time) / 1000.0);
-    let yframes = select(vertex.frames[0], vertex.frames[1], vertex.frames[1] > 0u);
-    let frame = u32(floor(id % f32(vertex.frames[0])));
-    let coords = select(
-        (vertex.tex_data.xy + vertex.tex_coords.xy), 
-        (((vec2(f32(frame % yframes), f32(frame / yframes))) * vertex.tex_data.zw) + vertex.tex_data.xy + vertex.tex_coords.xy), 
-        vertex.animate > 0u
-    );
+    let coords = (vertex.tex_data.xy + vertex.tex_coords.xy);
 
     let object_color = textureSampleLevel(tex, tex_sample ,coords / vertex.size, vertex.layer, 1.0) * vertex.col;
 
