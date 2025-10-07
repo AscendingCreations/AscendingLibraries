@@ -1,5 +1,5 @@
 use crate::{
-    AnimImage, AtlasSet, GpuRenderer, GraphicsError, ImageRenderPipeline,
+    AnimImage, AnimImageRenderPipeline, AtlasSet, GpuRenderer, GraphicsError,
     ImageVertex, InstanceBuffer, OrderedIndex, StaticVertexBuffer, System,
 };
 
@@ -112,7 +112,9 @@ where
                     self.set_bind_group(1, atlas.bind_group(), &[]);
                     self.set_vertex_buffer(1, buffer.buffer.instances(None));
                     self.set_pipeline(
-                        renderer.get_pipelines(ImageRenderPipeline).unwrap(),
+                        renderer
+                            .get_pipelines(AnimImageRenderPipeline)
+                            .unwrap(),
                     );
                     for (details, bounds, camera_type) in details {
                         if let Some(bounds) = bounds {
@@ -153,7 +155,7 @@ where
                 self.set_bind_group(1, atlas.bind_group(), &[]);
                 self.set_vertex_buffer(1, buffer.buffer.instances(None));
                 self.set_pipeline(
-                    renderer.get_pipelines(ImageRenderPipeline).unwrap(),
+                    renderer.get_pipelines(AnimImageRenderPipeline).unwrap(),
                 );
 
                 self.draw_indexed(
