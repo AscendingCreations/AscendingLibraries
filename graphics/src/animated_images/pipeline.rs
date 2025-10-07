@@ -21,7 +21,7 @@ impl PipeLineLayout for AnimImageRenderPipeline {
             wgpu::ShaderModuleDescriptor {
                 label: Some("Shader"),
                 source: wgpu::ShaderSource::Wgsl(
-                    include_str!("../shaders/imageshader.wgsl").into(),
+                    include_str!("../shaders/animimageshader.wgsl").into(),
                 ),
             },
         );
