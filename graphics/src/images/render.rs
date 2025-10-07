@@ -50,7 +50,7 @@ impl ImageRenderer {
     /// - atlas: [`AtlasSet`] the [`Image`] needs to render with.
     /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
-    pub fn image_update(
+    pub fn update(
         &mut self,
         image: &mut Image,
         renderer: &mut GpuRenderer,

@@ -155,7 +155,7 @@ impl TextRenderer {
     /// - atlas: [`TextAtlas`] the [`Text`] needs to render with.
     /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
-    pub fn text_update(
+    pub fn update(
         &mut self,
         text: &mut Text,
         atlas: &mut TextAtlas,

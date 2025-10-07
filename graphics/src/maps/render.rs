@@ -110,7 +110,7 @@ impl MapRenderer {
     /// - atlas: [`AtlasSet`] the [`Map`] needs to render with.
     /// - buffer_layers: The Buffer Layer's we want to add this Object too.
     ///
-    pub fn map_update(
+    pub fn update(
         &mut self,
         map: &mut Map,
         renderer: &mut GpuRenderer,

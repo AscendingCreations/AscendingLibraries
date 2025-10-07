@@ -129,7 +129,7 @@ impl LightRenderer {
     /// - lights: [`Lights`] we want to update and prepare for rendering.
     /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
-    pub fn lights_update(
+    pub fn update(
         &mut self,
         lights: &mut Lights,
         renderer: &mut GpuRenderer,

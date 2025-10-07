@@ -50,7 +50,7 @@ impl AnimImageRenderer {
     /// - atlas: [`AtlasSet`] the [`AnimImage`] needs to render with.
     /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
-    pub fn image_update(
+    pub fn update(
         &mut self,
         image: &mut AnimImage,
         renderer: &mut GpuRenderer,
@@ -78,7 +78,7 @@ where
 {
     /// Renders the all [`AnimImage`]'s within the buffer layer to screen that have been processed and finalized.
     ///
-    fn render_image(
+    fn render_animated_image(
         &mut self,
         renderer: &'b GpuRenderer,
         buffer: &'b AnimImageRenderer,
@@ -94,7 +94,7 @@ where
     'b: 'a,
     Controls: camera::controls::Controls,
 {
-    fn render_image(
+    fn render_animated_image(
         &mut self,
         renderer: &'b GpuRenderer,
         buffer: &'b AnimImageRenderer,

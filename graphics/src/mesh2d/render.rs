@@ -48,7 +48,7 @@ impl Mesh2DRenderer {
     /// - atlas: [`AtlasSet`] the [`Mesh2D`] needs to render with.
     /// - buffer_layer: The Buffer Layer we want to add this Object too.
     ///
-    pub fn mesh_update(
+    pub fn update(
         &mut self,
         mesh: &mut Mesh2D,
         renderer: &mut GpuRenderer,

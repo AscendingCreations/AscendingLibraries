@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.28.0 (7. October, 2025)
+
+### Changed
+- Wgpu & Naga to version 27.0.0
+- Removed Animation and API from Image
+- Renamed all Render *_update to be just update for better alignment.
+
+### Added
+- Animation Pipeline with AnimImage type use this for Animated Images types instead. 
+
 ## 0.27.0 (10. July, 2025)
 
 ### Changed
