@@ -27,6 +27,33 @@ pub struct GpuRenderer {
     pub backend: wgpu::Backend,
 }
 
+/// Used to deturmine which Pipelines to enable when using the Renderer.
+///
+#[derive(Debug, Default, Copy, Clone)]
+pub struct EnabledPipelines {
+    pub image_pipeline: bool,
+    pub anim_image_pipeline: bool,
+    pub map_pipeline: bool,
+    pub text_pipeline: bool,
+    pub mesh2d_pipeline: bool,
+    pub light_pipeline: bool,
+    pub rect_pipeline: bool,
+}
+
+impl EnabledPipelines {
+    pub fn all() -> Self {
+        Self {
+            image_pipeline: true,
+            anim_image_pipeline: true,
+            map_pipeline: true,
+            text_pipeline: true,
+            mesh2d_pipeline: true,
+            light_pipeline: true,
+            rect_pipeline: true,
+        }
+    }
+}
+
 /// Trait to allow [`wgpu::RenderPass`] to Set the Vertex and Index buffers.
 ///
 pub trait SetBuffers<'a, 'b>
@@ -263,55 +290,73 @@ impl GpuRenderer {
 
     /// Creates each supported rendering objects pipeline.
     ///
-    pub fn create_pipelines(&mut self, surface_format: wgpu::TextureFormat) {
-        self.pipeline_storage.create_pipeline(
-            &mut self.device,
-            &mut self.layout_storage,
-            surface_format,
-            crate::ImageRenderPipeline,
-        );
+    pub fn create_pipelines(
+        &mut self,
+        pipelined_enabled: EnabledPipelines,
+        surface_format: wgpu::TextureFormat,
+    ) {
+        if pipelined_enabled.image_pipeline {
+            self.pipeline_storage.create_pipeline(
+                &mut self.device,
+                &mut self.layout_storage,
+                surface_format,
+                crate::ImageRenderPipeline,
+            );
+        }
 
-        self.pipeline_storage.create_pipeline(
-            &mut self.device,
-            &mut self.layout_storage,
-            surface_format,
-            crate::AnimImageRenderPipeline,
-        );
+        if pipelined_enabled.anim_image_pipeline {
+            self.pipeline_storage.create_pipeline(
+                &mut self.device,
+                &mut self.layout_storage,
+                surface_format,
+                crate::AnimImageRenderPipeline,
+            );
+        }
 
-        self.pipeline_storage.create_pipeline(
-            &mut self.device,
-            &mut self.layout_storage,
-            surface_format,
-            crate::MapRenderPipeline,
-        );
+        if pipelined_enabled.map_pipeline {
+            self.pipeline_storage.create_pipeline(
+                &mut self.device,
+                &mut self.layout_storage,
+                surface_format,
+                crate::MapRenderPipeline,
+            );
+        }
 
-        self.pipeline_storage.create_pipeline(
-            &mut self.device,
-            &mut self.layout_storage,
-            surface_format,
-            crate::TextRenderPipeline,
-        );
+        if pipelined_enabled.text_pipeline {
+            self.pipeline_storage.create_pipeline(
+                &mut self.device,
+                &mut self.layout_storage,
+                surface_format,
+                crate::TextRenderPipeline,
+            );
+        }
 
-        self.pipeline_storage.create_pipeline(
-            &mut self.device,
-            &mut self.layout_storage,
-            surface_format,
-            crate::Mesh2DRenderPipeline,
-        );
+        if pipelined_enabled.mesh2d_pipeline {
+            self.pipeline_storage.create_pipeline(
+                &mut self.device,
+                &mut self.layout_storage,
+                surface_format,
+                crate::Mesh2DRenderPipeline,
+            );
+        }
 
-        self.pipeline_storage.create_pipeline(
-            &mut self.device,
-            &mut self.layout_storage,
-            surface_format,
-            crate::LightRenderPipeline,
-        );
+        if pipelined_enabled.light_pipeline {
+            self.pipeline_storage.create_pipeline(
+                &mut self.device,
+                &mut self.layout_storage,
+                surface_format,
+                crate::LightRenderPipeline,
+            );
+        }
 
-        self.pipeline_storage.create_pipeline(
-            &mut self.device,
-            &mut self.layout_storage,
-            surface_format,
-            crate::RectRenderPipeline,
-        );
+        if pipelined_enabled.rect_pipeline {
+            self.pipeline_storage.create_pipeline(
+                &mut self.device,
+                &mut self.layout_storage,
+                surface_format,
+                crate::RectRenderPipeline,
+            );
+        }
     }
 
     /// Gets a optional reference of [`wgpu::RenderPipeline`]

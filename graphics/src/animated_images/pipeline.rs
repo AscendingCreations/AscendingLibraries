@@ -35,7 +35,7 @@ impl PipeLineLayout for AnimImageRenderPipeline {
                 label: Some("Animated Image render pipeline"),
                 layout: Some(&gpu_device.device().create_pipeline_layout(
                     &wgpu::PipelineLayoutDescriptor {
-                        label: Some("render_pipeline_layout"),
+                        label: Some("animation_render_pipeline_layout"),
                         bind_group_layouts: &[&system_layout, &texture_layout],
                         push_constant_ranges: &[],
                     },
@@ -52,9 +52,9 @@ impl PipeLineLayout for AnimImageRenderPipeline {
                             ],
                         },
                         wgpu::VertexBufferLayout {
-                            array_stride: ImageVertex::stride() as u64,
+                            array_stride: AnimImageVertex::stride() as u64,
                             step_mode: wgpu::VertexStepMode::Instance,
-                            attributes: &ImageVertex::attributes(),
+                            attributes: &AnimImageVertex::attributes(),
                         },
                     ],
                     compilation_options: Default::default(),

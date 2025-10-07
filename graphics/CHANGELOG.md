@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added
 - Animation Pipeline with AnimImage type use this for Animated Images types instead. 
+- pipelined_enabled to create_device, create_renderer and create_pipelines.
 
 ## 0.27.0 (10. July, 2025)
 

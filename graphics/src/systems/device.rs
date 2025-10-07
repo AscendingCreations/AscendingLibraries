@@ -1,9 +1,8 @@
-use crate::{GpuRenderer, GraphicsError};
+use crate::{EnabledPipelines, GpuRenderer, GraphicsError};
 #[cfg(feature = "logging")]
 use log::debug;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
-
 use std::sync::Arc;
 use wgpu::{Adapter, Backends, DeviceType, Surface, TextureFormat};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
@@ -243,6 +242,7 @@ pub trait AdapterExt {
         window: &Arc<Window>,
         device_descriptor: &wgpu::DeviceDescriptor,
         present_mode: wgpu::PresentMode,
+        pipelined_enabled: EnabledPipelines,
     ) -> Result<GpuRenderer, GraphicsError>;
 }
 
@@ -253,6 +253,7 @@ impl AdapterExt for wgpu::Adapter {
         window: &Arc<Window>,
         device_descriptor: &wgpu::DeviceDescriptor<'_>,
         present_mode: wgpu::PresentMode,
+        pipelined_enabled: EnabledPipelines,
     ) -> Result<GpuRenderer, GraphicsError> {
         let size = window.inner_size();
 
@@ -328,7 +329,7 @@ impl AdapterExt for wgpu::Adapter {
         );
 
         // Creates the shader rendering pipelines for each renderer.
-        renderer.create_pipelines(renderer.surface_format());
+        renderer.create_pipelines(pipelined_enabled, renderer.surface_format());
         Ok(renderer)
     }
 }
@@ -346,6 +347,7 @@ pub trait InstanceExt {
         options: AdapterOptions,
         device_descriptor: &wgpu::DeviceDescriptor,
         present_mode: wgpu::PresentMode,
+        pipelined_enabled: EnabledPipelines,
     ) -> Result<GpuRenderer, GraphicsError>;
 
     /// Gets a list of Avaliable Adapters based upon the [`AdapterOptions`].
@@ -466,13 +468,20 @@ impl InstanceExt for wgpu::Instance {
         options: AdapterOptions,
         device_descriptor: &wgpu::DeviceDescriptor<'_>,
         present_mode: wgpu::PresentMode,
+        pipelined_enabled: EnabledPipelines,
     ) -> Result<GpuRenderer, GraphicsError> {
         let mut adapters = self.get_adapters(options);
 
         while let Some(adapter) = adapters.pop() {
             let ret = adapter
                 .0
-                .create_renderer(self, &window, device_descriptor, present_mode)
+                .create_renderer(
+                    self,
+                    &window,
+                    device_descriptor,
+                    present_mode,
+                    pipelined_enabled,
+                )
                 .await;
 
             if ret.is_ok() {
