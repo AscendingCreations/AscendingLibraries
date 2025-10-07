@@ -45,7 +45,7 @@ impl BufferLayout for AnimImageVertex {
     }
 
     fn default_buffer() -> BufferData {
-        Self::with_capacity(10_000, 0)
+        Self::with_capacity(1_000, 0)
     }
 
     fn with_capacity(
