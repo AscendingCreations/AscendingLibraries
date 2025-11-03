@@ -331,9 +331,15 @@ impl Text {
         text: &str,
         attrs: &Attrs,
         shaping: cosmic_text::Shaping,
+        alignment: Option<Align>,
     ) -> &mut Self {
-        self.buffer
-            .set_text(&mut renderer.font_sys, text, attrs, shaping);
+        self.buffer.set_text(
+            &mut renderer.font_sys,
+            text,
+            attrs,
+            shaping,
+            alignment,
+        );
         self.changed = true;
         self
     }
@@ -512,6 +518,7 @@ impl Text {
             "",
             &cosmic_text::Attrs::new(),
             cosmic_text::Shaping::Basic,
+            None,
         );
         self.changed = true;
         self
@@ -583,6 +590,7 @@ impl Text {
         text: &str,
         attrs: &Attrs,
         options: TextOptions,
+        alignment: Option<Align>,
     ) -> Vec2 {
         let mut buffer = Buffer::new(
             font_system,
@@ -597,7 +605,7 @@ impl Text {
             options.buffer_width,
             options.buffer_height,
         );
-        buffer.set_text(font_system, text, attrs, options.shaping);
+        buffer.set_text(font_system, text, attrs, options.shaping, alignment);
 
         #[cfg(not(feature = "rayon"))]
         let (width, total_lines) = buffer.layout_runs().fold(
@@ -639,6 +647,7 @@ impl Text {
         text: &str,
         attrs: &Attrs,
         options: TextOptions,
+        alignment: Option<Align>,
     ) -> Vec<Vec2> {
         let mut buffer = Buffer::new(
             font_system,
@@ -662,7 +671,13 @@ impl Text {
                 let mut buf = vec![0; n];
                 let u = ch.encode_utf8(&mut buf);
 
-                buffer.set_text(font_system, u, attrs, options.shaping);
+                buffer.set_text(
+                    font_system,
+                    u,
+                    attrs,
+                    options.shaping,
+                    alignment,
+                );
 
                 #[cfg(not(feature = "rayon"))]
                 let (width, total_lines) = buffer.layout_runs().fold(
