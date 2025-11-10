@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.29.1 (10. November, 2025)
+
+### Added
+- Rayon Support to visible bounds Calculation in visible_details.
+
+
 ## 0.29.0 (3. November, 2025)
 
 ### Changed

@@ -552,12 +552,29 @@ impl Text {
 
     /// Returns Visible Width and Line details of the Rendered [`Text`].
     pub fn visible_details(&self) -> VisibleDetails {
+        #[cfg(not(feature = "rayon"))]
         let (width, lines) = self.buffer.layout_runs().fold(
             (0.0, 0usize),
             |(width, total_lines), run| {
                 (run.line_w.max(width), total_lines + 1)
             },
         );
+
+        #[cfg(feature = "rayon")]
+        let (width, lines) = self
+            .buffer
+            .layout_runs()
+            .par_bridge()
+            .fold(
+                || (0.0, 0usize),
+                |(width, total_lines), run| {
+                    (run.line_w.max(width), total_lines + 1)
+                },
+            )
+            .reduce(
+                || (0.0, 0usize),
+                |(w1, t1), (w2, t2)| (w1.max(w2), t1 + t2),
+            );
 
         VisibleDetails {
             line_height: self.buffer.metrics().line_height,
