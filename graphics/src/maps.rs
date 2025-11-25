@@ -111,7 +111,11 @@ impl Default for MapZLayers {
 pub struct TileData {
     ///tiles allocation ID within the texture.
     pub id: usize,
+    /// Color Offset of the Tile
     pub color: Color,
+    /// Timer for animation switch. Note: Each Layer on the same Position must match to work correctly
+    /// for Anim layer 1 - 4.
+    pub anim_time: u32,
 }
 
 impl Default for TileData {
@@ -119,6 +123,7 @@ impl Default for TileData {
         Self {
             id: 0,
             color: Color::rgba(255, 255, 255, 255),
+            anim_time: 250,
         }
     }
 }
@@ -214,6 +219,7 @@ impl Map {
                             color: tile.color.0,
                             map_layer: layer as u32,
                             map_index: self.map_index as u32,
+                            anim_time: tile.anim_time,
                         })
                     } else {
                         None
@@ -537,9 +543,10 @@ impl Map {
         self
     }
 
-    /// This sets the tile's Id within the texture,
-    /// layer within the texture array and Alpha for its transparency.
-    /// This allows us to loop through the tiles Shader side efficiently.
+    /// This sets the tile's whole Data per layer.
+    /// This also increments or deincrements a Filled tile count to help speed up shader Vertex generation.
+    /// and avoid processing unused layers.
+    /// This also will loop set the anim_timer for all layers if different from the current tiles.
     ///
     pub fn set_tile(&mut self, pos: UVec3, tile: TileData) {
         if pos.x >= self.size.x || pos.y >= self.size.y || pos.z >= 9 {
@@ -551,6 +558,17 @@ impl Map {
             + (pos.z * (self.size.x * self.size.y)))
             as usize;
         let current_tile = self.tiles[tilepos];
+
+        if current_tile.anim_time != tile.anim_time {
+            for z in 0..9 {
+                let tile_pos = (pos.x
+                    + (pos.y * self.size.y)
+                    + (z * (self.size.x * self.size.y)))
+                    as usize;
+
+                self.tiles[tile_pos].anim_time = tile.anim_time;
+            }
+        }
 
         if (current_tile.id > 0 && current_tile.color.a() > 0)
             && (tile.color.a() == 0 || tile.id == 0)
@@ -565,7 +583,29 @@ impl Map {
                 self.filled_tiles[pos.z as usize].saturating_add(1);
         }
 
-        self.tiles[tilepos] = tile;
+        self.tiles[tilepos].color = tile.color;
+        self.tiles[tilepos].id = tile.id;
+        self.tiles_changed = true;
+    }
+
+    /// This sets the all layered Tiles anim_time within the X,Y location.
+    /// This is to help prevent timing issues between tile layers.
+    /// This does not increment or deincrement the tile data.
+    ///
+    pub fn set_tile_anim_timer(&mut self, pos: UVec2, anim_time: u32) {
+        if pos.x >= self.size.x || pos.y >= self.size.y {
+            return;
+        }
+
+        for z in 0..9 {
+            let tilepos = (pos.x
+                + (pos.y * self.size.y)
+                + (z * (self.size.x * self.size.y)))
+                as usize;
+
+            self.tiles[tilepos].anim_time = anim_time;
+        }
+
         self.tiles_changed = true;
     }
 

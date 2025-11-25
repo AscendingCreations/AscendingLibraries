@@ -31,6 +31,7 @@ struct VertexInput {
     @location(4) color: u32,
     @location(5) map_layer: u32,
     @location(6) map_id: u32,
+    @location(7) anim_time: u32,
 };
 
 struct VertexOutput {
@@ -137,7 +138,7 @@ fn vertex(
 
     result.color = unpack_color(vertex.color);
 
-    let id = global.seconds / (f32(250) / 1000.0);
+    let id = global.seconds / (f32(vertex.anim_time) / 1000.0);
     let frame = u32(floor(id % f32(4)));
 
     if vertex.map_layer == 3 && frame != 0u {
