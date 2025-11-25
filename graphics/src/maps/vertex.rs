@@ -37,7 +37,7 @@ impl BufferLayout for TileVertex {
     }
 
     fn default_buffer() -> BufferData {
-        Self::with_capacity(9_216, 0)
+        Self::with_capacity(82_944, 0)
     }
 
     fn with_capacity(
