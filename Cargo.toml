@@ -16,7 +16,7 @@ lru = "0.16.2"
 glam = { version = "0.30.9", features = ["bytemuck", "mint"] }
 lyon = "1.0.16"
 smol_str = "0.3.4"
-indexmap = "2.12.0"
+indexmap = "2.12.1"
 slotmap = "1.0.7"
 ahash = {version = "0.8.12", features = ["serde"]}
 slab = "0.4.11"
