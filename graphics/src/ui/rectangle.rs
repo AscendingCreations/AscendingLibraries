@@ -1,5 +1,5 @@
 use crate::{
-    AtlasSet, Bounds, CameraType, DrawOrder, GpuRenderer, GraphicsError, Index,
+    AtlasSet, Bounds, CameraView, DrawOrder, GpuRenderer, GraphicsError, Index,
     OrderedIndex, OtherError, RectVertex, Texture, Vec2, Vec3, Vec4,
 };
 use cosmic_text::Color;
@@ -26,7 +26,7 @@ pub struct Rect {
     /// Rectangle Radius.
     pub radius: f32,
     /// [`CameraType`] used to render with.
-    pub camera_type: CameraType,
+    pub camera_type: CameraView,
     /// Instance Buffers Store ID.
     pub store_id: Index,
     /// the draw order of the rect. created/updated when update is called.
@@ -59,7 +59,7 @@ impl Rect {
             border_width: 0.0,
             border_color: Color::rgba(0, 0, 0, 0),
             radius: 0.0,
-            camera_type: CameraType::None,
+            camera_type: CameraView::default(),
             store_id: renderer.new_buffer(rect_size, 0),
             order: DrawOrder::new(false, Vec3::default(), order_layer),
             bounds: None,
@@ -89,7 +89,7 @@ impl Rect {
             border_width: 0.0,
             border_color: Color::rgba(0, 0, 0, 0),
             radius: 0.0,
-            camera_type: CameraType::None,
+            camera_type: CameraView::default(),
             store_id: renderer.new_buffer(rect_size, 0),
             order: DrawOrder::new(false, Vec3::default(), order_layer),
             bounds: None,
@@ -135,7 +135,7 @@ impl Rect {
 
     /// Sets the [`Rect`]'s [`CameraType`] for rendering.
     ///
-    pub fn set_use_camera(&mut self, camera_type: CameraType) -> &mut Self {
+    pub fn set_use_camera(&mut self, camera_type: CameraView) -> &mut Self {
         self.camera_type = camera_type;
         self.changed = true;
         self

@@ -1,5 +1,5 @@
 use crate::{
-    CameraType, DrawOrder, GpuRenderer, GraphicsError, Index, Mesh2DVertex,
+    CameraView, DrawOrder, GpuRenderer, GraphicsError, Index, Mesh2DVertex,
     OrderedIndex, OtherError, Vec2, Vec3, Vec4, VertexBuilder,
 };
 use cosmic_text::Color;
@@ -288,7 +288,7 @@ pub struct Mesh2DBuilder {
     pub size: Vec2,
     pub z: f32,
     pub high_index: u32,
-    pub camera_type: CameraType,
+    pub camera_type: CameraView,
 }
 
 impl Default for Mesh2DBuilder {
@@ -300,7 +300,7 @@ impl Default for Mesh2DBuilder {
             size: Vec2::new(0.0, 0.0),
             z: 1.0,
             high_index: 0,
-            camera_type: CameraType::None,
+            camera_type: CameraView::default(),
         }
     }
 }
@@ -314,12 +314,12 @@ impl Mesh2DBuilder {
         self.size = Vec2::new(0.0, 0.0);
         self.z = 1.0;
         self.high_index = 0;
-        self.camera_type = CameraType::None;
+        self.camera_type = CameraView::default();
     }
 
     /// Creates a new [`Mesh2DBuilder`] with [`CameraType`].
     ///
-    pub fn with_camera(camera_type: CameraType) -> Self {
+    pub fn with_camera(camera_type: CameraView) -> Self {
         Self {
             camera_type,
             ..Self::default()

@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 
 use crate::{
-    Bounds, CameraType, Color, DrawOrder, GpuRenderer, GraphicsError, Index,
+    Bounds, CameraView, Color, DrawOrder, GpuRenderer, GraphicsError, Index,
     OrderedIndex, TextAtlas, TextVertex, Vec2, Vec3,
 };
 use cosmic_text::{
@@ -77,7 +77,7 @@ pub struct Text {
     /// Word Wrap Type. Default is Wrap::Word.
     pub wrap: Wrap,
     /// [`CameraType`] used to render with.
-    pub camera_type: CameraType,
+    pub camera_type: CameraView,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -234,7 +234,7 @@ impl Text {
                             tex_coord: [u, v],
                             layer: allocation.layer as u32,
                             color: color.0,
-                            camera_type: self.camera_type as u32,
+                            camera_view: self.camera_type as u32,
                             is_color: is_color as u32,
                         })
                     });
@@ -285,7 +285,7 @@ impl Text {
             order: DrawOrder::new(false, pos, order_layer),
             changed: true,
             default_color: Color::rgba(0, 0, 0, 255),
-            camera_type: CameraType::None,
+            camera_type: CameraView::default(),
             cursor: Cursor::default(),
             wrap: Wrap::Word,
             line: 0,
@@ -296,7 +296,7 @@ impl Text {
 
     /// Sets the [`Text`]'s [`CameraType`] for rendering.
     ///
-    pub fn set_camera_type(&mut self, camera_type: CameraType) {
+    pub fn set_camera_type(&mut self, camera_type: CameraView) {
         self.camera_type = camera_type;
 
         self.changed = true;

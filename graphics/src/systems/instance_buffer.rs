@@ -1,5 +1,5 @@
 use crate::{
-    Bounds, Buffer, BufferLayout, CameraType, GpuDevice, GpuRenderer,
+    Bounds, Buffer, BufferLayout, CameraView, GpuDevice, GpuRenderer,
     OrderedIndex,
 };
 #[cfg(feature = "rayon")]
@@ -18,7 +18,7 @@ pub struct InstanceDetails {
 }
 
 /// Clipped buffers Tuple type.
-pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>, CameraType);
+pub type ClippedInstanceDetails = (InstanceDetails, Option<Bounds>, CameraView);
 
 /// Instance buffer holds all the Details to render with instances with a Static VBO.
 /// This stores and handles the orders of all rendered objects to try and reduce the amount
@@ -265,7 +265,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
                                 end: count,
                             },
                             buf.bounds,
-                            buf.camera_type,
+                            buf.camera_view,
                         ));
                     }
 

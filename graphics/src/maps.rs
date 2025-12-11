@@ -4,7 +4,7 @@ mod uniforms;
 mod vertex;
 
 use crate::{
-    AtlasSet, CameraType, DrawOrder, GpuRenderer, Index, OrderedIndex, UVec2,
+    AtlasSet, CameraView, DrawOrder, GpuRenderer, Index, OrderedIndex, UVec2,
     UVec3, Vec2, Vec3,
 };
 use cosmic_text::Color;
@@ -158,7 +158,7 @@ pub struct Map {
     pub tilesize: u32,
     /// Used to deturmine if the map can be rendered or if its just a preload.
     pub can_render: bool,
-    pub camera_type: CameraType,
+    pub camera_type: CameraView,
     /// Each layers Z position. Default is 9.6-9.0 for lower levels and 5.1-5.0 for upper.
     pub zlayers: MapZLayers,
     /// If tiles vertex data got changed.
@@ -351,7 +351,7 @@ impl Map {
             can_render: true,
             tiles_changed: true,
             map_changed: true,
-            camera_type: CameraType::None,
+            camera_type: CameraView::default(),
             zlayers,
             size: UVec2::new(32, 32),
             map_index,
@@ -414,7 +414,7 @@ impl Map {
             can_render: true,
             tiles_changed: true,
             map_changed: true,
-            camera_type: CameraType::None,
+            camera_type: CameraView::default(),
             size,
             zlayers,
             map_index,
@@ -537,7 +537,7 @@ impl Map {
 
     /// Sets the [`CameraType`] this object will use to Render with.
     ///
-    pub fn set_camera_type(&mut self, camera_type: CameraType) -> &mut Self {
+    pub fn set_camera_type(&mut self, camera_type: CameraView) -> &mut Self {
         self.camera_type = camera_type;
         self.map_changed = true;
         self

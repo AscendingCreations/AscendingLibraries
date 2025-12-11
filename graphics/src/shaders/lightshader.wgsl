@@ -1,13 +1,11 @@
 struct Global {
-    view: mat4x4<f32>,
+    views: array<mat4x4<f32>, 8>,
+    scales: array<f32, 8>,
     proj: mat4x4<f32>,
     inverse_proj: mat4x4<f32>,
     eye: vec3<f32>,
-    scale: f32,
     size: vec2<f32>,
     seconds: f32,
-    manual_view: mat4x4<f32>,
-    manual_scale: f32,
 };
 
 struct AreaLights {
@@ -17,7 +15,7 @@ struct AreaLights {
     anim_speed: f32,
     dither: f32,
     animate: u32,
-    camera_type: u32,
+    camera_view: u32,
 };
 
 struct DirLights {
@@ -31,7 +29,7 @@ struct DirLights {
     fade_distance: f32,
     edge_fade_distance: f32,
     animate: u32,
-    camera_type: u32,
+    camera_view: u32,
 };
 
 @group(0)
@@ -146,40 +144,14 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
         for(var i = 0u; i < min(vertex.area_count, c_area_lights); i += 1u) {
             let light = u_areas[i];
             let light_pos = vec3<f32>(light.pos.x, light.pos.y, 1.0);
-            var pos = vec4<f32>(light.pos.x, light.pos.y, 1.0, 1.0);
-            var max_distance = light.max_distance;
-
-            switch light.camera_type {
-                case 1u: {
-                    pos = (global.view) * vec4<f32>(light_pos, 1.0);
-                }
-                case 2u: {
-                    let scale_mat = mat4x4<f32> (
-                        vec4<f32>(global.scale, 0.0, 0.0, 0.0),
-                        vec4<f32>(0.0, global.scale, 0.0, 0.0),
-                        vec4<f32>(0.0, 0.0, 1.0, 0.0),
-                        vec4<f32>(0.0, 0.0, 0.0, 1.0),
-                    );
-
-                    pos = (global.view * scale_mat) * vec4<f32>(light_pos, 1.0);
-                    max_distance = max_distance * global.scale;
-                }
-                case 3u: {
-                    pos = (global.manual_view) * vec4<f32>(light_pos, 1.0);
-                }
-                case 4u: {
-                    let scale_mat = mat4x4<f32> (
-                        vec4<f32>(global.manual_scale, 0.0, 0.0, 0.0),
-                        vec4<f32>(0.0, global.manual_scale, 0.0, 0.0),
-                        vec4<f32>(0.0, 0.0, 1.0, 0.0),
-                        vec4<f32>(0.0, 0.0, 0.0, 1.0),
-                    );
-
-                    pos = (global.manual_view * scale_mat) * vec4<f32>(light_pos, 1.0);
-                    max_distance = max_distance * global.scale;
-                }
-                default: {}
-            }
+            let scale_mat = mat4x4<f32> (
+                vec4<f32>(global.scales[light.camera_view], 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, global.scales[light.camera_view], 0.0, 0.0),
+                vec4<f32>(0.0, 0.0, 1.0, 0.0),
+                vec4<f32>(0.0, 0.0, 0.0, 1.0),
+            );
+            let pos = (global.views[light.camera_view] * scale_mat) * vec4<f32>(light_pos, 1.0);
+            var max_distance = light.max_distance * global.scales[light.camera_view];
 
             let light_color = unpack_color(light.color);
             max_distance = max_distance - (f32(light.animate) *(1.0 * sin(global.seconds * light.anim_speed)));
@@ -195,49 +167,17 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
         for(var i = 0u; i < min(vertex.dir_count, c_dir_lights); i += 1u) {
             let light = u_dirs[i];
             let light_pos = vec3<f32>(light.pos.x, light.pos.y, 1.0);
-            var pos = vec4<f32>(light.pos.x, light.pos.y, 1.0, 1.0);
-            var max_distance = light.max_distance;
-            var max_width = light.max_width;
-            var fade_distance = light.fade_distance;
-            var edge_fade_distance = light.edge_fade_distance;
-
-            switch light.camera_type {
-                case 1u: {
-                    pos = (global.view) * vec4<f32>(light_pos, 1.0);
-                }
-                case 2u: {
-                    let scale_mat = mat4x4<f32> (
-                        vec4<f32>(global.scale, 0.0, 0.0, 0.0),
-                        vec4<f32>(0.0, global.scale, 0.0, 0.0),
-                        vec4<f32>(0.0, 0.0, 1.0, 0.0),
-                        vec4<f32>(0.0, 0.0, 0.0, 1.0),
-                    );
-
-                    pos = (global.view * scale_mat) * vec4<f32>(light_pos, 1.0);
-                    max_distance = max_distance * global.scale;
-                    max_width = max_width * global.scale;
-                    fade_distance = fade_distance * global.scale;
-                    edge_fade_distance = edge_fade_distance * global.scale;
-                }
-                case 3u: {
-                    pos = (global.manual_view) * vec4<f32>(light_pos, 1.0);
-                }
-                case 4u: {
-                    let scale_mat = mat4x4<f32> (
-                        vec4<f32>(global.manual_scale, 0.0, 0.0, 0.0),
-                        vec4<f32>(0.0, global.manual_scale, 0.0, 0.0),
-                        vec4<f32>(0.0, 0.0, 1.0, 0.0),
-                        vec4<f32>(0.0, 0.0, 0.0, 1.0),
-                    );
-
-                    pos = (global.manual_view * scale_mat) * vec4<f32>(light_pos, 1.0);
-                    max_distance = max_distance * global.manual_scale;
-                    max_width = max_width * global.manual_scale;
-                    fade_distance = fade_distance * global.manual_scale;
-                    edge_fade_distance = edge_fade_distance * global.manual_scale;
-                }
-                default: {}
-            }
+            let scale_mat = mat4x4<f32> (
+                vec4<f32>(global.scales[light.camera_view], 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, global.scales[light.camera_view], 0.0, 0.0),
+                vec4<f32>(0.0, 0.0, 1.0, 0.0),
+                vec4<f32>(0.0, 0.0, 0.0, 1.0),
+            );
+            let pos = (global.views[light.camera_view] * scale_mat) * vec4<f32>(light_pos, 1.0);
+            var max_distance = light.max_distance * global.scales[light.camera_view];
+            var max_width = light.max_width * global.scales[light.camera_view];
+            let fade_distance = light.fade_distance * global.scales[light.camera_view];
+            let edge_fade_distance = light.edge_fade_distance * global.scales[light.camera_view];
 
             let light_color = unpack_color(light.color);
             max_distance = max_distance - (f32(light.animate) *(1.0 * sin(global.seconds * light.anim_speed)));
