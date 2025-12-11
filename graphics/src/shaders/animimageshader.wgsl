@@ -1,11 +1,15 @@
+struct wrapped_f32 {
+  @size(16) elem: f32
+}
+
 struct Global {
-    views: array<mat4x4<f32>, 8>,
-    scales: array<f32, 8>,
-    proj: mat4x4<f32>,
-    inverse_proj: mat4x4<f32>,
-    eye: vec3<f32>,
-    size: vec2<f32>,
-    seconds: f32,
+    views: array<mat4x4<f32>, 8>, //16
+    scales: array<wrapped_f32, 8>, //4
+    proj: mat4x4<f32>, //16
+    inverse_proj: mat4x4<f32>, //16
+    eye: vec3<f32>, //16
+    @size(16)  size: vec2<f32>, //8
+    @size(16)  seconds: f32, //4
 };
 
 @group(0)
@@ -212,7 +216,7 @@ fn vertex(
 
     }
 
-    let r_f = flip_rotation_mat4(vertex.flip_style, vertex.angle, vertex.v_pos + vertex.position.xy, vertex.hw, global.scales[vertex.camera_view]);
+    let r_f = flip_rotation_mat4(vertex.flip_style, vertex.angle, vertex.v_pos + vertex.position.xy, vertex.hw, global.scales[vertex.camera_view].elem);
     result.clip_position = (global.proj * global.views[vertex.camera_view]) * r_f * vec4<f32>(pos, 1.0);
 
     result.tex_data = tex_data;
