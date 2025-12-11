@@ -213,7 +213,7 @@ where
     /// Returns mutable reference to a views Matrix 4x4.
     /// This can return MainView but upon Update MainView gets reset by the camera.
     ///
-    pub fn mut_manual_view(&mut self, camera_view: CameraView) -> &mut Mat4 {
+    pub fn get_view_mut(&mut self, camera_view: CameraView) -> &mut Mat4 {
         let id = camera_view as usize;
 
         self.changed[id] = true;
@@ -222,7 +222,7 @@ where
 
     /// Returns a Views Scale.
     ///
-    pub fn manual_scale(&self, camera_view: CameraView) -> f32 {
+    pub fn get_scale(&self, camera_view: CameraView) -> f32 {
         let id = camera_view as usize;
         self.scales[id]
     }
@@ -230,14 +230,15 @@ where
     /// Returns mutable reference to a Views Scale.
     /// This can return MainView but upon Update MainView gets reset by the camera.
     ///
-    pub fn mut_manual_scale(&mut self, camera_view: CameraView) -> &mut f32 {
+    pub fn get_scale_mut(&mut self, camera_view: CameraView) -> &mut f32 {
         let id = camera_view as usize;
 
         self.changed[id] = true;
         &mut self.scales[id]
     }
 
-    /// Updates the GPU's shader struct Global with new Time and new changes.
+    /// Updates the GPU's shader struct Global with new Projections, Time, Views, and Scale changes.
+    /// This will update the MainView automatically when camera gets changed.
     ///
     pub fn update(&mut self, renderer: &GpuRenderer, frame_time: &FrameTime) {
         if self.camera.update(frame_time.delta_seconds()) {
