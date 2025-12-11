@@ -1,4 +1,4 @@
-use crate::{Bounds, CameraType, Vec3};
+use crate::{Bounds, CameraView, Vec3};
 use slotmap::new_key_type;
 use std::cmp::Ordering;
 
@@ -83,7 +83,7 @@ pub struct OrderedIndex {
     /// Stores buffers optional Bounds for scissor clipping.
     pub(crate) bounds: Option<Bounds>,
     /// Stores the buffers Camera Type for Rendering Aspects.
-    pub(crate) camera_type: CameraType,
+    pub(crate) camera_view: CameraView,
 }
 
 impl PartialOrd for OrderedIndex {
@@ -115,7 +115,7 @@ impl OrderedIndex {
             index_count: 0,
             index_max,
             bounds: None,
-            camera_type: CameraType::None,
+            camera_view: CameraView::MainView,
         }
     }
 
@@ -126,7 +126,7 @@ impl OrderedIndex {
         index: Index,
         index_max: u32,
         bounds: Option<Bounds>,
-        camera_type: CameraType,
+        camera_view: CameraView,
     ) -> Self {
         Self {
             order,
@@ -134,7 +134,7 @@ impl OrderedIndex {
             index_count: 0,
             index_max,
             bounds,
-            camera_type,
+            camera_view,
         }
     }
 }

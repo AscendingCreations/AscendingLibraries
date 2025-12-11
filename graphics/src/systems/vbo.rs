@@ -1,6 +1,6 @@
 use crate::{
     AsBufferPass, Bounds, Buffer, BufferData, BufferLayout, BufferPass,
-    CameraType, GpuDevice, GpuRenderer, OrderedIndex,
+    CameraView, GpuDevice, GpuRenderer, OrderedIndex,
 };
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
@@ -20,7 +20,7 @@ pub struct IndexDetails {
 }
 
 /// Clipped buffers Tuple type.
-pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>, CameraType);
+pub type ClippedIndexDetails = (IndexDetails, Option<Bounds>, CameraView);
 
 /// VertexBuffer holds all the Details to render with Verticies and indicies.
 /// This stores and handles the orders of all rendered objects to try and reduce the amount
@@ -297,7 +297,7 @@ impl<K: BufferLayout> VertexBuffer<K> {
                             vertex_base,
                         },
                         buf.bounds,
-                        buf.camera_type,
+                        buf.camera_view,
                     ));
                 }
             }

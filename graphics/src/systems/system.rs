@@ -1,4 +1,4 @@
-use crate::{Bounds, CameraType, GpuDevice, GpuRenderer, Layout};
+use crate::{Bounds, CameraView, GpuDevice, GpuRenderer, Layout};
 use bytemuck::{Pod, Zeroable};
 use camera::Projection;
 use glam::{Mat4, Vec2, Vec3, Vec4};
@@ -46,12 +46,12 @@ pub struct System<Controls: camera::controls::Controls> {
     global_buffer: wgpu::Buffer,
     /// Bind group for shader struct Global.
     bind_group: wgpu::BindGroup,
-    /// Manual View secondary to the camera View.
-    manual_view: Mat4,
-    /// Manual Scale Secondary to camera Scale
-    manual_scale: f32,
-    /// If the manual changed or not for uploading.
-    manual_changed: bool,
+    /// Camera Views.
+    views: [Mat4; 8],
+    /// Camera Scales.
+    scales: [f32; 8],
+    /// If changed or not for uploading.
+    changed: [bool; 8],
 }
 
 impl<Controls> System<Controls>
@@ -89,8 +89,6 @@ where
         projection: Projection,
         controls: Controls,
         screen_size: [f32; 2],
-        manual_view: Mat4,
-        manual_scale: f32,
     ) -> Self {
         let mut camera = camera::Camera::new(projection, controls);
 
@@ -98,24 +96,33 @@ where
 
         // Create the camera uniform.
         let proj = camera.projection();
-        let view = camera.view();
+        let main_view = camera.view();
         let inverse_proj: Mat4 = (proj).inverse();
         let eye = camera.eye();
-        let scale = camera.scale();
+        let main_scale = camera.scale();
         let seconds = 0.0;
+        let mut raw = [0f32; 175];
 
-        let mut raw = [0f32; 52 + 4 + 20];
-        raw[..16].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&view)[..]);
-        raw[16..32].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj)[..]);
-        raw[32..48]
+        raw[..16].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&main_view)[..]);
+
+        for i in 1..8 {
+            raw[(16 * i)..16 + (16 * i)].copy_from_slice(
+                &AsRef::<[f32; 16]>::as_ref(&Mat4::IDENTITY)[..],
+            );
+        }
+
+        raw[128] = main_scale;
+
+        for i in 1..8 {
+            raw[128 + i] = 1.0;
+        }
+
+        raw[136..152].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj)[..]);
+        raw[152..168]
             .copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&inverse_proj)[..]);
-        raw[48..51].copy_from_slice(&eye);
-        raw[51] = scale;
-        raw[52..54].copy_from_slice(&screen_size);
-        raw[54] = seconds;
-        raw[56..72]
-            .copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&manual_view)[..]);
-        raw[72] = manual_scale;
+        raw[168..171].copy_from_slice(&eye);
+        raw[171..173].copy_from_slice(&screen_size);
+        raw[174] = seconds;
 
         // Create the uniform buffers.
         let global_buffer = renderer.device().create_buffer_init(
@@ -148,9 +155,18 @@ where
             screen_size,
             global_buffer,
             bind_group,
-            manual_changed: false,
-            manual_scale,
-            manual_view,
+            changed: [false, false, false, false, false, false, false, false],
+            scales: [main_scale, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            views: [
+                main_view,
+                Mat4::IDENTITY,
+                Mat4::IDENTITY,
+                Mat4::IDENTITY,
+                Mat4::IDENTITY,
+                Mat4::IDENTITY,
+                Mat4::IDENTITY,
+                Mat4::IDENTITY,
+            ],
         }
     }
 
@@ -173,37 +189,52 @@ where
     }
 
     /// Sets Manual to a new View and Scale.
+    /// This can set MainView but upon Update MainView gets reset by the camera.
     ///
-    pub fn set_manual_view(&mut self, view: Mat4, scale: f32) {
-        self.manual_view = view;
-        self.manual_scale = scale;
-        self.manual_changed = true;
+    pub fn set_view(
+        &mut self,
+        camera_view: CameraView,
+        view: Mat4,
+        scale: f32,
+    ) {
+        let id = camera_view as usize;
+        self.views[id] = view;
+        self.scales[id] = scale;
+        self.changed[id] = true;
     }
 
-    /// Returns Manual views Matrix 4x4.
+    /// Returns a views Matrix 4x4.
     ///
-    pub fn manual_view(&self) -> Mat4 {
-        self.manual_view
+    pub fn get_view(&self, camera_view: CameraView) -> Mat4 {
+        let id = camera_view as usize;
+        self.views[id]
     }
 
-    /// Returns mutable reference to Manual views Matrix 4x4.
+    /// Returns mutable reference to a views Matrix 4x4.
+    /// This can return MainView but upon Update MainView gets reset by the camera.
     ///
-    pub fn mut_manual_view(&mut self) -> &mut Mat4 {
-        self.manual_changed = true;
-        &mut self.manual_view
+    pub fn mut_manual_view(&mut self, camera_view: CameraView) -> &mut Mat4 {
+        let id = camera_view as usize;
+
+        self.changed[id] = true;
+        &mut self.views[id]
     }
 
-    /// Returns Manual Scale.
+    /// Returns a Views Scale.
     ///
-    pub fn manual_scale(&self) -> f32 {
-        self.manual_scale
+    pub fn manual_scale(&self, camera_view: CameraView) -> f32 {
+        let id = camera_view as usize;
+        self.scales[id]
     }
 
-    /// Returns mutable reference to Manual Scale.
+    /// Returns mutable reference to a Views Scale.
+    /// This can return MainView but upon Update MainView gets reset by the camera.
     ///
-    pub fn mut_manual_scale(&mut self) -> &mut f32 {
-        self.manual_changed = true;
-        &mut self.manual_scale
+    pub fn mut_manual_scale(&mut self, camera_view: CameraView) -> &mut f32 {
+        let id = camera_view as usize;
+
+        self.changed[id] = true;
+        &mut self.scales[id]
     }
 
     /// Updates the GPU's shader struct Global with new Time and new changes.
@@ -211,45 +242,64 @@ where
     pub fn update(&mut self, renderer: &GpuRenderer, frame_time: &FrameTime) {
         if self.camera.update(frame_time.delta_seconds()) {
             let proj = self.camera.projection();
-            let view = self.camera.view();
-            let inverse_proj: Mat4 = (proj).inverse();
+            let inv_proj: Mat4 = (proj).inverse();
             let eye = self.camera.eye();
-            let scale = self.camera.scale();
 
-            let mut raw = [0f32; 52];
-            raw[..16].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&view)[..]);
-            raw[16..32].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj)[..]);
-            raw[32..48].copy_from_slice(
-                &AsRef::<[f32; 16]>::as_ref(&inverse_proj)[..],
-            );
-            raw[48..51].copy_from_slice(&eye);
-            raw[51] = scale;
+            self.views[0] = self.camera.view();
+            self.scales[0] = self.camera.scale();
+            self.changed[0] = true;
+
+            let mut raw = [0f32; 36];
+            raw[..16].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj)[..]);
+            raw[16..32]
+                .copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&inv_proj)[..]);
+            raw[32..35].copy_from_slice(&eye);
 
             renderer.queue().write_buffer(
                 &self.global_buffer,
-                0,
+                544,
                 bytemuck::cast_slice(&raw),
             );
         }
 
         renderer.queue().write_buffer(
             &self.global_buffer,
-            216,
+            692,
             bytemuck::bytes_of(&frame_time.seconds()),
         );
 
-        if self.manual_changed {
-            let mut raw = [0f32; 17];
-            raw[..16].copy_from_slice(
-                &AsRef::<[f32; 16]>::as_ref(&self.manual_view)[..],
-            );
-            raw[16] = self.manual_scale;
+        for i in 0..8 {
+            if self.changed[i] {
+                let mut raw = [0f32; 16];
 
-            renderer.queue().write_buffer(
-                &self.global_buffer,
-                224,
-                bytemuck::cast_slice(&raw),
-            );
+                raw[..16].copy_from_slice(
+                    &AsRef::<[f32; 16]>::as_ref(&self.views[i])[..],
+                );
+
+                renderer.queue().write_buffer(
+                    &self.global_buffer,
+                    (i * 64) as u64,
+                    bytemuck::cast_slice(&raw),
+                );
+            }
+        }
+
+        for i in 0..8 {
+            if self.changed[i] {
+                let mut raw = [0f32; 1];
+
+                raw[0] = self.scales[i];
+
+                renderer.queue().write_buffer(
+                    &self.global_buffer,
+                    512 + i as u64,
+                    bytemuck::cast_slice(&raw),
+                );
+            }
+        }
+
+        for i in 0..8 {
+            self.changed[i] = false;
         }
     }
 
@@ -265,13 +315,13 @@ where
 
             renderer.queue().write_buffer(
                 &self.global_buffer,
-                208,
+                684,
                 bytemuck::cast_slice(&screen_size),
             );
         }
     }
 
-    /// Returns the Cameras view Matrix 4x4
+    /// Returns the Internal Cameras view Matrix 4x4
     ///
     pub fn view(&self) -> Mat4 {
         self.camera.view()
@@ -281,21 +331,15 @@ where
     ///
     pub fn projected_world_to_screen(
         &self,
-        camera_type: CameraType,
+        camera_view: CameraView,
         bounds: &Bounds,
     ) -> Vec4 {
         let height = f32::abs(bounds.top - bounds.bottom);
         let projection = self.camera.projection();
         let model = Mat4::IDENTITY;
-        let view = match camera_type {
-            CameraType::None => Mat4::IDENTITY,
-            CameraType::ManualView | CameraType::ManualViewWithScale => {
-                self.manual_view
-            }
-            CameraType::ControlView | CameraType::ControlViewWithScale => {
-                self.camera.view()
-            }
-        };
+        let view_id = camera_view as usize;
+        let view = self.views[view_id];
+        let scale = self.scales[view_id];
 
         let clip_coords = projection
             * view
@@ -308,19 +352,8 @@ where
             (1.0 - coords.y) * 0.5 * self.screen_size[1],
         );
 
-        let (bw, bh, objh) = match camera_type {
-            CameraType::ManualViewWithScale => (
-                bounds.right * self.manual_scale,
-                bounds.top * self.manual_scale,
-                height * self.manual_scale,
-            ),
-            CameraType::ControlViewWithScale => (
-                bounds.right * self.camera.scale(),
-                bounds.top * self.camera.scale(),
-                height * self.camera.scale(),
-            ),
-            _ => (bounds.right, bounds.top, height),
-        };
+        let (bw, bh, objh) =
+            (bounds.right * scale, bounds.top * scale, height * scale);
 
         Vec4::new(xy.x, xy.y - objh, bw, bh)
     }
@@ -329,7 +362,7 @@ where
     ///
     pub fn world_to_screen(
         &self,
-        camera_type: CameraType,
+        camera_view: CameraView,
         bounds: &Bounds,
     ) -> Vec4 {
         let height = f32::abs(bounds.top - bounds.bottom);
@@ -339,25 +372,16 @@ where
             * model
             * Vec4::new(bounds.left, bounds.bottom, 1.0, 1.0);
         let coords = Vec3::from_slice(&clip_coords.to_array()) / clip_coords.w;
+        let view_id = camera_view as usize;
+        let scale = self.scales[view_id];
 
         let xy = Vec2::new(
             (coords.x + 1.0) * 0.5 * self.screen_size[0],
             (1.0 - coords.y) * 0.5 * self.screen_size[1],
         );
 
-        let (bw, bh, objh) = match camera_type {
-            CameraType::ManualViewWithScale => (
-                bounds.right * self.manual_scale,
-                bounds.top * self.manual_scale,
-                height * self.manual_scale,
-            ),
-            CameraType::ControlViewWithScale => (
-                bounds.right * self.camera.scale(),
-                bounds.top * self.camera.scale(),
-                height * self.camera.scale(),
-            ),
-            _ => (bounds.right, bounds.top, height),
-        };
+        let (bw, bh, objh) =
+            (bounds.right * scale, bounds.top * scale, height * scale);
 
         Vec4::new(xy.x, xy.y - objh, bw, bh)
     }

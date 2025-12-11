@@ -7,7 +7,7 @@ pub use render::*;
 pub use vertex::*;
 
 use crate::{
-    AtlasSet, Bounds, CameraType, Color, DrawOrder, FlipStyle, GpuRenderer,
+    AtlasSet, Bounds, CameraView, Color, DrawOrder, FlipStyle, GpuRenderer,
     Index, OrderedIndex, Vec2, Vec3, Vec4,
 };
 
@@ -31,7 +31,7 @@ pub struct AnimImage {
     /// turn on animation if set.
     pub animate: bool,
     /// Global Camera the Shader will use to render the object with
-    pub camera_type: CameraType,
+    pub camera_type: CameraView,
     /// Texture area location in Atlas.
     pub texture: Option<usize>,
     /// Buffer's store Index.
@@ -67,7 +67,7 @@ impl AnimImage {
             frames: Vec2::default(),
             switch_time: 0,
             animate: false,
-            camera_type: CameraType::None,
+            camera_type: CameraView::default(),
             color: Color::rgba(255, 255, 255, 255),
             texture,
             store_id: renderer.new_buffer(
@@ -194,7 +194,7 @@ impl AnimImage {
 
     /// Updates the [`AnimImage`]'s [`CameraType`].
     ///
-    pub fn set_camera_type(&mut self, camera_type: CameraType) -> &mut Self {
+    pub fn set_camera_type(&mut self, camera_type: CameraView) -> &mut Self {
         self.changed = true;
         self.camera_type = camera_type;
         self
@@ -241,7 +241,7 @@ impl AnimImage {
             color: self.color.0,
             frames: self.frames.to_array(),
             animate: u32::from(self.animate),
-            camera_type: self.camera_type as u32,
+            camera_view: self.camera_type as u32,
             time: self.switch_time,
             layer: allocation.layer as i32,
             flip_style: self.flip_style as u32,

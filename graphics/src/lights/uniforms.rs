@@ -12,7 +12,7 @@ pub struct AreaLightRaw {
     pub anim_speed: f32,
     pub dither: f32,
     pub animate: u32,
-    pub camera_type: u32,
+    pub camera_view: u32,
 }
 
 /// Uniform Details for [crate::DirectionalLight`] that matches the Shaders Uniform Layout.
@@ -30,7 +30,7 @@ pub struct DirectionalLightRaw {
     pub fade_distance: f32,
     pub edge_fade_distance: f32,
     pub animate: u32,
-    pub camera_type: u32,
+    pub camera_view: u32,
 }
 
 /// Uniform Layout for [crate::AreaLight`].

@@ -9,7 +9,7 @@ pub use uniforms::*;
 pub use vertex::*;
 
 use crate::{
-    CameraType, Color, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
+    CameraView, Color, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
     Vec4,
 };
 #[cfg(feature = "rayon")]
@@ -31,7 +31,7 @@ pub struct AreaLight {
     pub anim_speed: f32,
     pub dither: f32,
     pub animate: bool,
-    pub camera_type: CameraType,
+    pub camera_view: CameraView,
 }
 
 impl AreaLight {
@@ -43,7 +43,7 @@ impl AreaLight {
             dither: self.dither,
             anim_speed: self.anim_speed,
             animate: u32::from(self.animate),
-            camera_type: self.camera_type as u32,
+            camera_view: self.camera_view as u32,
         }
     }
 }
@@ -62,7 +62,7 @@ pub struct DirectionalLight {
     pub fade_distance: f32,
     pub edge_fade_distance: f32,
     pub animate: bool,
-    pub camera_type: CameraType,
+    pub camera_view: CameraView,
 }
 
 impl DirectionalLight {
@@ -78,7 +78,7 @@ impl DirectionalLight {
             angle: self.angle,
             fade_distance: self.fade_distance,
             edge_fade_distance: self.edge_fade_distance,
-            camera_type: self.camera_type as u32,
+            camera_view: self.camera_view as u32,
         }
     }
 }

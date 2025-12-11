@@ -1,19 +1,17 @@
 struct Global {
-    view: mat4x4<f32>,
+    views: array<mat4x4<f32>, 8>,
+    scales: array<f32, 8>,
     proj: mat4x4<f32>,
     inverse_proj: mat4x4<f32>,
     eye: vec3<f32>,
-    scale: f32,
     size: vec2<f32>,
     seconds: f32,
-    manual_view: mat4x4<f32>,
-    manual_scale: f32,
 };
 
 struct Map {
     pos: vec2<f32>,
     tilesize: f32,
-    camera_type: u32,
+    camera_view: u32,
 };
 
 const c_maps: u32 = 500u;
@@ -104,38 +102,14 @@ fn vertex(
         }
     }
 
-    switch map[vertex.map_id].camera_type {
-        case 1u: {
-            result.clip_position = (global.proj * global.view) * vec4<f32>(pos, 1.0);
-        }
-        case 2u: {
-            let scale_mat = mat4x4<f32> (
-                vec4<f32>(global.scale, 0.0, 0.0, 0.0),
-                vec4<f32>(0.0, global.scale, 0.0, 0.0),
-                vec4<f32>(0.0, 0.0, 1.0, 0.0),
-                vec4<f32>(0.0, 0.0, 0.0, 1.0),
-            );
+    let scale_mat = mat4x4<f32> (
+        vec4<f32>(global.scales[map[vertex.map_id].camera_view], 0.0, 0.0, 0.0),
+        vec4<f32>(0.0, global.scales[map[vertex.map_id].camera_view], 0.0, 0.0),
+        vec4<f32>(0.0, 0.0, 1.0, 0.0),
+        vec4<f32>(0.0, 0.0, 0.0, 1.0),
+    ); 
 
-            result.clip_position = (global.proj * global.view * scale_mat) * vec4<f32>(pos, 1.0);
-        }
-        case 3u: {
-            result.clip_position = (global.proj * global.manual_view) * vec4<f32>(pos, 1.0);
-        }
-        case 4u: {
-            let scale_mat = mat4x4<f32> (
-                vec4<f32>(global.manual_scale, 0.0, 0.0, 0.0),
-                vec4<f32>(0.0, global.manual_scale, 0.0, 0.0),
-                vec4<f32>(0.0, 0.0, 1.0, 0.0),
-                vec4<f32>(0.0, 0.0, 0.0, 1.0),
-            );
-
-            result.clip_position = (global.proj * global.manual_view * scale_mat) * vec4<f32>(pos, 1.0);
-        }
-        default: {
-            result.clip_position = global.proj * vec4<f32>(pos, 1.0);
-        }
-    }
-
+    result.clip_position = (global.proj * global.views[map[vertex.map_id].camera_view] * scale_mat) * vec4<f32>(pos, 1.0);
     result.color = unpack_color(vertex.color);
 
     let id = global.seconds / (f32(vertex.anim_time) / 1000.0);

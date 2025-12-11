@@ -32,16 +32,19 @@ pub(crate) use ahash::{AHashMap, AHashSet, AHasher};
 pub(crate) type ABuildHasher = std::hash::BuildHasherDefault<AHasher>;
 pub(crate) type AIndexSet<K> = indexmap::IndexSet<K, ABuildHasher>;
 
-/// Type of Camera to use within the Shader per rendered Object.
+/// Type of Camera view and Scale to use within the Shader per rendered Object.
 ///
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub enum CameraType {
+pub enum CameraView {
     #[default]
-    None,
-    ControlView,
-    ControlViewWithScale,
-    ManualView,
-    ManualViewWithScale,
+    MainView,
+    SubView1,
+    SubView2,
+    SubView3,
+    SubView4,
+    SubView5,
+    SubView6,
+    SubView7,
 }
 
 /// Type of Texture Flipping in shader.
