@@ -1,11 +1,15 @@
+struct wrapped_f32 {
+  @size(16) elem: f32
+}
+
 struct Global {
-    views: array<mat4x4<f32>, 8>,
-    scales: array<f32, 8>,
-    proj: mat4x4<f32>,
-    inverse_proj: mat4x4<f32>,
-    eye: vec3<f32>,
-    size: vec2<f32>,
-    seconds: f32,
+    views: array<mat4x4<f32>, 8>, //16
+    scales: array<wrapped_f32, 8>, //4
+    proj: mat4x4<f32>, //16
+    inverse_proj: mat4x4<f32>, //16
+    eye: vec3<f32>, //16
+    @size(16)  size: vec2<f32>, //8
+    @size(16)  seconds: f32, //4
 };
 
 struct AreaLights {
@@ -145,13 +149,13 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
             let light = u_areas[i];
             let light_pos = vec3<f32>(light.pos.x, light.pos.y, 1.0);
             let scale_mat = mat4x4<f32> (
-                vec4<f32>(global.scales[light.camera_view], 0.0, 0.0, 0.0),
-                vec4<f32>(0.0, global.scales[light.camera_view], 0.0, 0.0),
+                vec4<f32>(global.scales[light.camera_view].elem, 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, global.scales[light.camera_view].elem, 0.0, 0.0),
                 vec4<f32>(0.0, 0.0, 1.0, 0.0),
                 vec4<f32>(0.0, 0.0, 0.0, 1.0),
             );
             let pos = (global.views[light.camera_view] * scale_mat) * vec4<f32>(light_pos, 1.0);
-            var max_distance = light.max_distance * global.scales[light.camera_view];
+            var max_distance = light.max_distance * global.scales[light.camera_view].elem;
 
             let light_color = unpack_color(light.color);
             max_distance = max_distance - (f32(light.animate) *(1.0 * sin(global.seconds * light.anim_speed)));
@@ -168,16 +172,16 @@ fn fragment(vertex: VertexOutput,) -> @location(0) vec4<f32> {
             let light = u_dirs[i];
             let light_pos = vec3<f32>(light.pos.x, light.pos.y, 1.0);
             let scale_mat = mat4x4<f32> (
-                vec4<f32>(global.scales[light.camera_view], 0.0, 0.0, 0.0),
-                vec4<f32>(0.0, global.scales[light.camera_view], 0.0, 0.0),
+                vec4<f32>(global.scales[light.camera_view].elem, 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, global.scales[light.camera_view].elem, 0.0, 0.0),
                 vec4<f32>(0.0, 0.0, 1.0, 0.0),
                 vec4<f32>(0.0, 0.0, 0.0, 1.0),
             );
             let pos = (global.views[light.camera_view] * scale_mat) * vec4<f32>(light_pos, 1.0);
-            var max_distance = light.max_distance * global.scales[light.camera_view];
-            var max_width = light.max_width * global.scales[light.camera_view];
-            let fade_distance = light.fade_distance * global.scales[light.camera_view];
-            let edge_fade_distance = light.edge_fade_distance * global.scales[light.camera_view];
+            var max_distance = light.max_distance * global.scales[light.camera_view].elem;
+            var max_width = light.max_width * global.scales[light.camera_view].elem;
+            let fade_distance = light.fade_distance * global.scales[light.camera_view].elem;
+            let edge_fade_distance = light.edge_fade_distance * global.scales[light.camera_view].elem;
 
             let light_color = unpack_color(light.color);
             max_distance = max_distance - (f32(light.animate) *(1.0 * sin(global.seconds * light.anim_speed)));

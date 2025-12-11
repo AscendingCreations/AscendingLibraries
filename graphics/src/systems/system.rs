@@ -101,7 +101,7 @@ where
         let eye = camera.eye();
         let main_scale = camera.scale();
         let seconds = 0.0;
-        let mut raw = [0f32; 175];
+        let mut raw = [0f32; 204];
 
         raw[..16].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&main_view)[..]);
 
@@ -114,15 +114,15 @@ where
         raw[128] = main_scale;
 
         for i in 1..8 {
-            raw[128 + i] = 1.0;
+            raw[128 + (i * 4)] = 1.0;
         }
 
-        raw[136..152].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj)[..]);
-        raw[152..168]
+        raw[160..176].copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&proj)[..]);
+        raw[176..192]
             .copy_from_slice(&AsRef::<[f32; 16]>::as_ref(&inverse_proj)[..]);
-        raw[168..171].copy_from_slice(&eye);
-        raw[171..173].copy_from_slice(&screen_size);
-        raw[174] = seconds;
+        raw[192..195].copy_from_slice(&eye);
+        raw[196..198].copy_from_slice(&screen_size);
+        raw[200] = seconds;
 
         // Create the uniform buffers.
         let global_buffer = renderer.device().create_buffer_init(
@@ -257,14 +257,14 @@ where
 
             renderer.queue().write_buffer(
                 &self.global_buffer,
-                544,
+                640,
                 bytemuck::cast_slice(&raw),
             );
         }
 
         renderer.queue().write_buffer(
             &self.global_buffer,
-            692,
+            800,
             bytemuck::bytes_of(&frame_time.seconds()),
         );
 
@@ -286,13 +286,13 @@ where
 
         for i in 0..8 {
             if self.changed[i] {
-                let mut raw = [0f32; 1];
+                let mut raw = [0f32; 4];
 
                 raw[0] = self.scales[i];
 
                 renderer.queue().write_buffer(
                     &self.global_buffer,
-                    512 + i as u64,
+                    512 + (i * 16) as u64,
                     bytemuck::cast_slice(&raw),
                 );
             }
@@ -315,7 +315,7 @@ where
 
             renderer.queue().write_buffer(
                 &self.global_buffer,
-                684,
+                784,
                 bytemuck::cast_slice(&screen_size),
             );
         }
