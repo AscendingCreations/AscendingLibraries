@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Added
+- get_scale, get_scale_mut, get_view, get_view_mut.
+- Support for up to 7 additional Manual Views
+
+### Changed
+- (Breaking) CameraType is now CameraView with changes in its enum names adding main_view and sub_views.
+- (Breaking) manual view and scale repalced with Array of views and scales. Functions renamed as set_view.
+- (Breaking) Removed manual_view, mut_manual_view, manual_scale, and mut_manual_scale
+
+
 ## 0.30.0 (25. November, 2025)
 
 ### Changed
