@@ -288,7 +288,7 @@ pub struct Mesh2DBuilder {
     pub size: Vec2,
     pub z: f32,
     pub high_index: u32,
-    pub camera_type: CameraView,
+    pub camera_view: CameraView,
 }
 
 impl Default for Mesh2DBuilder {
@@ -300,7 +300,7 @@ impl Default for Mesh2DBuilder {
             size: Vec2::new(0.0, 0.0),
             z: 1.0,
             high_index: 0,
-            camera_type: CameraView::default(),
+            camera_view: CameraView::default(),
         }
     }
 }
@@ -314,14 +314,14 @@ impl Mesh2DBuilder {
         self.size = Vec2::new(0.0, 0.0);
         self.z = 1.0;
         self.high_index = 0;
-        self.camera_type = CameraView::default();
+        self.camera_view = CameraView::default();
     }
 
-    /// Creates a new [`Mesh2DBuilder`] with [`CameraType`].
+    /// Creates a new [`Mesh2DBuilder`] with [`CameraView`].
     ///
-    pub fn with_camera(camera_type: CameraView) -> Self {
+    pub fn with_camera_view(camera_view: CameraView) -> Self {
         Self {
-            camera_type,
+            camera_view,
             ..Self::default()
         }
     }
@@ -392,7 +392,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.camera_type as u32,
+                camera: self.camera_view as u32,
             };
             match mode {
                 DrawMode::Fill(fill_options) => {
@@ -437,7 +437,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.camera_type as u32,
+                camera: self.camera_view as u32,
             };
             match mode {
                 DrawMode::Fill(fill_options) => {
@@ -516,7 +516,7 @@ impl Mesh2DBuilder {
         let vb = VertexBuilder {
             z,
             color,
-            camera: self.camera_type as u32,
+            camera: self.camera_view as u32,
         };
         self.polyline_with_vertex_builder(mode, points, is_closed, vb)
     }
@@ -582,7 +582,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.camera_type as u32,
+                camera: self.camera_view as u32,
             };
             match mode {
                 DrawMode::Fill(fill_options) => {
@@ -625,7 +625,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.camera_type as u32,
+                camera: self.camera_view as u32,
             };
             let mut path_builder = tess::path::Path::builder();
             path_builder.add_rounded_rectangle(
@@ -678,7 +678,7 @@ impl Mesh2DBuilder {
             let vb = VertexBuilder {
                 z,
                 color,
-                camera: self.camera_type as u32,
+                camera: self.camera_view as u32,
             };
             for tri in tris {
                 assert!(tri.len() == 3);
