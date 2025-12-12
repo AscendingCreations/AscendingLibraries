@@ -25,7 +25,7 @@ pub struct Rect {
     pub border_color: Color,
     /// Rectangle Radius.
     pub radius: f32,
-    /// [`CameraType`] used to render with.
+    /// [`CameraView`] used to render with.
     pub camera_view: CameraView,
     /// Instance Buffers Store ID.
     pub store_id: Index,
@@ -133,7 +133,7 @@ impl Rect {
         self
     }
 
-    /// Sets the [`Rect`]'s [`CameraType`] for rendering.
+    /// Sets the [`Rect`]'s [`CameraView`] for rendering.
     ///
     pub fn set_camera_view(&mut self, camera_view: CameraView) -> &mut Self {
         self.camera_view = camera_view;

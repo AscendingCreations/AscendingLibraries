@@ -535,7 +535,7 @@ impl Map {
             as usize]
     }
 
-    /// Sets the [`CameraType`] this object will use to Render with.
+    /// Sets the [`CameraView`] this object will use to Render with.
     ///
     pub fn set_camera_view(&mut self, camera_view: CameraView) -> &mut Self {
         self.camera_view = camera_view;

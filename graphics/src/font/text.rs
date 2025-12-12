@@ -76,8 +76,8 @@ pub struct Text {
     pub scroll: cosmic_text::Scroll,
     /// Word Wrap Type. Default is Wrap::Word.
     pub wrap: Wrap,
-    /// [`CameraType`] used to render with.
-    pub camera_type: CameraView,
+    /// [`CameraView`] used to render with.
+    pub camera_view: CameraView,
     /// If anything got updated we need to update the buffers too.
     pub changed: bool,
 }
@@ -234,7 +234,7 @@ impl Text {
                             tex_coord: [u, v],
                             layer: allocation.layer as u32,
                             color: color.0,
-                            camera_view: self.camera_type as u32,
+                            camera_view: self.camera_view as u32,
                             is_color: is_color as u32,
                         })
                     });
@@ -285,7 +285,7 @@ impl Text {
             order: DrawOrder::new(false, pos, order_layer),
             changed: true,
             default_color: Color::rgba(0, 0, 0, 255),
-            camera_type: CameraView::default(),
+            camera_view: CameraView::default(),
             cursor: Cursor::default(),
             wrap: Wrap::Word,
             line: 0,
@@ -294,10 +294,10 @@ impl Text {
         }
     }
 
-    /// Sets the [`Text`]'s [`CameraType`] for rendering.
+    /// Sets the [`Text`]'s [`CameraView`] for rendering.
     ///
-    pub fn set_camera_type(&mut self, camera_type: CameraView) {
-        self.camera_type = camera_type;
+    pub fn set_camera_view(&mut self, camera_view: CameraView) {
+        self.camera_view = camera_view;
 
         self.changed = true;
     }
