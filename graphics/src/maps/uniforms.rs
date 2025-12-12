@@ -11,7 +11,7 @@ pub const MAX_MAPS: usize = 500;
 pub struct MapRaw {
     pub pos: [f32; 2],
     pub tilesize: f32,
-    pub camera_type: u32,
+    pub camera_view: u32,
 }
 
 /// Uniform Layout for [crate::Map`] base shared Data.

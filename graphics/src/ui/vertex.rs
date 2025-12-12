@@ -24,7 +24,7 @@ pub struct RectVertex {
     /// Rectangle Radius.
     pub radius: f32,
     /// Camera Type numberical.
-    pub camera_type: u32,
+    pub camera_view: u32,
 }
 
 impl Default for RectVertex {
@@ -38,7 +38,7 @@ impl Default for RectVertex {
             border_color: 0,
             layer: 0,
             radius: 1.0,
-            camera_type: 0,
+            camera_view: 0,
         }
     }
 }

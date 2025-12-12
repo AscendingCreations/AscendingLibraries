@@ -26,7 +26,7 @@ pub struct Rect {
     /// Rectangle Radius.
     pub radius: f32,
     /// [`CameraType`] used to render with.
-    pub camera_type: CameraView,
+    pub camera_view: CameraView,
     /// Instance Buffers Store ID.
     pub store_id: Index,
     /// the draw order of the rect. created/updated when update is called.
@@ -59,7 +59,7 @@ impl Rect {
             border_width: 0.0,
             border_color: Color::rgba(0, 0, 0, 0),
             radius: 0.0,
-            camera_type: CameraView::default(),
+            camera_view: CameraView::default(),
             store_id: renderer.new_buffer(rect_size, 0),
             order: DrawOrder::new(false, Vec3::default(), order_layer),
             bounds: None,
@@ -89,7 +89,7 @@ impl Rect {
             border_width: 0.0,
             border_color: Color::rgba(0, 0, 0, 0),
             radius: 0.0,
-            camera_type: CameraView::default(),
+            camera_view: CameraView::default(),
             store_id: renderer.new_buffer(rect_size, 0),
             order: DrawOrder::new(false, Vec3::default(), order_layer),
             bounds: None,
@@ -135,8 +135,8 @@ impl Rect {
 
     /// Sets the [`Rect`]'s [`CameraType`] for rendering.
     ///
-    pub fn set_use_camera(&mut self, camera_type: CameraView) -> &mut Self {
-        self.camera_type = camera_type;
+    pub fn set_camera_view(&mut self, camera_view: CameraView) -> &mut Self {
+        self.camera_view = camera_view;
         self.changed = true;
         self
     }
@@ -261,7 +261,7 @@ impl Rect {
             layer,
             color: self.color.0,
             border_color: self.border_color.0,
-            camera_type: self.camera_type as u32,
+            camera_view: self.camera_view as u32,
         };
 
         if let Some(store) = renderer.get_buffer_mut(self.store_id) {
@@ -295,7 +295,7 @@ impl Rect {
             self.store_id,
             0,
             self.bounds,
-            self.camera_type,
+            self.camera_view,
         )
     }
 
