@@ -106,10 +106,10 @@ where
                 if buffer.vbos.is_clipped() {
                     let mut scissor_is_default = true;
 
-                    for (details, bounds, camera_type) in vbos {
+                    for (details, bounds, camera_view) in vbos {
                         if let Some(bounds) = bounds {
                             let bounds =
-                                system.world_to_screen(*camera_type, bounds);
+                                system.world_to_screen(*camera_view, bounds);
 
                             self.set_scissor_rect(
                                 bounds.x as u32,

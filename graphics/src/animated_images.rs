@@ -31,7 +31,7 @@ pub struct AnimImage {
     /// turn on animation if set.
     pub animate: bool,
     /// Global Camera the Shader will use to render the object with
-    pub camera_type: CameraView,
+    pub camera_view: CameraView,
     /// Texture area location in Atlas.
     pub texture: Option<usize>,
     /// Buffer's store Index.
@@ -67,7 +67,7 @@ impl AnimImage {
             frames: Vec2::default(),
             switch_time: 0,
             animate: false,
-            camera_type: CameraView::default(),
+            camera_view: CameraView::default(),
             color: Color::rgba(255, 255, 255, 255),
             texture,
             store_id: renderer.new_buffer(
@@ -192,11 +192,11 @@ impl AnimImage {
         self
     }
 
-    /// Updates the [`AnimImage`]'s [`CameraType`].
+    /// Updates the [`AnimImage`]'s [`CameraView`].
     ///
-    pub fn set_camera_type(&mut self, camera_type: CameraView) -> &mut Self {
+    pub fn set_camera_view(&mut self, camera_view: CameraView) -> &mut Self {
         self.changed = true;
-        self.camera_type = camera_type;
+        self.camera_view = camera_view;
         self
     }
 
@@ -241,7 +241,7 @@ impl AnimImage {
             color: self.color.0,
             frames: self.frames.to_array(),
             animate: u32::from(self.animate),
-            camera_view: self.camera_type as u32,
+            camera_view: self.camera_view as u32,
             time: self.switch_time,
             layer: allocation.layer as i32,
             flip_style: self.flip_style as u32,
@@ -278,7 +278,7 @@ impl AnimImage {
             self.store_id,
             0,
             self.bounds,
-            self.camera_type,
+            self.camera_view,
         )
     }
 }

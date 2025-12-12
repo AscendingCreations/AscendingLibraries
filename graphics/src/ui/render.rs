@@ -119,10 +119,10 @@ where
                         renderer.get_pipelines(RectRenderPipeline).unwrap(),
                     );
 
-                    for (details, bounds, camera_type) in details {
+                    for (details, bounds, camera_view) in details {
                         if let Some(bounds) = bounds {
                             let bounds =
-                                system.world_to_screen(*camera_type, bounds);
+                                system.world_to_screen(*camera_view, bounds);
 
                             self.set_scissor_rect(
                                 bounds.x as u32,
