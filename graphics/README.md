@@ -28,6 +28,7 @@ Ascending Graphics
 - Supports both Instance Buffers and Vertex Buffers.
 - Extendable.
 - Rayon support for sorting, clearing and anything possible.
+- Supports up to 7 custom Camera views with 1 Auto camera handled Main View.
 
 ## 🚨 Help
 
