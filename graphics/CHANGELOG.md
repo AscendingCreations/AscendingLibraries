@@ -13,7 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - (Breaking) CameraType is now CameraView with changes in its enum names adding main_view and sub_views.
 - (Breaking) manual view and scale repalced with Array of views and scales. Functions renamed as set_view.
 - (Breaking) Removed manual_view, mut_manual_view, manual_scale, and mut_manual_scale
-
+- (Breaking) Aligned Camera View function names.
+- (Breaking) changed all naming from camera_type to camera_view
+- (Breaking) Shaders Simplfied under new Camera Views.
+- (Breaking) System and Shader Global now all use an array of 8 camera views and scales. index 0 is MainView and auto Set by camera.
 
 ## 0.30.0 (25. November, 2025)
 
