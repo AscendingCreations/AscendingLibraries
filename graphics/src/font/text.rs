@@ -108,11 +108,6 @@ impl Text {
             self.buffer.lines.iter().map(|line| line.text().len()).sum();
 
         let mut is_alpha = false;
-        let screensize = renderer.size();
-        let bounds_min_x = self.bounds.left.max(0.0);
-        let bounds_min_y = self.bounds.bottom.max(0.0);
-        let bounds_max_x = self.bounds.right.min(screensize.width);
-        let bounds_max_y = self.bounds.top.min(screensize.height);
 
         GLYPH_VERTICES.with_borrow_mut(|vertices| {
             vertices.clear();
@@ -129,8 +124,8 @@ impl Text {
                 - run.line_top
                 - (run.line_height * 0.5);
 
-            start_y <= bounds_max_y + (run.line_height * 0.5)
-                && bounds_min_y <= end_y
+            start_y <= self.bounds.top + (run.line_height * 0.5)
+                && self.bounds.bottom <= end_y
         };
 
         self.buffer
@@ -195,33 +190,33 @@ impl Text {
 
                     // Starts beyond right edge or ends beyond left edge
                     let max_x = x + width;
-                    if x > bounds_max_x || max_x < bounds_min_x {
+                    if x > self.bounds.right || max_x < self.bounds.left {
                         return;
                     }
 
                     // Clip left edge
-                    if x < bounds_min_x {
-                        let right_shift = bounds_min_x - x;
+                    if x < self.bounds.left {
+                        let right_shift = self.bounds.left - x;
 
-                        x = bounds_min_x;
-                        width = max_x - bounds_min_x;
+                        x = self.bounds.left;
+                        width = max_x - self.bounds.left;
                         u += right_shift;
                     }
 
                     // Clip right edge
-                    if x + width > bounds_max_x {
-                        width = bounds_max_x - x;
+                    if x + width > self.bounds.right {
+                        width = self.bounds.right - x;
                     }
 
                     // Clip top edge
-                    if y < bounds_min_y {
-                        height -= bounds_min_y - y;
-                        y = bounds_min_y;
+                    if y < self.bounds.bottom {
+                        height -= self.bounds.bottom - y;
+                        y = self.bounds.bottom;
                     }
 
                     // Clip top edge
-                    if y + height > bounds_max_y {
-                        let bottom_shift = (y + height) - bounds_max_y;
+                    if y + height > self.bounds.top {
+                        let bottom_shift = (y + height) - self.bounds.top;
 
                         v += bottom_shift;
                         height -= bottom_shift;
