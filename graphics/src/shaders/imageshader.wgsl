@@ -161,16 +161,16 @@ fn flip_rotation_mat4(flip_style: u32, angle: f32, pos: vec2<f32>, hw: vec2<f32>
                 vec4<f32>(1.0, 0.0, 0.0, 0.0),
                 vec4<f32>(0.0, 1.0, 0.0, 0.0),
                 vec4<f32>(0.0, 0.0, 1.0, 0.0),
-                vec4<f32>((-pos.x - hw.x / 2.0) , (-pos.y - hw.y / 2.0), 0.0, 1.0),
+                vec4<f32>(-pos.x - (hw.x / 2.0) , -pos.y - (hw.y / 2.0), 0.0, 1.0),
             );
     let trans = mat4x4<f32> (
                 vec4<f32>(1.0, 0.0, 0.0, 0.0),
                 vec4<f32>(0.0, 1.0, 0.0, 0.0),
                 vec4<f32>(0.0, 0.0, 1.0, 0.0),
-                vec4<f32>(pos.x + hw.x / 2.0 , pos.y + hw.y / 2.0, 0.0, 1.0),
+                vec4<f32>(pos.x + (hw.x / 2.0) , pos.y + (hw.y / 2.0), 0.0, 1.0),
             );
 
-    return trans * scale_mat * flip * rotation * inverse_trans;
+    return scale_mat * trans * flip * rotation * inverse_trans;
 }
 
 fn quat_from_rotation_z(angle: f32) -> vec4<f32>
@@ -207,18 +207,11 @@ fn vertex(
         default: {
             result.tex_coords = vec2<f32>(0.0, tex_data[3]);
         }
-
     }
 
-    let scale_mat = mat4x4<f32> (
-                vec4<f32>(global.scales[vertex.camera_view].elem, 0.0, 0.0, 0.0),
-                vec4<f32>(0.0, global.scales[vertex.camera_view].elem, 0.0, 0.0),
-                vec4<f32>(0.0, 0.0, 1.0, 0.0),
-                vec4<f32>(0.0, 0.0, 0.0, 1.0),
-            );
     let r_f = flip_rotation_mat4(vertex.flip_style, vertex.angle, vertex.v_pos + vertex.position.xy, vertex.hw, global.scales[vertex.camera_view].elem);
 
-    result.clip_position = ((global.proj * global.views[vertex.camera_view]) * scale_mat) * vec4<f32>(pos, 1.0);
+    result.clip_position = global.proj * global.views[vertex.camera_view] * r_f * vec4<f32>(pos, 1.0);
     result.tex_data = tex_data;
     result.layer = vertex.layer;
     result.col = unpack_color(vertex.color);
