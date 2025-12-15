@@ -210,9 +210,15 @@ fn vertex(
 
     }
 
+    let scale_mat = mat4x4<f32> (
+                vec4<f32>(global.scales[vertex.camera_view].elem, 0.0, 0.0, 0.0),
+                vec4<f32>(0.0, global.scales[vertex.camera_view].elem, 0.0, 0.0),
+                vec4<f32>(0.0, 0.0, 1.0, 0.0),
+                vec4<f32>(0.0, 0.0, 0.0, 1.0),
+            );
     let r_f = flip_rotation_mat4(vertex.flip_style, vertex.angle, vertex.v_pos + vertex.position.xy, vertex.hw, global.scales[vertex.camera_view].elem);
 
-    result.clip_position = ((global.proj * global.views[vertex.camera_view]) * r_f) * vec4<f32>(pos, 1.0);
+    result.clip_position = ((global.proj * global.views[vertex.camera_view]) * scale_mat) * vec4<f32>(pos, 1.0);
     result.tex_data = tex_data;
     result.layer = vertex.layer;
     result.col = unpack_color(vertex.color);
