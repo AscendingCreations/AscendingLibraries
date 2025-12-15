@@ -212,7 +212,7 @@ fn vertex(
 
     let r_f = flip_rotation_mat4(vertex.flip_style, vertex.angle, vertex.v_pos + vertex.position.xy, vertex.hw, global.scales[vertex.camera_view].elem);
 
-    result.clip_position = (global.proj * global.views[vertex.camera_view]) * r_f * vec4<f32>(pos, 1.0);
+    result.clip_position = ((global.proj * global.views[vertex.camera_view]) * r_f) * vec4<f32>(pos, 1.0);
     result.tex_data = tex_data;
     result.layer = vertex.layer;
     result.col = unpack_color(vertex.color);
