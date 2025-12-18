@@ -5,17 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.32.0 (18. December, 2025)
+
+### Changes
+- (Breaking) get_adapters is now async.
+- (Breaking) WGPU & Naga are updated to v28.0.0
+
 ## 0.31.2 (15. December, 2025)
 
 ### Fixed
-
 - Image and Animation Image Shaders not doing rotation, flipping, scaling and Translation correctly when using Camera Zoom.
-
 
 ## 0.31.1 (14. December, 2025)
 
 ### Fixed
-
 - Allow bounds to be set outside of the Screen limit so camera scrolling can still Render these text.
 
 ## 0.31.0 (12. December, 2025)

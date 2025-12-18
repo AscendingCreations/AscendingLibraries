@@ -42,7 +42,7 @@ impl PipeLineLayout for MapRenderPipeline {
                             &texture_layout,
                             &map_layout,
                         ],
-                        push_constant_ranges: &[],
+                        immediate_size: 0,
                     },
                 )),
                 vertex: wgpu::VertexState {
@@ -91,7 +91,7 @@ impl PipeLineLayout for MapRenderPipeline {
                     })],
                     compilation_options: Default::default(),
                 }),
-                multiview: None,
+                multiview_mask: None,
                 cache: None,
             },
         )

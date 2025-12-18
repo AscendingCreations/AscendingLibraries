@@ -43,7 +43,7 @@ impl PipeLineLayout for LightRenderPipeline {
                             &area_light_layout,
                             &dir_light_layout,
                         ],
-                        push_constant_ranges: &[],
+                        immediate_size: 0,
                     },
                 )),
                 vertex: wgpu::VertexState {
@@ -92,7 +92,7 @@ impl PipeLineLayout for LightRenderPipeline {
                     })],
                     compilation_options: Default::default(),
                 }),
-                multiview: None,
+                multiview_mask: None,
                 cache: None,
             },
         )

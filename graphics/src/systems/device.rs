@@ -352,16 +352,19 @@ pub trait InstanceExt {
 
     /// Gets a list of Avaliable Adapters based upon the [`AdapterOptions`].
     ///
-    fn get_adapters(&self, options: AdapterOptions)
-    -> Vec<(Adapter, u32, u32)>;
+    #[allow(async_fn_in_trait)]
+    async fn get_adapters(
+        &self,
+        options: AdapterOptions,
+    ) -> Vec<(Adapter, u32, u32)>;
 }
 
 impl InstanceExt for wgpu::Instance {
-    fn get_adapters(
+    async fn get_adapters(
         &self,
         options: AdapterOptions,
     ) -> Vec<(Adapter, u32, u32)> {
-        let adapters = self.enumerate_adapters(options.allowed_backends);
+        let adapters = self.enumerate_adapters(options.allowed_backends).await;
 
         #[cfg(feature = "rayon")]
         let mut compatible_adapters: Vec<(Adapter, u32, u32)> = adapters
@@ -470,7 +473,7 @@ impl InstanceExt for wgpu::Instance {
         present_mode: wgpu::PresentMode,
         pipelined_enabled: EnabledPipelines,
     ) -> Result<GpuRenderer, GraphicsError> {
-        let mut adapters = self.get_adapters(options);
+        let mut adapters = self.get_adapters(options).await;
 
         while let Some(adapter) = adapters.pop() {
             let ret = adapter

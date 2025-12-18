@@ -37,7 +37,7 @@ impl PipeLineLayout for RectRenderPipeline {
                     &wgpu::PipelineLayoutDescriptor {
                         label: Some("rectangle_render_pipeline_layout"),
                         bind_group_layouts: &[&system_layout, &texture_layout],
-                        push_constant_ranges: &[],
+                        immediate_size: 0,
                     },
                 )),
                 vertex: wgpu::VertexState {
@@ -86,7 +86,7 @@ impl PipeLineLayout for RectRenderPipeline {
                     })],
                     compilation_options: Default::default(),
                 }),
-                multiview: None,
+                multiview_mask: None,
                 cache: None,
             },
         )

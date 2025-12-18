@@ -36,7 +36,7 @@ impl PipeLineLayout for Mesh2DRenderPipeline {
                     &wgpu::PipelineLayoutDescriptor {
                         label: Some("render_pipeline_layout"),
                         bind_group_layouts: &[&system_layout],
-                        push_constant_ranges: &[],
+                        immediate_size: 0,
                     },
                 )),
                 vertex: wgpu::VertexState {
@@ -76,7 +76,7 @@ impl PipeLineLayout for Mesh2DRenderPipeline {
                     })],
                     compilation_options: Default::default(),
                 }),
-                multiview: None,
+                multiview_mask: None,
                 cache: None,
             },
         )
