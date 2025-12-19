@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.33.0 (19. December, 2025)
+
+### Changes
+- (Breaking) Text Bounds is now Optional. If set to None Text will no longer Clip.
+- (Breaking) Text:set_bounds now takes an Optional Argument,
+
 ## 0.32.0 (18. December, 2025)
 
 ### Changes

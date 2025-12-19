@@ -63,7 +63,7 @@ pub struct Text {
     /// Default Text Font Color.
     pub default_color: Color,
     /// Clip Bounds of Text.
-    pub bounds: Bounds,
+    pub bounds: Option<Bounds>,
     /// Instance Buffer Store Index of Text Buffer.
     pub store_id: Index,
     /// the draw order of the Text. created/updated when update is called.
@@ -119,13 +119,17 @@ impl Text {
 
         // From Glyphon good optimization.
         let is_run_visible = |run: &cosmic_text::LayoutRun| {
-            let start_y = self.pos.y + self.size.y - run.line_top;
-            let end_y = self.pos.y + self.size.y
-                - run.line_top
-                - (run.line_height * 0.5);
+            if let Some(bounds) = self.bounds {
+                let start_y = self.pos.y + self.size.y - run.line_top;
+                let end_y = self.pos.y + self.size.y
+                    - run.line_top
+                    - (run.line_height * 0.5);
 
-            start_y <= self.bounds.top + (run.line_height * 0.5)
-                && self.bounds.bottom <= end_y
+                start_y <= bounds.top + (run.line_height * 0.5)
+                    && bounds.bottom <= end_y
+            } else {
+                true
+            }
         };
 
         self.buffer
@@ -188,38 +192,40 @@ impl Text {
                         is_alpha = true;
                     }
 
-                    // Starts beyond right edge or ends beyond left edge
-                    let max_x = x + width;
-                    if x > self.bounds.right || max_x < self.bounds.left {
-                        return;
-                    }
+                    if let Some(bounds) = self.bounds {
+                        // Starts beyond right edge or ends beyond left edge
+                        let max_x = x + width;
+                        if x > bounds.right || max_x < bounds.left {
+                            return;
+                        }
 
-                    // Clip left edge
-                    if x < self.bounds.left {
-                        let right_shift = self.bounds.left - x;
+                        // Clip left edge
+                        if x < bounds.left {
+                            let right_shift = bounds.left - x;
 
-                        x = self.bounds.left;
-                        width = max_x - self.bounds.left;
-                        u += right_shift;
-                    }
+                            x = bounds.left;
+                            width = max_x - bounds.left;
+                            u += right_shift;
+                        }
 
-                    // Clip right edge
-                    if x + width > self.bounds.right {
-                        width = self.bounds.right - x;
-                    }
+                        // Clip right edge
+                        if x + width > bounds.right {
+                            width = bounds.right - x;
+                        }
 
-                    // Clip top edge
-                    if y < self.bounds.bottom {
-                        height -= self.bounds.bottom - y;
-                        y = self.bounds.bottom;
-                    }
+                        // Clip top edge
+                        if y < bounds.bottom {
+                            height -= bounds.bottom - y;
+                            y = bounds.bottom;
+                        }
 
-                    // Clip top edge
-                    if y + height > self.bounds.top {
-                        let bottom_shift = (y + height) - self.bounds.top;
+                        // Clip top edge
+                        if y + height > bounds.top {
+                            let bottom_shift = (y + height) - bounds.top;
 
-                        v += bottom_shift;
-                        height -= bottom_shift;
+                            v += bottom_shift;
+                            height -= bottom_shift;
+                        }
                     }
 
                     GLYPH_VERTICES.with_borrow_mut(|vertices| {
@@ -275,7 +281,7 @@ impl Text {
             ),
             pos,
             size,
-            bounds: Bounds::default(),
+            bounds: None,
             store_id: renderer.new_buffer(text_starter_size, 0),
             order: DrawOrder::new(false, pos, order_layer),
             changed: true,
@@ -469,7 +475,7 @@ impl Text {
 
     /// Sets the [`Text`]'s clipping bounds.
     ///
-    pub fn set_bounds(&mut self, bounds: Bounds) -> &mut Self {
+    pub fn set_bounds(&mut self, bounds: Option<Bounds>) -> &mut Self {
         self.bounds = bounds;
         self.changed = true;
         self
