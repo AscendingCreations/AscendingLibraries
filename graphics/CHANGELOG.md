@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+### Added
+- set_area_light_visibility and set_directional_light_visibility.
+
+### Changes
+- (Breaking) Add visibility to Area and Directional light.
+- (Breaking) return Option<T> When removing a Area or Directional light.
+
 ## 0.33.0 (19. December, 2025)
 
 ### Changes
