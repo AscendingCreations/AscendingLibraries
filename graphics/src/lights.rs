@@ -184,11 +184,27 @@ impl Lights {
         let instance = LightsVertex {
             world_color: self.world_color.to_array(),
             enable_lights: u32::from(self.enable_lights),
+            #[cfg(feature = "rayon")]
+            dir_count: self
+                .directional_lights
+                .iter()
+                .filter(|(_k, l)| l.visible)
+                .par_bridge()
+                .count() as u32,
+            #[cfg(not(feature = "rayon"))]
             dir_count: self
                 .directional_lights
                 .iter()
                 .filter(|(_k, l)| l.visible)
                 .count() as u32,
+            #[cfg(feature = "rayon")]
+            area_count: self
+                .area_lights
+                .iter()
+                .filter(|(_k, l)| l.visible)
+                .par_bridge()
+                .count() as u32 as u32,
+            #[cfg(not(feature = "rayon"))]
             area_count: self
                 .area_lights
                 .iter()
@@ -227,10 +243,10 @@ impl Lights {
 
     /// Removes a [`AreaLight`] by its [`Index`].
     ///
-    pub fn remove_area_light(&mut self, key: Index) {
+    pub fn remove_area_light(&mut self, key: Index) -> Option<AreaLight> {
         self.areas_changed = true;
         self.changed = true;
-        self.area_lights.remove(key);
+        self.area_lights.remove(key)
     }
 
     /// sets the reference of a [`Index`]ed [`AreaLight`]'s Visibility.
@@ -269,10 +285,13 @@ impl Lights {
 
     /// Removes a [`DirectionalLight`] by its [`Index`].
     ///
-    pub fn remove_directional_light(&mut self, key: Index) {
+    pub fn remove_directional_light(
+        &mut self,
+        key: Index,
+    ) -> Option<DirectionalLight> {
         self.directionals_changed = true;
         self.changed = true;
-        self.directional_lights.remove(key);
+        self.directional_lights.remove(key)
     }
 
     /// Sets the reference of a [`Index`]ed [`DirectionalLight`]'s Visibility.
