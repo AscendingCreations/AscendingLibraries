@@ -32,6 +32,7 @@ pub struct AreaLight {
     pub dither: f32,
     pub animate: bool,
     pub camera_view: CameraView,
+    pub visible: bool,
 }
 
 impl AreaLight {
@@ -63,6 +64,7 @@ pub struct DirectionalLight {
     pub edge_fade_distance: f32,
     pub animate: bool,
     pub camera_view: CameraView,
+    pub visible: bool,
 }
 
 impl DirectionalLight {
@@ -182,8 +184,16 @@ impl Lights {
         let instance = LightsVertex {
             world_color: self.world_color.to_array(),
             enable_lights: u32::from(self.enable_lights),
-            dir_count: self.directional_lights.len() as u32,
-            area_count: self.area_lights.len() as u32,
+            dir_count: self
+                .directional_lights
+                .iter()
+                .filter(|(_k, l)| l.visible)
+                .count() as u32,
+            area_count: self
+                .area_lights
+                .iter()
+                .filter(|(_k, l)| l.visible)
+                .count() as u32 as u32,
             pos: self.pos.to_array(),
             size: self.size.to_array(),
         };
@@ -223,6 +233,17 @@ impl Lights {
         self.area_lights.remove(key);
     }
 
+    /// sets the reference of a [`Index`]ed [`AreaLight`]'s Visibility.
+    ///
+    pub fn set_area_light_visibility(&mut self, key: Index, visible: bool) {
+        self.areas_changed = true;
+        self.changed = true;
+
+        if let Some(light) = self.area_lights.get_mut(key) {
+            light.visible = visible;
+        }
+    }
+
     /// Gets a Optional mutable reference of a [`Index`]ed [`AreaLight`].
     ///
     pub fn get_mut_area_light(&mut self, key: Index) -> Option<&mut AreaLight> {
@@ -252,6 +273,21 @@ impl Lights {
         self.directionals_changed = true;
         self.changed = true;
         self.directional_lights.remove(key);
+    }
+
+    /// Sets the reference of a [`Index`]ed [`DirectionalLight`]'s Visibility.
+    ///
+    pub fn set_directional_light_visibility(
+        &mut self,
+        key: Index,
+        visible: bool,
+    ) {
+        self.directionals_changed = true;
+        self.changed = true;
+
+        if let Some(light) = self.directional_lights.get_mut(key) {
+            light.visible = visible;
+        }
     }
 
     /// Gets a Optional mutable reference of a [`Index`]ed [`DirectionalLight`].
@@ -284,18 +320,26 @@ impl Lights {
             let queue = renderer.queue();
 
             #[cfg(feature = "rayon")]
-            self.area_lights.iter().enumerate().par_bridge().for_each(
-                |(i, (_key, light))| {
+            self.area_lights
+                .iter()
+                .filter(|(_k, l)| l.visible)
+                .enumerate()
+                .par_bridge()
+                .for_each(|(i, (_key, light))| {
                     queue.write_buffer(
                         areas,
                         (i * area_alignment) as wgpu::BufferAddress,
                         bytemuck::bytes_of(&light.to_raw()),
                     );
-                },
-            );
+                });
 
             #[cfg(not(feature = "rayon"))]
-            for (i, (_key, light)) in self.area_lights.iter().enumerate() {
+            for (i, (_key, light)) in self
+                .area_lights
+                .iter()
+                .filter(|(_k, l)| l.visible)
+                .enumerate()
+            {
                 queue.write_buffer(
                     areas,
                     (i * area_alignment) as wgpu::BufferAddress,
@@ -314,6 +358,7 @@ impl Lights {
             #[cfg(feature = "rayon")]
             self.directional_lights
                 .iter()
+                .filter(|(_k, l)| l.visible)
                 .enumerate()
                 .par_bridge()
                 .for_each(|(i, (_key, dir))| {
@@ -325,7 +370,12 @@ impl Lights {
                 });
 
             #[cfg(not(feature = "rayon"))]
-            for (i, (_key, dir)) in self.directional_lights.iter().enumerate() {
+            for (i, (_key, dir)) in self
+                .directional_lights
+                .iter()
+                .filter(|(_k, l)| l.visible)
+                .enumerate()
+            {
                 queue.write_buffer(
                     dirs,
                     (i * dir_alignment) as wgpu::BufferAddress,
