@@ -1,6 +1,6 @@
 [package]
 name = "ascending_time"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.85"
 authors = ["S.J.R. van Schaik", "Andrew Wheeler <genusistimelord@gmail.com>"]
@@ -15,7 +15,6 @@ categories = ["game-development"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["sqlx_runtime-tokio", "sqlx_postgres", "sqlx_rustls", "enable_serde", "enable_mmap_bytey", "enable_bytey"]
 enable_sqlx = ["sqlx"]
 sqlx_runtime-tokio = ["enable_sqlx", "sqlx/runtime-tokio"]
 sqlx_runtime-async-std = ["enable_sqlx", "sqlx/runtime-async-std"]
@@ -25,7 +24,6 @@ sqlx_postgres = ["sqlx?/postgres"]
 enable_serde = ["serde"]
 enable_mmap_bytey = ["mmap_bytey"]
 enable_bytey = ["bytey"]
-
 
 [dependencies]
 chrono = {version = "0.4.42", features = [

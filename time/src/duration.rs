@@ -1,6 +1,10 @@
+#[cfg(feature = "enable_bytey")]
 use bytey::{ByteBuffer, ByteBufferRead, ByteBufferWrite};
+#[cfg(feature = "enable_mmap_bytey")]
 use mmap_bytey::{MByteBuffer, MByteBufferRead, MByteBufferWrite};
+#[cfg(feature = "enable_serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
 use sqlx::{Postgres, Type};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -44,6 +48,7 @@ impl std::ops::Deref for Duration {
     }
 }
 
+#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
 impl sqlx::Type<Postgres> for Duration {
     fn type_info() -> sqlx::postgres::PgTypeInfo {
         <i64 as Type<Postgres>>::type_info()
@@ -54,6 +59,7 @@ impl sqlx::Type<Postgres> for Duration {
     }
 }
 
+#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
 impl<'r> sqlx::Decode<'r, Postgres> for Duration {
     fn decode(
         value: sqlx::postgres::PgValueRef<'r>,
@@ -69,6 +75,7 @@ impl<'r> sqlx::Decode<'r, Postgres> for Duration {
     }
 }
 
+#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
 impl<'q> sqlx::Encode<'q, Postgres> for Duration {
     fn encode_by_ref(
         &self,
@@ -83,6 +90,7 @@ impl<'q> sqlx::Encode<'q, Postgres> for Duration {
     }
 }
 
+#[cfg(feature = "enable_serde")]
 impl Serialize for Duration {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -92,6 +100,7 @@ impl Serialize for Duration {
     }
 }
 
+#[cfg(feature = "enable_serde")]
 impl<'de> Deserialize<'de> for Duration {
     fn deserialize<D>(deserializer: D) -> Result<Duration, D::Error>
     where
@@ -101,6 +110,7 @@ impl<'de> Deserialize<'de> for Duration {
     }
 }
 
+#[cfg(feature = "enable_bytey")]
 impl ByteBufferRead for Duration {
     fn read_from_bytey_buffer(buffer: &mut ByteBuffer) -> bytey::Result<Self> {
         Ok(Duration::from_milliseconds(buffer.read::<u64>()?))
@@ -119,6 +129,7 @@ impl ByteBufferRead for Duration {
     }
 }
 
+#[cfg(feature = "enable_bytey")]
 impl ByteBufferWrite for &Duration {
     fn write_to_bytey_buffer(
         &self,
@@ -143,6 +154,7 @@ impl ByteBufferWrite for &Duration {
     }
 }
 
+#[cfg(feature = "enable_mmap_bytey")]
 impl MByteBufferRead for Duration {
     fn read_from_mbuffer(buffer: &mut MByteBuffer) -> mmap_bytey::Result<Self> {
         Ok(Duration::from_milliseconds(buffer.read::<u64>()?))
@@ -161,6 +173,7 @@ impl MByteBufferRead for Duration {
     }
 }
 
+#[cfg(feature = "enable_mmap_bytey")]
 impl MByteBufferWrite for &Duration {
     fn write_to_mbuffer(
         &self,

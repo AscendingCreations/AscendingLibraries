@@ -195,7 +195,7 @@ dependencies = [
 
 [[package]]
 name = "ascending_time"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bytey",
  "chrono",
