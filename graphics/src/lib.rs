@@ -40,6 +40,8 @@ pub use input;
 #[cfg(feature = "crate_passthru")]
 pub use naga;
 #[cfg(feature = "crate_passthru")]
+pub use time;
+#[cfg(feature = "crate_passthru")]
 pub use wgpu;
 #[cfg(feature = "crate_passthru")]
 pub use winit;

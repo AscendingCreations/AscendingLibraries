@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["input", "camera", "graphics"]
+members = ["input", "camera", "graphics", "time"]
 
 [workspace.dependencies]
 bytemuck = { version = "1.24.0", features = ["derive"] }
@@ -31,6 +31,11 @@ version = "0.6.0"
 package = "ascending_input" 
 path = "./input"
 version = "0.5.0"
+
+[workspace.dependencies.time]
+package = "ascending_time" 
+path = "./time"
+version = "0.1.0"
 
 [workspace.dependencies.naga]
 #git = "https://github.com/gfx-rs/wgpu"

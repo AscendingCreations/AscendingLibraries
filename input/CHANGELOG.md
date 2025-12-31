@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.6.0 (31. December, 2025)
+### Changed
+- Migrated FrameTime to Ascending_time
+
 ## 0.5.0 (20. June, 2025)
 
 ### Changed

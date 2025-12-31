@@ -28,6 +28,7 @@ image.workspace = true
 guillotiere.workspace = true
 serde.workspace = true
 camera.workspace = true
+time.workspace = true
 input.workspace = true
 log = { workspace = true, optional = true }
 cosmic-text.workspace = true

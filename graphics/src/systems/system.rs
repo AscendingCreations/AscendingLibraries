@@ -2,7 +2,7 @@ use crate::{Bounds, CameraView, GpuDevice, GpuRenderer, Layout};
 use bytemuck::{Pod, Zeroable};
 use camera::Projection;
 use glam::{Mat4, Vec2, Vec3, Vec4};
-use input::FrameTime;
+use time::FrameTime;
 use wgpu::util::DeviceExt;
 
 /// System Layout send to all the Shaders for struct Global.
