@@ -10,7 +10,7 @@ image = "0.25.9"
 guillotiere = "0.6.2"
 serde = { version = "1.0.228", features = ["derive"] }
 log = "0.4.29"
-cosmic-text = { version = "0.15.0", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
+cosmic-text = { version = "0.16.0", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
 ordered-float = { version = "5.1.0", features = ["serde"] }
 lru = "0.16.2"
 glam = { version = "0.30.9", features = ["bytemuck", "mint"] }
