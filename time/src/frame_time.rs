@@ -72,7 +72,7 @@ impl FrameTime {
     /// from the stored timer that is handled by the updater.
     ///
     pub fn update_recent(&mut self) {
-        let frame_time = Instant::now();
+        let frame_time = Instant::recent();
 
         self.delta_seconds =
             frame_time.duration_since(self.frame_time).as_secs_f32();
