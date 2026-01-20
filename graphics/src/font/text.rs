@@ -174,13 +174,17 @@ impl Text {
 
                     let position = allocation.data;
                     let (u, v, width, height) = allocation.rect();
-                    let (mut u, mut v, mut width, mut height) =
-                        (u as f32, v as f32, width as f32, height as f32);
+                    let (mut u, mut v, mut width, mut height) = (
+                        u as f32,
+                        v as f32,
+                        (width as f32 * self.scale).round(),
+                        (height as f32 * self.scale).round(),
+                    );
                     let (mut x, mut y) = (
-                        physical_glyph.x as f32 + position.x,
-                        physical_glyph.y as f32
+                        position.x + physical_glyph.x as f32,
+                        (physical_glyph.y as f32
                             + ((position.y - height)
-                                - (run.line_y * self.scale).round()),
+                                - (run.line_y * self.scale).round())),
                     );
                     let color = if is_color {
                         Color::rgba(255, 255, 255, 255)

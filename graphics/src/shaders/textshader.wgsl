@@ -86,20 +86,20 @@ fn vertex(
 
     switch v {
         case 1u: {
-            result.uv = vec2<f32>(vertex.uv.x + vertex.hw.x, vertex.uv.y + vertex.hw.y) /  fsize;
+            result.uv = vec2<f32>(vertex.uv.x + vertex.hw.x, vertex.uv.y + vertex.hw.y) / fsize;
             pos.x += vertex.hw.x;
         }
         case 2u: {
-            result.uv = vec2<f32>(vertex.uv.x + vertex.hw.x, vertex.uv.y) /  fsize;
+            result.uv = vec2<f32>(vertex.uv.x + vertex.hw.x, vertex.uv.y) / fsize;
             pos.x += vertex.hw.x;
             pos.y += vertex.hw.y;
         }
         case 3u: {
-            result.uv = vec2<f32>(vertex.uv.x, vertex.uv.y) /  fsize;
+            result.uv = vec2<f32>(vertex.uv.x, vertex.uv.y) / fsize;
             pos.y += vertex.hw.y;
         }
         default: {
-            result.uv = vec2<f32>(vertex.uv.x, vertex.uv.y + vertex.hw.y) /  fsize;
+            result.uv = vec2<f32>(vertex.uv.x, vertex.uv.y + vertex.hw.y) / fsize;
         }
     }
 
@@ -110,7 +110,7 @@ fn vertex(
         vec4<f32>(0.0, 0.0, 0.0, 1.0),
     );
 
-    result.clip_position = (global.proj * global.views[vertex.camera_view] * scale_mat) * vec4<f32>(pos, 1.0);
+    result.clip_position = (global.proj * global.views[vertex.camera_view] * scale_mat) * vec4<f32>(pos.xy, pos.z, 1.0);
     result.layer = i32(vertex.layer);
     result.is_color = vertex.is_color;
     result.color = unpack_color(vertex.color);
