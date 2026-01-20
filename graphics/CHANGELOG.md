@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.35.1 (20. Jan, 2026)
+
+### Fixes
+-  Fix text width and Height not getting sized for correct output.
+
 ## 0.35.0 (2. Jan, 2026)
 
 ### Changes
