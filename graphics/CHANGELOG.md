@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.36.0 (31. Jan, 2026)
+
+### Changes
+- (Breaking) Updated Cosmic-text and Glam
+- Refactored Code using parallel helper (thank you Stephan)
+
+### Fixed
+- Fixed issue where Metal Adapters return no Driver String which cuased Macs to not work.
+
 ## 0.35.1 (20. Jan, 2026)
 
 ### Fixes
