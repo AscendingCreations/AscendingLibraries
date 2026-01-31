@@ -1,9 +1,8 @@
-use crate::{EnabledPipelines, GpuRenderer, GraphicsError};
+use crate::{EnabledPipelines, GpuRenderer, GraphicsError, parallel::*};
 use ahash::AHashSet;
 #[cfg(feature = "logging")]
 use log::debug;
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
+
 use std::sync::Arc;
 use wgpu::{Adapter, Backends, DeviceType, Surface, TextureFormat};
 use winit::{dpi::PhysicalSize, event::WindowEvent, window::Window};
@@ -373,15 +372,10 @@ impl InstanceExt for wgpu::Instance {
             Some((adapter, device_type, backend))
         };
 
-        #[cfg(feature = "rayon")]
         let mut compatible_adapters: Vec<(Adapter, u32, u32)> = adapters
             .into_par_iter()
             .filter_map(compatible_test)
             .collect();
-
-        #[cfg(not(feature = "rayon"))]
-        let mut compatible_adapters: Vec<(Adapter, u32, u32)> =
-            adapters.into_iter().filter_map(compatible_test).collect();
 
         #[cfg(feature = "logging")]
         if compatible_adapters.is_empty() {

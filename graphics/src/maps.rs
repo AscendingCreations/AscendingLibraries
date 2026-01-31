@@ -254,6 +254,7 @@ impl Map {
                     color: tile.color.0,
                     map_layer: layer as u32,
                     map_index: self.map_index as u32,
+                    anim_time: tile.anim_time,
                 };
 
                 vertexs.push(map_vertex);
