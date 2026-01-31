@@ -388,13 +388,6 @@ impl InstanceExt for wgpu::Instance {
                     DeviceType::Cpu => 5,
                 };
 
-                #[cfg(target_os = "windows")]
-                if (device_type == 1 || device_type == 2)
-                    && information.driver.is_empty()
-                {
-                    return None;
-                }
-
                 if let Some(ref surface) = options.compatible_surface {
                     if !adapter.is_surface_supported(surface) {
                         return None;
@@ -427,13 +420,6 @@ impl InstanceExt for wgpu::Instance {
                     DeviceType::Cpu => 5,
                 };
 
-                #[cfg(target_os = "windows")]
-                if (device_type == 1 || device_type == 2)
-                    && information.driver.is_empty()
-                {
-                    return None;
-                }
-
                 if let Some(ref surface) = options.compatible_surface {
                     if !adapter.is_surface_supported(surface) {
                         return None;
@@ -458,11 +444,6 @@ impl InstanceExt for wgpu::Instance {
             )
         }
 
-        #[cfg(feature = "rayon")]
-        compatible_adapters
-            .par_sort_by(|a, b| b.1.cmp(&a.1).then(b.2.cmp(&a.2)));
-
-        #[cfg(not(feature = "rayon"))]
         compatible_adapters.sort_by(|a, b| b.1.cmp(&a.1).then(b.2.cmp(&a.2)));
         compatible_adapters
     }
