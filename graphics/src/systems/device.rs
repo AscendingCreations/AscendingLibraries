@@ -366,69 +366,43 @@ impl InstanceExt for wgpu::Instance {
     ) -> Vec<(Adapter, u32, u32)> {
         let adapters = self.enumerate_adapters(options.allowed_backends).await;
 
+        let compatible_test = |adapter: Adapter| {
+            let information = adapter.get_info();
+            let mut backend = information.backend as u32;
+
+            if backend == 0 {
+                backend = 6; //NOOP Reordering to last
+            }
+
+            let is_low = options.power == AdapterPowerSettings::LowPower;
+            let device_type = match information.device_type {
+                DeviceType::IntegratedGpu if is_low => 1,
+                DeviceType::IntegratedGpu => 2,
+                DeviceType::DiscreteGpu if is_low => 2,
+                DeviceType::DiscreteGpu => 1,
+                DeviceType::Other => 3,
+                DeviceType::VirtualGpu => 4,
+                DeviceType::Cpu => 5,
+            };
+
+            if let Some(ref surface) = options.compatible_surface {
+                if !adapter.is_surface_supported(surface) {
+                    return None;
+                }
+            }
+
+            Some((adapter, device_type, backend))
+        };
+
         #[cfg(feature = "rayon")]
         let mut compatible_adapters: Vec<(Adapter, u32, u32)> = adapters
             .into_par_iter()
-            .filter_map(|adapter| {
-                let information = adapter.get_info();
-                let mut backend = information.backend as u32;
-
-                if backend == 0 {
-                    backend = 6; //NOOP Reordering to last
-                }
-
-                let is_low = options.power == AdapterPowerSettings::LowPower;
-                let device_type = match information.device_type {
-                    DeviceType::IntegratedGpu if is_low => 1,
-                    DeviceType::IntegratedGpu => 2,
-                    DeviceType::DiscreteGpu if is_low => 2,
-                    DeviceType::DiscreteGpu => 1,
-                    DeviceType::Other => 3,
-                    DeviceType::VirtualGpu => 4,
-                    DeviceType::Cpu => 5,
-                };
-
-                if let Some(ref surface) = options.compatible_surface {
-                    if !adapter.is_surface_supported(surface) {
-                        return None;
-                    }
-                }
-
-                Some((adapter, device_type, backend))
-            })
+            .filter_map(compatible_test)
             .collect();
 
         #[cfg(not(feature = "rayon"))]
-        let mut compatible_adapters: Vec<(Adapter, u32, u32)> = adapters
-            .into_iter()
-            .filter_map(|adapter| {
-                let information = adapter.get_info();
-                let mut backend = information.backend as u32;
-
-                if backend == 0 {
-                    backend = 6;
-                }
-
-                let is_low = options.power == AdapterPowerSettings::LowPower;
-                let device_type = match information.device_type {
-                    DeviceType::IntegratedGpu if is_low => 1,
-                    DeviceType::IntegratedGpu => 2,
-                    DeviceType::DiscreteGpu if is_low => 2,
-                    DeviceType::DiscreteGpu => 1,
-                    DeviceType::Other => 3,
-                    DeviceType::VirtualGpu => 4,
-                    DeviceType::Cpu => 5,
-                };
-
-                if let Some(ref surface) = options.compatible_surface {
-                    if !adapter.is_surface_supported(surface) {
-                        return None;
-                    }
-                }
-
-                Some((adapter, device_type, backend))
-            })
-            .collect();
+        let mut compatible_adapters: Vec<(Adapter, u32, u32)> =
+            adapters.into_iter().filter_map(compatible_test).collect();
 
         #[cfg(feature = "logging")]
         if compatible_adapters.is_empty() {
