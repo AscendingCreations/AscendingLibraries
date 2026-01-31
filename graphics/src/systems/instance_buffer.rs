@@ -1,9 +1,7 @@
 use crate::{
     Bounds, Buffer, BufferLayout, CameraView, GpuDevice, GpuRenderer,
-    OrderedIndex,
+    OrderedIndex, parallel::*,
 };
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
 use std::ops::Range;
 
 /// Details for the Objects Memory location within the instance Buffer.
@@ -130,22 +128,12 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             let offset = buffer_layer.saturating_add(1);
 
             if self.unprocessed.len() < offset {
-                #[cfg(feature = "rayon")]
                 let mut expansions = (self.unprocessed.len()..offset)
                     .into_par_iter()
                     .map(|_| Vec::with_capacity(self.layer_size))
                     .collect();
 
-                #[cfg(feature = "rayon")]
                 self.unprocessed.append(&mut expansions);
-
-                #[cfg(not(feature = "rayon"))]
-                for _ in self.unprocessed.len()..offset {
-                    //Push the buffer_layer. if this is a layer we are adding data too lets
-                    //give it a starting size. this can be adjusted later for better performance
-                    //versus ram usage.
-                    self.unprocessed.push(Vec::with_capacity(self.layer_size));
-                }
             }
 
             self.needed_size += store.store.len();
@@ -200,24 +188,12 @@ impl<K: BufferLayout> InstanceBuffer<K> {
         self.buffer.count = self.needed_size / K::stride();
         self.buffer.len = self.needed_size;
 
-        #[cfg(feature = "rayon")]
         self.unprocessed
             .par_iter_mut()
             .for_each(|processing| processing.par_sort());
 
-        #[cfg(not(feature = "rayon"))]
-        self.unprocessed.iter_mut().for_each(|processing| {
-            processing.sort();
-        });
-
         if self.is_clipped {
-            #[cfg(feature = "rayon")]
             self.clipped_buffers.par_iter_mut().for_each(|buffer| {
-                buffer.clear();
-            });
-
-            #[cfg(not(feature = "rayon"))]
-            self.clipped_buffers.iter_mut().for_each(|buffer| {
                 buffer.clear();
             });
 
@@ -276,13 +252,7 @@ impl<K: BufferLayout> InstanceBuffer<K> {
 
         self.needed_size = 0;
 
-        #[cfg(feature = "rayon")]
         self.unprocessed.par_iter_mut().for_each(|buffer| {
-            buffer.clear();
-        });
-
-        #[cfg(not(feature = "rayon"))]
-        self.unprocessed.iter_mut().for_each(|buffer| {
             buffer.clear();
         });
     }

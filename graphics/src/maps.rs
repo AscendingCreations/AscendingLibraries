@@ -5,12 +5,10 @@ mod vertex;
 
 use crate::{
     AtlasSet, CameraView, DrawOrder, GpuRenderer, Index, OrderedIndex, UVec2,
-    UVec3, Vec2, Vec3,
+    UVec3, Vec2, Vec3, parallel::*,
 };
 use cosmic_text::Color;
 pub use pipeline::*;
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
 pub use render::*;
 use std::{cell::RefCell, iter, mem};
 pub use uniforms::*;
@@ -191,75 +189,41 @@ impl Map {
         let atlas_width = atlas.size().x / self.tilesize;
         let max_tiles = self.size.x * self.size.y;
 
-        #[cfg(feature = "rayon")]
-        {
-            let mut data: Vec<TileVertex> = (0..max_tiles)
-                .into_par_iter()
-                .filter_map(|id| {
-                    let (x, y) = ((id % self.size.x), (id / self.size.x));
-                    let tile =
-                        &self.tiles[(id + (layer as u32 * max_tiles)) as usize];
+        let mut data: Vec<TileVertex> = (0..max_tiles)
+            .into_par_iter()
+            .filter_map(|id| {
+                let (x, y) = ((id % self.size.x), (id / self.size.x));
+                let tile =
+                    &self.tiles[(id + (layer as u32 * max_tiles)) as usize];
 
-                    if tile.id == 0 {
-                        return None;
-                    }
+                if tile.id == 0 {
+                    return None;
+                }
 
-                    if let Some((allocation, _)) = atlas.peek(tile.id) {
-                        let (posx, posy) = allocation.position();
+                if let Some((allocation, _)) = atlas.peek(tile.id) {
+                    let (posx, posy) = allocation.position();
 
-                        Some(TileVertex {
-                            pos: [
-                                (x * self.tilesize) as f32,
-                                (y * self.tilesize) as f32,
-                                z,
-                            ],
-                            tile_id: (posx / self.tilesize)
-                                + ((posy / self.tilesize) * atlas_width),
-                            texture_layer: allocation.layer as u32,
-                            color: tile.color.0,
-                            map_layer: layer as u32,
-                            map_index: self.map_index as u32,
-                            anim_time: tile.anim_time,
-                        })
-                    } else {
-                        None
-                    }
-                })
-                .collect();
+                    Some(TileVertex {
+                        pos: [
+                            (x * self.tilesize) as f32,
+                            (y * self.tilesize) as f32,
+                            z,
+                        ],
+                        tile_id: (posx / self.tilesize)
+                            + ((posy / self.tilesize) * atlas_width),
+                        texture_layer: allocation.layer as u32,
+                        color: tile.color.0,
+                        map_layer: layer as u32,
+                        map_index: self.map_index as u32,
+                        anim_time: tile.anim_time,
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect();
 
-            vertexs.append(&mut data);
-        }
-
-        #[cfg(not(feature = "rayon"))]
-        for id in 0..max_tiles {
-            let (x, y) = ((id % self.size.x), (id / self.size.x));
-            let tile = &self.tiles[(id + (layer as u32 * max_tiles)) as usize];
-
-            if tile.id == 0 {
-                continue;
-            }
-
-            if let Some((allocation, _)) = atlas.peek(tile.id) {
-                let (posx, posy) = allocation.position();
-
-                let map_vertex = TileVertex {
-                    pos: [
-                        (x * self.tilesize) as f32,
-                        (y * self.tilesize) as f32,
-                        z,
-                    ],
-                    tile_id: (posx / self.tilesize)
-                        + ((posy / self.tilesize) * atlas_width),
-                    texture_layer: allocation.layer as u32,
-                    color: tile.color.0,
-                    map_layer: layer as u32,
-                    map_index: self.map_index as u32,
-                    anim_time: tile.anim_time,
-                };
-
-                vertexs.push(map_vertex);
-            }
-        }
+        vertexs.append(&mut data);
     }
 
     /// Updates the [`Map`]'s Buffers to prepare them for rendering.

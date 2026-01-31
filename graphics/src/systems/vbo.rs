@@ -1,9 +1,7 @@
 use crate::{
     AsBufferPass, Bounds, Buffer, BufferData, BufferLayout, BufferPass,
-    CameraView, GpuDevice, GpuRenderer, OrderedIndex,
+    CameraView, GpuDevice, GpuRenderer, OrderedIndex, parallel::*,
 };
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
 use std::ops::Range;
 
 /// Details for the Objects Memory location within the Vertex Buffer and Index Buffers.
@@ -197,15 +195,9 @@ impl<K: BufferLayout> VertexBuffer<K> {
         self.vertex_buffer.count = self.vertex_needed / K::stride();
         self.vertex_buffer.len = self.vertex_needed;
 
-        #[cfg(feature = "rayon")]
         self.unprocessed
             .par_iter_mut()
             .for_each(|processing| processing.par_sort());
-
-        #[cfg(not(feature = "rayon"))]
-        self.unprocessed.iter_mut().for_each(|processing| {
-            processing.sort();
-        });
 
         if self.buffers.len() < self.unprocessed.len() {
             for i in self.buffers.len()..self.unprocessed.len() {
@@ -214,13 +206,9 @@ impl<K: BufferLayout> VertexBuffer<K> {
             }
         }
 
-        #[cfg(feature = "rayon")]
         self.buffers
             .par_iter_mut()
             .for_each(|buffer| buffer.clear());
-
-        #[cfg(not(feature = "rayon"))]
-        self.buffers.iter_mut().for_each(|buffer| buffer.clear());
 
         for (layer, processing) in self.unprocessed.iter().enumerate() {
             for buf in processing {
@@ -303,14 +291,8 @@ impl<K: BufferLayout> VertexBuffer<K> {
             }
         }
 
-        #[cfg(feature = "rayon")]
         self.unprocessed
             .par_iter_mut()
-            .for_each(|buffer| buffer.clear());
-
-        #[cfg(not(feature = "rayon"))]
-        self.unprocessed
-            .iter_mut()
             .for_each(|buffer| buffer.clear());
 
         self.vertex_needed = 0;

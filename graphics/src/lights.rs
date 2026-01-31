@@ -10,10 +10,9 @@ pub use vertex::*;
 
 use crate::{
     CameraView, Color, DrawOrder, GpuRenderer, Index, OrderedIndex, Vec2, Vec3,
-    Vec4,
+    Vec4, parallel::*,
 };
-#[cfg(feature = "rayon")]
-use rayon::prelude::*;
+
 use slotmap::SlotMap;
 use std::mem;
 use wgpu::util::align_to;
@@ -184,31 +183,17 @@ impl Lights {
         let instance = LightsVertex {
             world_color: self.world_color.to_array(),
             enable_lights: u32::from(self.enable_lights),
-            #[cfg(feature = "rayon")]
             dir_count: self
                 .directional_lights
                 .iter()
                 .filter(|(_k, l)| l.visible)
                 .par_bridge()
                 .count() as u32,
-            #[cfg(not(feature = "rayon"))]
-            dir_count: self
-                .directional_lights
-                .iter()
-                .filter(|(_k, l)| l.visible)
-                .count() as u32,
-            #[cfg(feature = "rayon")]
             area_count: self
                 .area_lights
                 .iter()
                 .filter(|(_k, l)| l.visible)
                 .par_bridge()
-                .count() as u32 as u32,
-            #[cfg(not(feature = "rayon"))]
-            area_count: self
-                .area_lights
-                .iter()
-                .filter(|(_k, l)| l.visible)
                 .count() as u32 as u32,
             pos: self.pos.to_array(),
             size: self.size.to_array(),
@@ -338,7 +323,6 @@ impl Lights {
                 align_to(mem::size_of::<AreaLightRaw>(), 32) as usize;
             let queue = renderer.queue();
 
-            #[cfg(feature = "rayon")]
             self.area_lights
                 .iter()
                 .filter(|(_k, l)| l.visible)
@@ -352,20 +336,6 @@ impl Lights {
                     );
                 });
 
-            #[cfg(not(feature = "rayon"))]
-            for (i, (_key, light)) in self
-                .area_lights
-                .iter()
-                .filter(|(_k, l)| l.visible)
-                .enumerate()
-            {
-                queue.write_buffer(
-                    areas,
-                    (i * area_alignment) as wgpu::BufferAddress,
-                    bytemuck::bytes_of(&light.to_raw()),
-                );
-            }
-
             self.areas_changed = false;
         }
 
@@ -374,7 +344,6 @@ impl Lights {
                 align_to(mem::size_of::<DirectionalLightRaw>(), 48) as usize;
             let queue = renderer.queue();
 
-            #[cfg(feature = "rayon")]
             self.directional_lights
                 .iter()
                 .filter(|(_k, l)| l.visible)
@@ -387,20 +356,6 @@ impl Lights {
                         bytemuck::bytes_of(&dir.to_raw()),
                     );
                 });
-
-            #[cfg(not(feature = "rayon"))]
-            for (i, (_key, dir)) in self
-                .directional_lights
-                .iter()
-                .filter(|(_k, l)| l.visible)
-                .enumerate()
-            {
-                queue.write_buffer(
-                    dirs,
-                    (i * dir_alignment) as wgpu::BufferAddress,
-                    bytemuck::bytes_of(&dir.to_raw()),
-                );
-            }
 
             self.directionals_changed = false;
         }

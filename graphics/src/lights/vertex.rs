@@ -1,7 +1,8 @@
 use crate::{BufferData, BufferLayout};
 #[cfg(feature = "rayon")]
 use rayon::{iter::repeat_n, prelude::*};
-
+#[cfg(not(feature = "rayon"))]
+use std::iter::repeat_n;
 /// Vertex Details for [`crate::Lights`] that matches the Shaders Vertex Layout.
 ///
 #[repr(C)]
@@ -41,14 +42,8 @@ impl BufferLayout for LightsVertex {
         vertex_capacity: usize,
         _index_capacity: usize,
     ) -> BufferData {
-        #[cfg(feature = "rayon")]
         let instance_arr: Vec<LightsVertex> =
             repeat_n(LightsVertex::default(), vertex_capacity).collect();
-
-        #[cfg(not(feature = "rayon"))]
-        let instance_arr: Vec<LightsVertex> =
-            std::iter::repeat_n(LightsVertex::default(), vertex_capacity)
-                .collect();
 
         BufferData {
             vertexs: bytemuck::cast_slice(&instance_arr).to_vec(),
