@@ -388,6 +388,7 @@ impl InstanceExt for wgpu::Instance {
                     DeviceType::Cpu => 5,
                 };
 
+                #[cfg(target_os = "windows")]
                 if (device_type == 1 || device_type == 2)
                     && information.driver.is_empty()
                 {
@@ -426,6 +427,7 @@ impl InstanceExt for wgpu::Instance {
                     DeviceType::Cpu => 5,
                 };
 
+                #[cfg(target_os = "windows")]
                 if (device_type == 1 || device_type == 2)
                     && information.driver.is_empty()
                 {
