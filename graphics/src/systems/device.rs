@@ -1,4 +1,5 @@
 use crate::{EnabledPipelines, GpuRenderer, GraphicsError};
+use ahash::AHashSet;
 #[cfg(feature = "logging")]
 use log::debug;
 #[cfg(feature = "rayon")]
@@ -265,33 +266,11 @@ impl AdapterExt for wgpu::Adapter {
         #[cfg(feature = "logging")]
         debug!("{:?}", caps.formats);
 
-        #[cfg(feature = "rayon")]
-        let rgba = caps
-            .formats
-            .par_iter()
-            .find_first(|&&v| v == TextureFormat::Rgba8UnormSrgb);
+        let caps: AHashSet<TextureFormat> = caps.formats.into_iter().collect();
 
-        #[cfg(feature = "rayon")]
-        let bgra = caps
-            .formats
-            .par_iter()
-            .find_first(|&&v| v == TextureFormat::Bgra8UnormSrgb);
-
-        #[cfg(not(feature = "rayon"))]
-        let rgba = caps
-            .formats
-            .iter()
-            .find(|&&v| v == TextureFormat::Rgba8UnormSrgb);
-
-        #[cfg(not(feature = "rayon"))]
-        let bgra = caps
-            .formats
-            .iter()
-            .find(|&&v| v == TextureFormat::Bgra8UnormSrgb);
-
-        let format = if rgba.is_some() {
+        let format = if caps.get(&TextureFormat::Rgba8UnormSrgb).is_some() {
             TextureFormat::Rgba8UnormSrgb
-        } else if bgra.is_some() {
+        } else if caps.get(&TextureFormat::Bgra8UnormSrgb).is_some() {
             TextureFormat::Bgra8UnormSrgb
         } else {
             panic!(
