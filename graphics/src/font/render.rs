@@ -204,21 +204,21 @@ where
             return;
         }
 
-        if let Some(Some(details)) = buffer.buffer.buffers.get(buffer_layer) {
-            if buffer.buffer.count() > 0 {
-                self.set_buffers(renderer.buffer_object.as_buffer_pass());
-                self.set_bind_group(1, atlas.text.bind_group(), &[]);
-                self.set_bind_group(2, atlas.emoji.bind_group(), &[]);
-                self.set_vertex_buffer(1, buffer.buffer.instances(None));
-                self.set_pipeline(
-                    renderer.get_pipelines(TextRenderPipeline).unwrap(),
-                );
-                self.draw_indexed(
-                    0..StaticVertexBuffer::index_count(),
-                    0,
-                    details.start..details.end,
-                );
-            }
+        if let Some(Some(details)) = buffer.buffer.buffers.get(buffer_layer)
+            && buffer.buffer.count() > 0
+        {
+            self.set_buffers(renderer.buffer_object.as_buffer_pass());
+            self.set_bind_group(1, atlas.text.bind_group(), &[]);
+            self.set_bind_group(2, atlas.emoji.bind_group(), &[]);
+            self.set_vertex_buffer(1, buffer.buffer.instances(None));
+            self.set_pipeline(
+                renderer.get_pipelines(TextRenderPipeline).unwrap(),
+            );
+            self.draw_indexed(
+                0..StaticVertexBuffer::index_count(),
+                0,
+                details.start..details.end,
+            );
         }
     }
 }

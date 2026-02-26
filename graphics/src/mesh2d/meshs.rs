@@ -664,7 +664,7 @@ impl Mesh2DBuilder {
         color: Color,
     ) -> Result<&mut Self, GraphicsError> {
         {
-            if (triangles.len() % 3) != 0 {
+            if !triangles.len().is_multiple_of(3) {
                 return Err(GraphicsError::Other(OtherError::new(
                     "Called MeshBuilder::triangles() with points that have a length not a multiple of 3.",
                 )));

@@ -363,10 +363,10 @@ impl InstanceExt for wgpu::Instance {
                 DeviceType::Cpu => 5,
             };
 
-            if let Some(ref surface) = options.compatible_surface {
-                if !adapter.is_surface_supported(surface) {
-                    return None;
-                }
+            if let Some(ref surface) = options.compatible_surface
+                && !adapter.is_surface_supported(surface)
+            {
+                return None;
             }
 
             Some((adapter, device_type, backend))

@@ -170,21 +170,21 @@ where
         buffer: &'b LightRenderer,
         buffer_layer: usize,
     ) {
-        if let Some(Some(details)) = buffer.buffer.buffers.get(buffer_layer) {
-            if buffer.buffer.count() > 0 {
-                self.set_bind_group(1, &buffer.area_bind_group, &[]);
-                self.set_bind_group(2, &buffer.dir_bind_group, &[]);
-                self.set_vertex_buffer(1, buffer.buffer.instances(None));
-                self.set_pipeline(
-                    renderer.get_pipelines(LightRenderPipeline).unwrap(),
-                );
+        if let Some(Some(details)) = buffer.buffer.buffers.get(buffer_layer)
+            && buffer.buffer.count() > 0
+        {
+            self.set_bind_group(1, &buffer.area_bind_group, &[]);
+            self.set_bind_group(2, &buffer.dir_bind_group, &[]);
+            self.set_vertex_buffer(1, buffer.buffer.instances(None));
+            self.set_pipeline(
+                renderer.get_pipelines(LightRenderPipeline).unwrap(),
+            );
 
-                self.draw_indexed(
-                    0..StaticVertexBuffer::index_count(),
-                    0,
-                    details.start..details.end,
-                );
-            }
+            self.draw_indexed(
+                0..StaticVertexBuffer::index_count(),
+                0,
+                details.start..details.end,
+            );
         }
     }
 }

@@ -4,7 +4,7 @@ use bytey::{ByteBuffer, ByteBufferRead, ByteBufferWrite};
 use mmap_bytey::{MByteBuffer, MByteBufferRead, MByteBufferWrite};
 #[cfg(feature = "enable_serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
+#[cfg(feature = "enable_sqlx")]
 use sqlx::{Postgres, Type};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -48,7 +48,7 @@ impl std::ops::Deref for Duration {
     }
 }
 
-#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
+#[cfg(feature = "enable_sqlx")]
 impl sqlx::Type<Postgres> for Duration {
     fn type_info() -> sqlx::postgres::PgTypeInfo {
         <i64 as Type<Postgres>>::type_info()
@@ -59,7 +59,7 @@ impl sqlx::Type<Postgres> for Duration {
     }
 }
 
-#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
+#[cfg(feature = "enable_sqlx")]
 impl<'r> sqlx::Decode<'r, Postgres> for Duration {
     fn decode(
         value: sqlx::postgres::PgValueRef<'r>,
@@ -75,7 +75,7 @@ impl<'r> sqlx::Decode<'r, Postgres> for Duration {
     }
 }
 
-#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
+#[cfg(feature = "enable_sqlx")]
 impl<'q> sqlx::Encode<'q, Postgres> for Duration {
     fn encode_by_ref(
         &self,

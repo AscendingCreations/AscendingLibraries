@@ -150,20 +150,19 @@ where
             }
         } else if let Some(Some(details)) =
             buffer.buffer.buffers.get(buffer_layer)
+            && buffer.buffer.count() > 0
         {
-            if buffer.buffer.count() > 0 {
-                self.set_bind_group(1, atlas.bind_group(), &[]);
-                self.set_vertex_buffer(1, buffer.buffer.instances(None));
-                self.set_pipeline(
-                    renderer.get_pipelines(AnimImageRenderPipeline).unwrap(),
-                );
+            self.set_bind_group(1, atlas.bind_group(), &[]);
+            self.set_vertex_buffer(1, buffer.buffer.instances(None));
+            self.set_pipeline(
+                renderer.get_pipelines(AnimImageRenderPipeline).unwrap(),
+            );
 
-                self.draw_indexed(
-                    0..StaticVertexBuffer::index_count(),
-                    0,
-                    details.start..details.end,
-                );
-            }
+            self.draw_indexed(
+                0..StaticVertexBuffer::index_count(),
+                0,
+                details.start..details.end,
+            );
         }
     }
 }

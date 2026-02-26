@@ -120,7 +120,7 @@ impl TileSheet {
             })
             .collect_into_vec(&mut upload_tiles);
 
-        upload_tiles.sort_by(|a, b| a.id.cmp(&b.id));
+        upload_tiles.sort_by_key(|a| a.id);
 
         for tile_data in upload_tiles {
             if tile_data.is_empty {

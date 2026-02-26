@@ -168,10 +168,8 @@ impl<K: BufferLayout> InstanceBuffer<K> {
             *count += (store.store.len() / K::stride()) as u32;
         }
 
-        if write_buffer {
-            if let Some(store) = renderer.get_buffer(buf.index) {
-                self.buffer.write(renderer.queue(), &store.store, old_pos);
-            }
+        if write_buffer && let Some(store) = renderer.get_buffer(buf.index) {
+            self.buffer.write(renderer.queue(), &store.store, old_pos);
         }
     }
 

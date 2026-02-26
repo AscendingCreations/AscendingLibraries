@@ -50,10 +50,7 @@ impl Updater {
             .expect("The Thread was already unloaded.")
             .join()
             .map_err(|_| {
-                io::Error::new(
-                    io::ErrorKind::Other,
-                    "failed to properly stop the updater",
-                )
+                io::Error::other("failed to properly stop the updater")
             })
     }
 }

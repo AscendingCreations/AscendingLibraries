@@ -194,7 +194,7 @@ impl Lights {
                 .iter()
                 .filter(|(_k, l)| l.visible)
                 .par_bridge()
-                .count() as u32 as u32,
+                .count() as u32,
             pos: self.pos.to_array(),
             size: self.size.to_array(),
         };

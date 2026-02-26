@@ -5,7 +5,7 @@ use bytey::{ByteBuffer, ByteBufferRead, ByteBufferWrite};
 use mmap_bytey::{MByteBuffer, MByteBufferRead, MByteBufferWrite};
 #[cfg(feature = "enable_serde")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
+#[cfg(feature = "enable_sqlx")]
 use sqlx::{Postgres, Type};
 use std::ops::*;
 use std::sync::LazyLock;
@@ -22,7 +22,7 @@ pub struct Instant(pub u64);
 // We will hold the entire Duration for Rebuild.
 static RECENT: AtomicU64 = AtomicU64::new(0);
 static INSTANT: LazyLock<std::time::Instant> =
-    std::sync::LazyLock::new(|| std::time::Instant::now());
+    std::sync::LazyLock::new(std::time::Instant::now);
 
 impl Instant {
     /// Returns an instant corresponding to "now".
@@ -116,7 +116,7 @@ impl std::ops::Deref for Instant {
     }
 }
 
-#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
+#[cfg(feature = "enable_sqlx")]
 impl sqlx::Type<Postgres> for Instant {
     fn type_info() -> sqlx::postgres::PgTypeInfo {
         <i64 as Type<Postgres>>::type_info()
@@ -127,7 +127,7 @@ impl sqlx::Type<Postgres> for Instant {
     }
 }
 
-#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
+#[cfg(feature = "enable_sqlx")]
 impl<'r> sqlx::Decode<'r, Postgres> for Instant {
     fn decode(
         value: sqlx::postgres::PgValueRef<'r>,
@@ -138,7 +138,7 @@ impl<'r> sqlx::Decode<'r, Postgres> for Instant {
     }
 }
 
-#[cfg(all(feature = "enable_sqlx", feature = "sqlx_postgres"))]
+#[cfg(feature = "enable_sqlx")]
 impl<'q> sqlx::Encode<'q, Postgres> for Instant {
     fn encode_by_ref(
         &self,

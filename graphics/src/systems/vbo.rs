@@ -250,24 +250,24 @@ impl<K: BufferLayout> VertexBuffer<K> {
                     index_pos += store.indexs.len();
                 }
 
-                if write_vertex {
-                    if let Some(store) = renderer.get_buffer(buf.index) {
-                        self.vertex_buffer.write(
-                            renderer.queue(),
-                            &store.store,
-                            old_vertex_pos,
-                        );
-                    }
+                if write_vertex
+                    && let Some(store) = renderer.get_buffer(buf.index)
+                {
+                    self.vertex_buffer.write(
+                        renderer.queue(),
+                        &store.store,
+                        old_vertex_pos,
+                    );
                 }
 
-                if write_index {
-                    if let Some(store) = renderer.get_buffer(buf.index) {
-                        self.index_buffer.write(
-                            renderer.queue(),
-                            &store.indexs,
-                            old_index_pos,
-                        );
-                    }
+                if write_index
+                    && let Some(store) = renderer.get_buffer(buf.index)
+                {
+                    self.index_buffer.write(
+                        renderer.queue(),
+                        &store.indexs,
+                        old_index_pos,
+                    );
                 }
 
                 let indices_start = pos;

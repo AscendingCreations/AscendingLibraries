@@ -4,22 +4,22 @@ members = ["input", "camera", "graphics", "time"]
 
 [workspace.dependencies]
 bytemuck = { version = "1.24.0", features = ["derive"] }
-thiserror = "2.0.17"
+thiserror = "2.0.18"
 winit = { version = "0.30.12", features = ["serde"] }
 image = "0.25.9"
 guillotiere = "0.6.2"
 serde = { version = "1.0.228", features = ["derive"] }
 log = "0.4.29"
-cosmic-text = { version = "0.17.0", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
+cosmic-text = { version = "0.18.2", features = ["shape-run-cache"] } #git = "https://github.com/pop-os/cosmic-text"
 ordered-float = { version = "5.1.0", features = ["serde"] }
 lru = "0.16.2"
-glam = { version = "0.31.0", features = ["bytemuck", "mint"] }
+glam = { version = "0.32.0", features = ["bytemuck", "mint"] }
 lyon = "1.0.16"
-smol_str = "0.3.4"
+smol_str = "0.3.5"
 indexmap = "2.12.1"
 slotmap = "1.1.1"
 ahash = {version = "0.8.12", features = ["serde"]}
-slab = "0.4.11"
+slab = "0.4.12"
 rayon = "1.11.0"
 
 [workspace.dependencies.camera]
