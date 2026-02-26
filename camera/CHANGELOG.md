@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## Unreleased
 
+## 0.8.0 (26. Feb, 2026)
+### Changed
+- Updated Glam 0.32.0.
+
 ## 0.7.0 (31. Jan, 2026)
 ### Changed
 - Updated Glam.
